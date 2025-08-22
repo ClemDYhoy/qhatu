@@ -1,1 +1,115 @@
- 
+/* Modern CSS Reset mejorado */
+*, *::before, *::after {
+box-sizing: border-box;
+}
+
+* {
+margin: 0;
+padding: 0;
+border: 0;
+}
+
+html {
+scroll-behavior: smooth;
+font-size: 16px;
+-webkit-text-size-adjust: 100%;
+}
+
+body {
+font-family: var(--font-family-base);
+font-weight: var(--font-weight-regular);
+line-height: var(--line-height-normal);
+color: var(--texto-primario);
+background-color: var(--fondo-principal);
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+text-rendering: optimizeLegibility;
+}
+
+/* Mejora de rendimiento para animaciones */
+@media (prefers-reduced-motion: reduce) {
+*,
+*::before,
+*::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+}
+
+/* Mejora de contraste para accesibilidad */
+@media (prefers-contrast: high) {
+:root {
+    --texto-primario: #000000;
+    --texto-secundario: #333333;
+    --borde-claro: #000000;
+}
+}
+
+/* Optimización de medios */
+img, picture, video, canvas, svg {
+display: block;
+max-width: 100%;
+height: auto;
+}
+
+/* Mejora de formularios */
+input, button, textarea, select {
+font: inherit;
+color: inherit;
+}
+
+button {
+cursor: pointer;
+background: none;
+border: none;
+}
+
+/* Mejora de enlaces */
+a {
+color: inherit;
+text-decoration: none;
+transition: var(--transicion-sutil);
+}
+
+/* Mejora de listas */
+ul, ol {
+list-style: none;
+}
+
+/* Mejora de tablas */
+table {
+border-collapse: collapse;
+border-spacing: 0;
+}
+
+/* Focus visible mejorado */
+:focus-visible {
+outline: 2px solid var(--amarillo-principal);
+outline-offset: 2px;
+}
+
+/* Selección de texto mejorada */
+::selection {
+background-color: var(--amarillo-claro);
+color: var(--texto-primario);
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+width: 8px;
+}
+
+::-webkit-scrollbar-track {
+background: var(--fondo-secundario);
+}
+
+::-webkit-scrollbar-thumb {
+background: var(--gris-30);
+border-radius: var(--radio-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+background: var(--gris-40);
+}
