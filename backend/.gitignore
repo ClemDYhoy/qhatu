@@ -1,0 +1,16 @@
+# Ignorar node_modules
+node_modules/
+
+# Ignorar archivos de entorno
+.env
+
+# Ignorar archivos generados o temporales
+*.log
+*.tmp
+
+# Ignorar configuraciones locales de IDEs (ejemplo)
+.vscode/
+.idea/
+
+# Ignorar caché de nvm (opcional)
+.nvmrc
