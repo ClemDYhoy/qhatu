@@ -6,6 +6,7 @@ import Footer from './components/layout/Footer/Footer'
 import Home from './pages/Home/Home'
 import Products from './pages/Products/Products'
 import ProductDetail from './pages/ProductDetail/ProductDetail'
+import AdminDashboard from './components/AdminDashboard.jsx';
 import './App.css'
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <main className="main-content">
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
               </Routes>

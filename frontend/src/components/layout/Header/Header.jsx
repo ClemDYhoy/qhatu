@@ -10,7 +10,11 @@ return (
         <div className="container">
             <div className="header-content">
             <Link to="/" className="logo">
-                <span className="logo-icon">🛍️</span>
+                <img 
+                    src="/public/logo.png" 
+                    alt="Logo Clínica Bolívar" 
+                    className="urbat-logo__brain-icon" 
+                />
                 Oe!!
             </Link>
             

@@ -34,12 +34,13 @@ search: async (query) => {
     }
 },
 
-create: async (productData) => {
+create: async (productData, token) => {
     try {
-    const response = await api.post('/products', productData);
+    const response = await api.post('/products', productData, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data;
     } catch (error) {
-    console.error('Error creating product:', error);
     throw error;
     }
 }
