@@ -6,8 +6,17 @@ import Footer from './components/layout/Footer/Footer'
 import Home from './pages/Home/Home'
 import Products from './pages/Products/Products'
 import ProductDetail from './pages/ProductDetail/ProductDetail'
-import AdminDashboard from './components/AdminDashboard.jsx';
+import AdminDashboard from './pages/Admin/AdminDashboard'
+import Register from './pages/Admin/Register';
+import Auth from './pages/Auth/Auth'; // Nueva página
+import { useAuth } from './hooks/useAuth';
 import './App.css'
+
+
+const ProtectedRoute = ({ children }) => {
+  const { user } = useAuth();
+  return user && user.role === 'admin' ? children : <Navigate to="/login" />;
+};
 
 function App() {
   return (
@@ -19,7 +28,9 @@ function App() {
             <main className="main-content">
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/login" element={<Auth />} />
+                <Route path="/register" element={<Register />} /> 
+                <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
               </Routes>
