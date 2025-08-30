@@ -9,6 +9,7 @@ import ProductDetail from './pages/ProductDetail/ProductDetail'
 import AdminDashboard from './pages/Admin/AdminDashboard'
 import Register from './pages/Admin/Register';
 import Auth from './pages/Auth/Auth'; // Nueva página
+import Nosotros from './pages/Nosotros/Nosotros';
 import { useAuth } from './hooks/useAuth';
 import './App.css'
 
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/nosotros" element={<Nosotros />} /> 
               </Routes>
             </main>
             <Footer />

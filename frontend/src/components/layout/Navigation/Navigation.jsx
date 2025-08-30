@@ -9,10 +9,10 @@ const location = useLocation();
 const navItems = [
     { path: '/', label: 'Inicio' },
     { path: '/products', label: 'Productos' },
-    { path: '/about', label: 'Nosotros' },
+    { path: '/nosotros', label: 'Nosotros' },
     { path: '/contact', label: 'Contacto' },
 ];
-
+6
 const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
 };

@@ -30,11 +30,11 @@ const getContextualContent = () => {
     case '/products':
         return {
         title: 'Nuestros Productos',
-        description: 'Descubre una amplia selección de productos importados cuidadosamente seleccionados para la comunidad hispanohablante.',
+        description: 'Descubre una amplia selección de nuestros productos cuidadosamente seleccionados para la comunidad.',
         image: 'https://images.unsplash.com/photo-1607082350899-7e105aa886ae?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80',
         alt: 'Catálogo de productos Oasis Elegante'
         };
-    case '/about':
+    case '/nosotros':
         return {
         title: 'Nuestra Historia',
         description: 'Conoce más sobre nuestra misión de conectar a la comunidad hispanohablante con los mejores productos internacionales.',
@@ -105,23 +105,22 @@ return (
             {/* Contenido adicional específico por página */}
             {location.pathname === '/products' && (
                 <div className="oe-contextual-actions">
-                <button className="oe-btn oe-btn-primary">Ver Catálogo Completo</button>
                 <button className="oe-btn oe-btn-outline">Filtrar Productos</button>
                 </div>
             )}
             
-            {location.pathname === '/about' && (
+            {location.pathname === '/nosotros' && (
                 <div className="oe-contextual-stats">
                 <div className="oe-stat">
-                    <span className="oe-stat-number">500+</span>
+                    <span className="oe-stat-number">20+</span>
                     <span className="oe-stat-label">Productos</span>
                 </div>
                 <div className="oe-stat">
-                    <span className="oe-stat-number">10K+</span>
+                    <span className="oe-stat-number">1K+</span>
                     <span className="oe-stat-label">Clientes</span>
                 </div>
                 <div className="oe-stat">
-                    <span className="oe-stat-number">15+</span>
+                    <span className="oe-stat-number">1+</span>
                     <span className="oe-stat-label">Países</span>
                 </div>
                 </div>

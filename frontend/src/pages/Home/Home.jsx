@@ -148,6 +148,60 @@ const Home = () => {
         </div>
       </section>
 
+      <section className="qhatu-services-horizontal-section">
+        <div className="qhatu-services-horizontal-container">
+          <div className="qhatu-services-horizontal-content">
+            <h2 className="qhatu-services-horizontal-title">Te brindamos una experiencia única</h2>
+            
+            <div className="qhatu-services-horizontal-grid">
+              {/* Servicio 1: Envíos */}
+              <div className="qhatu-service-horizontal-item">
+                <div className="qhatu-service-horizontal-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3.375 4.5C2.339 4.5 1.5 5.34 1.5 6.375V13.5h12V6.375c0-1.036-.84-1.875-1.875-1.875h-8.25zM13.5 15h-12v2.625c0 1.035.84 1.875 1.875 1.875h.375a3 3 0 116 0h3a.75.75 0 00.75-.75V15z" />
+                    <path d="M8.25 19.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0zM15.75 6.75a.75.75 0 00-.75.75v11.25c0 .087.015.17.042.248a3 3 0 015.958.464c.853-.175 1.522-.935 1.464-1.883a18.659 18.659 0 00-3.732-10.104 1.837 1.837 0 00-1.47-.725H15.75z" />
+                    <path d="M19.5 19.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z" />
+                  </svg>
+                </div>
+                <div className="qhatu-service-horizontal-text">
+                  <h3>Envíos todo Huanuco</h3>
+                  <p>Delivery 24 a 48 Hrs</p>
+                </div>
+              </div>
+              
+              {/* Servicio 2: Compras seguras */}
+              <div className="qhatu-service-horizontal-item">
+                <div className="qhatu-service-horizontal-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 1.5a.75.75 0 01.75.75V7.5h-1.5V2.25A.75.75 0 0112 1.5zM11.25 7.5v5.69l-1.72-1.72a.75.75 0 00-1.06 1.06l3 3a.75.75 0 001.06 0l3-3a.75.75 0 10-1.06-1.06l-1.72 1.72V7.5h3.75a3 3 0 013 3v9a3 3 0 01-3 3h-9a3 3 0 01-3-3v-9a3 3 0 013-3h3.75z" />
+                  </svg>
+                </div>
+                <div className="qhatu-service-horizontal-text">
+                  <h3>Compras seguras</h3>
+                  <p>En todos los pedidos</p>
+                </div>
+              </div>
+              
+              {/* Servicio 3: 100% Seguro */}
+              <div className="qhatu-service-horizontal-item">
+                <div className="qhatu-service-horizontal-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fillRule="evenodd" d="M12.516 2.17a.75.75 0 00-1.032 0 11.209 11.209 0 01-7.877 3.08.75.75 0 00-.722.515A12.74 12.74 0 002.25 9.75c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 00.374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.985a.75.75 0 00-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08zm3.094 8.016a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="qhatu-service-horizontal-text">
+                  <h3>100% Seguro</h3>
+                  <p>Vea nuestros beneficios</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
+
       {/* Featured Products */}
       <section className="qhatu-section">
         <div className="container">

@@ -1,0 +1,300 @@
+/* Nosotros.css - Estilos para la página Nosotros */
+
+.nosotros-page {
+  padding: var(--space-4xl) 0;
+}
+
+.nosotros-content {
+  width: 100%;
+}
+
+/* Contenedor principal */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+/* Secciones generales */
+.qhatu-about-section {
+  padding: var(--space-4xl) 0;
+}
+
+/* Filas de contenido */
+.qhatu-about-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2xl);
+  align-items: center;
+}
+
+.qhatu-about-row-reverse {
+  direction: rtl;
+}
+
+.qhatu-about-row-reverse > * {
+  direction: ltr;
+}
+
+/* Texto */
+.qhatu-about-text {
+  padding: var(--space-xl);
+}
+
+.qhatu-about-main-title {
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  color: var(--texto-primario);
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.qhatu-about-subtitle {
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--texto-primario);
+  margin-bottom: var(--space-md);
+}
+
+.qhatu-about-highlight {
+  font-size: var(--font-size-lg);
+  color: var(--texto-destacado);
+  margin-bottom: var(--space-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.qhatu-about-quote {
+  font-style: italic;
+  padding: var(--space-lg);
+  border-left: 4px solid var(--amarillo-principal);
+  background: var(--fondo-secundario);
+  margin: var(--space-xl) 0;
+  color: var(--texto-secundario);
+}
+
+.qhatu-about-separator {
+  text-align: center;
+  margin: var(--space-lg) 0;
+  color: var(--amarillo-principal);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Imágenes */
+.qhatu-about-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qhatu-about-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radio-xl);
+  box-shadow: var(--sombra-media);
+  transition: var(--transicion-normal);
+}
+
+.qhatu-logo-animate {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Sección de beneficios */
+.qhatu-benefits-section {
+  padding: var(--space-4xl) 0;
+  background: var(--fondo-terciario);
+  text-align: center;
+}
+
+.qhatu-benefits-title {
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--texto-primario);
+  margin-bottom: var(--space-3xl);
+}
+
+.qhatu-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-xl);
+}
+
+.qhatu-benefit-card {
+  background: var(--fondo-elevado);
+  padding: var(--space-xl);
+  border-radius: var(--radio-xl);
+  box-shadow: var(--sombra-suave);
+  transition: var(--transicion-normal);
+  text-align: center;
+}
+
+.qhatu-benefit-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--sombra-media);
+}
+
+.qhatu-benefit-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--space-lg);
+  background: var(--gradiente-fucsia);
+  border-radius: var(--radio-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qhatu-benefit-icon img {
+  width: 40px;
+  height: 40px;
+}
+
+.qhatu-benefit-card h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--texto-primario);
+  margin-bottom: var(--space-md);
+}
+
+.qhatu-benefit-card p {
+  color: var(--texto-secundario);
+  line-height: var(--line-height-normal);
+}
+
+/* Sección de valores */
+.qhatu-values-section {
+  padding: var(--space-4xl) 0;
+  text-align: center;
+}
+
+.qhatu-values-title {
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--texto-primario);
+  margin-bottom: var(--space-3xl);
+}
+
+.qhatu-values-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-xl);
+}
+
+.qhatu-value-item {
+  background: var(--fondo-secundario);
+  padding: var(--space-xl);
+  border-radius: var(--radio-lg);
+  border-left: 4px solid var(--amarillo-principal);
+  text-align: left;
+}
+
+.qhatu-value-item h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--texto-destacado);
+  margin-bottom: var(--space-md);
+}
+
+.qhatu-value-item p {
+  color: var(--texto-secundario);
+  line-height: var(--line-height-normal);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .qhatu-benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .qhatu-values-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .qhatu-about-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+  }
+  
+  .qhatu-about-row-reverse {
+    direction: ltr;
+  }
+  
+  .qhatu-about-main-title {
+    font-size: var(--font-size-xxxl);
+  }
+  
+  .qhatu-about-subtitle {
+    font-size: var(--font-size-xxl);
+  }
+  
+  .qhatu-benefits-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .qhatu-benefit-card {
+    padding: var(--space-lg);
+  }
+  
+  .qhatu-benefit-icon {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .qhatu-benefit-icon img {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nosotros-page {
+    padding: var(--space-2xl) 0;
+  }
+  
+  .qhatu-about-section {
+    padding: var(--space-2xl) 0;
+  }
+  
+  .qhatu-about-text {
+    padding: var(--space-md);
+  }
+  
+  .qhatu-about-main-title {
+    font-size: var(--font-size-xxl);
+  }
+  
+  .qhatu-about-subtitle {
+    font-size: var(--font-size-xl);
+  }
+  
+  .qhatu-benefit-card {
+    padding: var(--space-md);
+  }
+  
+  .qhatu-value-item {
+    padding: var(--space-lg);
+  }
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+  .qhatu-benefit-card {
+    background: var(--fondo-secundario);
+  }
+  
+  .qhatu-value-item {
+    background: var(--fondo-terciario);
+  }
+  
+  .qhatu-about-quote {
+    background: var(--fondo-terciario);
+  }
+}
