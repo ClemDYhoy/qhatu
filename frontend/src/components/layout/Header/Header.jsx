@@ -71,7 +71,7 @@ return (
                 alt="Oasis Elegante" 
                 className="oe-logo-img"
                 />
-            </Link>
+            </Link> 
             
             <Navigation />
             

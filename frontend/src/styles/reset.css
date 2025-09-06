@@ -1,115 +1,177 @@
-/* Modern CSS Reset mejorado */
+/* Modern CSS Reset mejorado con estilo DoneDrinks */
 *, *::before, *::after {
-box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 * {
-margin: 0;
-padding: 0;
-border: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 html {
-scroll-behavior: smooth;
-font-size: 16px;
--webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
-font-family: var(--font-family-base);
-font-weight: var(--font-weight-regular);
-line-height: var(--line-height-normal);
-color: var(--texto-primario);
-background-color: var(--fondo-principal);
--webkit-font-smoothing: antialiased;
--moz-osx-font-smoothing: grayscale;
-text-rendering: optimizeLegibility;
+  font-family: var(--font-primary);
+  font-weight: var(--font-regular);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
 /* Mejora de rendimiento para animaciones */
 @media (prefers-reduced-motion: reduce) {
-*,
-*::before,
-*::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-}
+  }
 }
 
 /* Mejora de contraste para accesibilidad */
 @media (prefers-contrast: high) {
-:root {
-    --texto-primario: #000000;
-    --texto-secundario: #333333;
-    --borde-claro: #000000;
-}
+  :root {
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --border-medium: #000000;
+  }
 }
 
 /* Optimización de medios */
 img, picture, video, canvas, svg {
-display: block;
-max-width: 100%;
-height: auto;
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 /* Mejora de formularios */
 input, button, textarea, select {
-font: inherit;
-color: inherit;
+  font: inherit;
+  color: inherit;
 }
 
 button {
-cursor: pointer;
-background: none;
-border: none;
+  cursor: pointer;
+  background: none;
+  border: none;
 }
 
 /* Mejora de enlaces */
 a {
-color: inherit;
-text-decoration: none;
-transition: var(--transicion-sutil);
+  color: inherit;
+  text-decoration: none;
+  transition: var(--transition-base);
+}
+
+a:hover {
+  color: var(--primary);
 }
 
 /* Mejora de listas */
 ul, ol {
-list-style: none;
+  list-style: none;
 }
 
 /* Mejora de tablas */
 table {
-border-collapse: collapse;
-border-spacing: 0;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
 
 /* Focus visible mejorado */
 :focus-visible {
-outline: 2px solid var(--amarillo-principal);
-outline-offset: 2px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* Selección de texto mejorada */
 ::selection {
-background-color: var(--amarillo-claro);
-color: var(--texto-primario);
+  background-color: var(--primary-light);
+  color: var(--text-primary);
 }
 
-/* Scrollbar personalizado */
+/* Scrollbar personalizado estilo DoneDrinks */
 ::-webkit-scrollbar {
-width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-background: var(--fondo-secundario);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb {
-background: var(--gris-30);
-border-radius: var(--radio-full);
+  background: var(--primary);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-background: var(--gris-40);
+  background: var(--primary-dark);
+}
+
+/* Firefox scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--bg-secondary);
+}
+
+/* Placeholder styling */
+::placeholder {
+  color: var(--text-tertiary);
+  opacity: 1;
+}
+
+/* Remove default button styles */
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Remove input number arrows */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+
+/* Hide clear button from search inputs */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+}
+
+/* Ensure responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Remove blue highlight on tap mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Improve readability for long texts */
+p {
+  max-width: 65ch;
 }
