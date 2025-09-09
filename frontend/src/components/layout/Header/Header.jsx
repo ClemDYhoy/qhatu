@@ -4,6 +4,8 @@ import Navigation from '../Navigation/Navigation';
 import CartWidget from '../../cart/CartWidget/CartWidget';
 import './Header.css';
 
+import fresa from '../../../../public/fresa.png';
+
 const Header = () => {
 const [isScrolled, setIsScrolled] = useState(false);
 const location = useLocation();
@@ -21,17 +23,12 @@ useEffect(() => {
 const getContextualContent = () => {
     switch(location.pathname) {
     case '/':
-        return {
-        title: 'Bienvenido a tu spot de sabores',
-        description: 'Ramen, bebidas, snacks y un mundo de delicias reunidos en un único spot, listos para pedir súper fácil por WhatsApp.',
-        image: 'https://images.unsplash.com/photo-1556155092-490a1ba16284?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80',
-        alt: 'Oasis Elegante - Productos importados'
-        };
+        
     case '/products':
         return {
         title: 'Nuestros Productos',
         description: 'Descubre una amplia selección de nuestros productos cuidadosamente seleccionados para la comunidad.',
-        image: 'https://images.unsplash.com/photo-1607082350899-7e105aa886ae?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80',
+        image: fresa,
         alt: 'Catálogo de productos Oasis Elegante'
         };
     case '/nosotros':
@@ -67,8 +64,8 @@ return (
         <div className="oe-header-content">
             <Link to="/" className="oe-logo-link">
                 <img 
-                src="../../../../public/oe.png" 
-                alt="Oasis Elegante" 
+                src="../../../../public/logo-oe.png" 
+                alt="Oe" 
                 className="oe-logo-img"
                 />
             </Link> 

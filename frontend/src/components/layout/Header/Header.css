@@ -5,16 +5,17 @@
   left: 0;
   width: 100%;
   z-index: var(--z-fixed);
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--accent) 100%);
+  background: transparent;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   padding: var(--space-3) 0;
-  box-shadow: var(--shadow-lg);
+  box-shadow: none;
 }
 
 .oe-header-scrolled {
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(10px);
   padding: var(--space-2) 0;
+
 }
 
 .oe-header-content {
@@ -29,18 +30,21 @@
   align-items: center;
   transition: var(--transition-base);
   z-index: var(--z-fixed);
+  transform: scale(2.65) translateY(-2px);
+
 }
 
 .oe-logo-link:hover {
-  transform: scale(1.05);
+  transform: scale(1.15);
 }
 
 .oe-logo-img {
-  height: 48px;
+  height: 50px;
   width: auto;
   object-fit: contain;
   transition: var(--transition-base);
 }
+
 
 
 
@@ -97,7 +101,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: url('https://images.unsplash.com/photo-1556155092-490a1ba16284?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80') center/cover no-repeat;
+  background: url('https://cdn.pixabay.com/photo/2020/06/02/01/33/sakura-5248955_1280.jpg') center/cover no-repeat;
   opacity: 0.15;
   z-index: 1;
 }
@@ -124,19 +128,11 @@
 }
 
 .oe-contextual-image {
-  position: relative;
-  border-radius: var(--radius-2xl);
   overflow: hidden;
-  box-shadow: var(--shadow-2xl);
   transform: translateZ(0);
+  transform: scale(1.85) translateY(-70px);
 }
 
-.oe-contextual-image img {
-  width: 100%;
-  height: 400px;
-  object-fit: cover;
-  transition: var(--transition-slow);
-}
 
 .oe-contextual-image:hover img {
   transform: scale(1.05);
