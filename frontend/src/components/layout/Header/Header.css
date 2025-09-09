@@ -1,3 +1,4 @@
+/* C:\qhatu\frontend\src\components\layout\Header\Header.css */
 /* ================= HEADER ================= */
 .oe-header {
   position: fixed;
@@ -15,7 +16,7 @@
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(10px);
   padding: var(--space-2) 0;
-
+  box-shadow: var(--shadow-md);
 }
 
 .oe-header-content {
@@ -25,17 +26,20 @@
   gap: var(--space-6);
 }
 
+.oe-header-logo {
+  flex-shrink: 0;
+  z-index: var(--z-fixed);
+}
+
 .oe-logo-link {
   display: flex;
   align-items: center;
   transition: var(--transition-base);
-  z-index: var(--z-fixed);
   transform: scale(2.65) translateY(-2px);
-
 }
 
 .oe-logo-link:hover {
-  transform: scale(1.15);
+  transform: scale(2.7) translateY(-2px) rotate(-2deg);
 }
 
 .oe-logo-img {
@@ -45,13 +49,83 @@
   transition: var(--transition-base);
 }
 
-
-
+.oe-header-nav {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
 
 .oe-header-actions {
   display: flex;
   align-items: center;
   gap: var(--space-4);
+  margin-left: auto;
+}
+
+.oe-auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.oe-login-btn,
+.oe-register-btn {
+  padding: var(--space-2) var(--space-5);
+  font-family: var(--font-primary);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-xl);
+  transition: var(--transition-bounce);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+}
+
+.oe-login-btn {
+  background: transparent;
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.oe-register-btn {
+  background: var(--gradient-primary);
+  color: var(--white);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-primary);
+}
+
+.oe-header-scrolled .oe-login-btn {
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+.oe-header-scrolled .oe-login-btn:hover {
+  background: rgba(255, 216, 39, 0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.oe-login-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.oe-register-btn:hover {
+  background: var(--gradient-warm);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
+
+.oe-login-btn:active,
+.oe-register-btn:active {
+  transform: translateY(0) scale(0.98);
+  transition: var(--transition-fast);
 }
 
 .oe-menu-toggle {
@@ -75,10 +149,125 @@
   margin: 2px 0;
   transition: var(--transition-base);
   border-radius: var(--radius-full);
+  transform-origin: center;
 }
 
 .oe-header-scrolled .oe-menu-toggle span {
   background: var(--text-primary);
+}
+
+.oe-menu-toggle-open span:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+
+.oe-menu-toggle-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.oe-menu-toggle-open span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .oe-header-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transform: translateX(-100%);
+    transition: var(--transition-base);
+    padding: var(--space-16) var(--space-6);
+  }
+
+  .oe-header-nav-open {
+    transform: translateX(0);
+  }
+
+  .oe-menu-toggle {
+    display: flex;
+  }
+
+  .oe-header-actions {
+    gap: var(--space-3);
+  }
+
+  .oe-auth-buttons {
+    gap: var(--space-2);
+  }
+
+  .oe-login-btn,
+  .oe-register-btn {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-xs);
+  }
+}
+
+@media (max-width: 640px) {
+  .oe-header-content {
+    gap: var(--space-4);
+  }
+
+  .oe-logo-link {
+    transform: scale(2.2) translateY(-1px);
+  }
+
+  .oe-header-actions {
+    gap: var(--space-2);
+  }
+
+  .oe-auth-buttons {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .oe-login-btn,
+  .oe-register-btn {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-xs);
+    min-width: 80px;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .oe-header-scrolled {
+    background: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(10px);
+  }
+
+  .oe-header-scrolled .oe-login-btn {
+    color: var(--white);
+    border-color: var(--border-medium);
+  }
+
+  .oe-header-scrolled .oe-login-btn:hover {
+    background: rgba(255, 216, 39, 0.2);
+    border-color: var(--primary);
+    color: var(--primary-light);
+  }
+}
+
+/* Animation for header scroll */
+@keyframes headerSlideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.oe-header-scrolled {
+  animation: headerSlideDown 0.3s ease-out;
 }
 
 /* ================= CONTEXTUAL SECTION ================= */
@@ -130,13 +319,25 @@
 .oe-contextual-image {
   overflow: hidden;
   transform: translateZ(0);
-  transform: scale(1.85) translateY(-70px);
+  transform: scale(1.0) translateY(-10px);
+  
+  /* Mejoras para la imagen */
+  filter: 
+    drop-shadow(0px 50px 6px rgba(0, 0, 0, 0.5))
+    contrast(1.1)
+    brightness(1.09);
+  
+
+  
+  /* Mejora de renderizado */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  
+  /* Transición suave para efectos hover */
+  transition: all 0.3s ease;
+  border-radius: 4px;
 }
 
-
-.oe-contextual-image:hover img {
-  transform: scale(1.05);
-}
 
 .oe-contextual-text {
   padding: var(--space-6);

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import './Login.css';
+import './Register.css';
 
-const Login = ({ onClose, onSwitchToRegister }) => {
+const Register = ({ onClose, onSwitchToLogin }) => {
 const [formData, setFormData] = useState({
+    name: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
 });
 
 const handleInputChange = (e) => {
@@ -16,21 +18,37 @@ const handleInputChange = (e) => {
 
 const handleSubmit = (e) => {
     e.preventDefault();
-    // Aquí iría la lógica de login
-    console.log('Login data:', formData);
+    if (formData.password !== formData.confirmPassword) {
+    alert('Las contraseñas no coinciden');
+    return;
+    }
+    // Aquí iría la lógica de registro
+    console.log('Register data:', formData);
 };
 
 return (
     <div className="oe-modal-overlay" onClick={onClose}>
     <div className="oe-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="oe-modal-header">
-        <h2>Iniciar Sesión</h2>
+        <h2>Crear Cuenta</h2>
         <button className="oe-modal-close" onClick={onClose}>
             ×
         </button>
         </div>
 
         <form onSubmit={handleSubmit} className="oe-auth-form">
+        <div className="oe-form-group">
+            <label htmlFor="name">Nombre Completo</label>
+            <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            required
+            />
+        </div>
+
         <div className="oe-form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -55,19 +73,31 @@ return (
             />
         </div>
 
+        <div className="oe-form-group">
+            <label htmlFor="confirmPassword">Confirmar Contraseña</label>
+            <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            required
+            />
+        </div>
+
         <button type="submit" className="oe-btn oe-btn-primary oe-btn-full">
-            Iniciar Sesión
+            Crear Cuenta
         </button>
         </form>
 
         <div className="oe-auth-footer">
         <p>
-            ¿No tienes cuenta? 
+            ¿Ya tienes cuenta? 
             <button 
             className="oe-link-btn" 
-            onClick={onSwitchToRegister}
+            onClick={onSwitchToLogin}
             >
-            Regístrate aquí
+            Inicia sesión aquí
             </button>
         </p>
         </div>
@@ -76,4 +106,4 @@ return (
 );
 };
 
-export default Login;
+export default Register;

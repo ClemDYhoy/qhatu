@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navigation from '../Navigation/Navigation';
 import CartWidget from '../../cart/CartWidget/CartWidget';
+import Login from '../Login/Login';
+import Register from '../Login/Register';
 import './Header.css';
-
-import fresa from '../../../../public/fresa.png';
 
 const Header = () => {
 const [isScrolled, setIsScrolled] = useState(false);
+const [showLogin, setShowLogin] = useState(false);
+const [showRegister, setShowRegister] = useState(false);
+const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 const location = useLocation();
 
 useEffect(() => {
@@ -23,19 +26,24 @@ useEffect(() => {
 const getContextualContent = () => {
     switch(location.pathname) {
     case '/':
-        
+        return {
+        title: 'Bienvenido a tu spot de sabores',
+        description: 'Ramen, bebidas, snacks y un mundo de delicias reunidos en un único spot, listos para pedir súper fácil por WhatsApp.',
+        image: 'https://i.ibb.co/VcrTmX1F/upscalemedia-transformed-1.png',
+        alt: 'Oe'
+        };
     case '/products':
         return {
         title: 'Nuestros Productos',
         description: 'Descubre una amplia selección de nuestros productos cuidadosamente seleccionados para la comunidad.',
-        image: fresa,
+        image: 'https://i.ibb.co/VcrTmX1F/upscalemedia-transformed-1.png',
         alt: 'Catálogo de productos Oasis Elegante'
         };
     case '/nosotros':
         return {
         title: 'Nuestra Historia',
         description: 'Conoce más sobre nuestra misión de conectar a la comunidad hispanohablante con los mejores productos internacionales.',
-        image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=871&q=80',
+        image: 'https://i.ibb.co/VcrTmX1F/upscalemedia-transformed-1.png',
         alt: 'Equipo de Oasis Elegante'
         };
     case '/contact':
@@ -62,21 +70,48 @@ return (
     <header className={`oe-header ${isScrolled ? 'oe-header-scrolled' : ''}`}>
         <div className="container">
         <div className="oe-header-content">
+            {/* Logo */}
+            <div className="oe-header-logo">
             <Link to="/" className="oe-logo-link">
                 <img 
-                src="../../../../public/logo-oe.png" 
+                src="/logo-oe.png" 
                 alt="Oe" 
                 className="oe-logo-img"
                 />
-            </Link> 
+            </Link>
+            </div>
             
+            {/* Navigation */}
+            <div className={`oe-header-nav ${isMobileMenuOpen ? 'oe-header-nav-open' : ''}`}>
             <Navigation />
-            
-            <div className="oe-header-actions">
-            <CartWidget />
             </div>
 
-            <button className="oe-menu-toggle" aria-label="Abrir menú">
+            {/* Actions */}
+            <div className="oe-header-actions">
+            <CartWidget />
+            
+            <div className="oe-auth-buttons">
+                <button 
+                className="oe-login-btn"
+                onClick={() => setShowLogin(true)}
+                >
+                Iniciar
+                </button>
+                <button 
+                className="oe-register-btn"
+                onClick={() => setShowRegister(true)}
+                >
+                Registrarse
+                </button>
+            </div>
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <button 
+            className={`oe-menu-toggle ${isMobileMenuOpen ? 'oe-menu-toggle-open' : ''}`}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Abrir menú"
+            >
             <span></span>
             <span></span>
             <span></span>
@@ -125,37 +160,58 @@ return (
             
             {location.pathname === '/contact' && (
                 <div className="oe-contextual-contact">
-                    <div className="oe-contact-method">
+                <div className="oe-contact-method">
                     <span className="oe-contact-icon">📧</span>
                     <a href="mailto:info@oasiselegante.com" className="oe-contact-link">
-                        info@oasiselegante.com
+                    info@oasiselegante.com
                     </a>
-                    </div>
-                    <div className="oe-contact-method">
+                </div>
+                <div className="oe-contact-method">
                     <span className="oe-contact-icon">📱</span>
                     <a href="https://wa.me/1234567890" className="oe-contact-link" target="_blank" rel="noopener noreferrer">
-                        +1 (123) 456-7890
+                    +1 (123) 456-7890
                     </a>
-                    </div>
-                    <div className="oe-contact-method">
+                </div>
+                <div className="oe-contact-method">
                     <span className="oe-contact-icon">🕒</span>
                     <span>Lun-Vie: 9AM - 6PM</span>
-                    </div>
-                    
-                    <div className="oe-contact-actions">
+                </div>
+                
+                <div className="oe-contact-actions">
                     <a href="mailto:info@oasiselegante.com" className="oe-contact-btn oe-contact-btn-primary">
-                        <span>📧</span> Enviar Email
+                    <span>📧</span> Enviar Email
                     </a>
                     <a href="https://wa.me/1234567890" className="oe-contact-btn oe-contact-btn-secondary" target="_blank" rel="noopener noreferrer">
-                        <span>💬</span> WhatsApp
+                    <span>💬</span> WhatsApp
                     </a>
-                    </div>
                 </div>
-                )}
+                </div>
+            )}
             </div>
         </div>
         </div>
     </section>
+
+    {/* Modals */}
+    {showLogin && (
+        <Login 
+        onClose={() => setShowLogin(false)} 
+        onSwitchToRegister={() => {
+            setShowLogin(false);
+            setShowRegister(true);
+        }}
+        />
+    )}
+    
+    {showRegister && (
+        <Register 
+        onClose={() => setShowRegister(false)}
+        onSwitchToLogin={() => {
+            setShowRegister(false);
+            setShowLogin(true);
+        }}
+        />
+    )}
     </>
 );
 };
