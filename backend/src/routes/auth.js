@@ -1,36 +1,46 @@
 import express from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
+// Register
 router.post('/register', async (req, res) => {
+const { nombre, email, password, telefono } = req.body;
 try {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email y password requeridos' });
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ error: 'Email ya registrado' });
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ email, password: hashedPassword });
+    let user = await User.findOne({ email });
+    if (user) {
+    return res.status(400).json({ message: 'Usuario ya existe' });
+    }
+
+    user = new User({ nombre, email, password, telefono });
     await user.save();
-    res.status(201).json({ message: 'Cuenta creada exitosamente' });
-} catch (err) {
-    res.status(500).json({ error: 'Error al registrar' });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.status(201).json({ token, user: { id: user._id, email, nombre } });
+} catch (error) {
+    res.status(500).json({ message: 'Error en registro', error: error.message });
 }
 });
 
+// Login
 router.post('/login', async (req, res) => {
+const { email, password } = req.body;
 try {
-    const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user || !await bcrypt.compare(password, user.password)) {
-    return res.status(401).json({ error: 'Credenciales inválidas' });
+    if (!user) {
+    return res.status(400).json({ message: 'Credenciales inválidas' });
     }
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, role: user.role });
-} catch (err) {
-    res.status(500).json({ error: 'Error al iniciar sesión' });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+    return res.status(400).json({ message: 'Credenciales inválidas' });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token, user: { id: user._id, email, nombre: user.nombre } });
+} catch (error) {
+    res.status(500).json({ message: 'Error en login', error: error.message });
 }
 });
 

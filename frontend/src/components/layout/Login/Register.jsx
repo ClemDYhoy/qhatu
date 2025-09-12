@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api from '../../../services/api.js';
 import './Register.css';
 
 const Register = ({ onClose, onSwitchToLogin }) => {
@@ -6,24 +7,36 @@ const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
 });
+const [error, setError] = useState('');
 
 const handleInputChange = (e) => {
     setFormData({
     ...formData,
-    [e.target.name]: e.target.value
+    [e.target.name]: e.target.value,
     });
 };
 
-const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-    alert('Las contraseñas no coinciden');
+    setError('Las contraseñas no coinciden');
     return;
     }
-    // Aquí iría la lógica de registro
-    console.log('Register data:', formData);
+    try {
+    const res = await api.post('/auth/register', {
+        nombre: formData.name,
+        email: formData.email,
+        password: formData.password,
+    });
+    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('user', JSON.stringify(res.data.user));
+    setError('');
+    onClose();
+    } catch (err) {
+    setError(err.response?.data?.message || 'Error en registro');
+    }
 };
 
 return (
@@ -35,6 +48,8 @@ return (
             ×
         </button>
         </div>
+
+        {error && <p className="oe-error">{error}</p>}
 
         <form onSubmit={handleSubmit} className="oe-auth-form">
         <div className="oe-form-group">
@@ -92,11 +107,8 @@ return (
 
         <div className="oe-auth-footer">
         <p>
-            ¿Ya tienes cuenta? 
-            <button 
-            className="oe-link-btn" 
-            onClick={onSwitchToLogin}
-            >
+            ¿Ya tienes cuenta?{' '}
+            <button className="oe-link-btn" onClick={onSwitchToLogin}>
             Inicia sesión aquí
             </button>
         </p>

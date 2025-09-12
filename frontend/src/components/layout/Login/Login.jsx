@@ -1,23 +1,32 @@
 import React, { useState } from 'react';
+import api from '../../../services/api.js';
 import './Login.css';
 
 const Login = ({ onClose, onSwitchToRegister }) => {
 const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
 });
+const [error, setError] = useState('');
 
 const handleInputChange = (e) => {
     setFormData({
     ...formData,
-    [e.target.name]: e.target.value
+    [e.target.name]: e.target.value,
     });
 };
 
-const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
-    // Aquí iría la lógica de login
-    console.log('Login data:', formData);
+    try {
+    const res = await api.post('/auth/login', formData);
+    localStorage.setItem('token', res.data.token);
+    localStorage.setItem('user', JSON.stringify(res.data.user));
+    setError('');
+    onClose();
+    } catch (err) {
+    setError(err.response?.data?.message || 'Error en login');
+    }
 };
 
 return (
@@ -29,6 +38,8 @@ return (
             ×
         </button>
         </div>
+
+        {error && <p className="oe-error">{error}</p>}
 
         <form onSubmit={handleSubmit} className="oe-auth-form">
         <div className="oe-form-group">
@@ -62,11 +73,8 @@ return (
 
         <div className="oe-auth-footer">
         <p>
-            ¿No tienes cuenta? 
-            <button 
-            className="oe-link-btn" 
-            onClick={onSwitchToRegister}
-            >
+            ¿No tienes cuenta?{' '}
+            <button className="oe-link-btn" onClick={onSwitchToRegister}>
             Regístrate aquí
             </button>
         </p>
