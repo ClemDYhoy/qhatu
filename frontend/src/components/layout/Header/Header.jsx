@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navigation from '../Navigation/Navigation';
 import CartWidget from '../../cart/CartWidget/CartWidget';
-import Login from '../Login/Login';
-import Register from '../Login/Register';
+import Login from '../../pages/Auth/Login';
+import Register from '../../pages/Auth/Register';
 import './Header.css';
 
 const Header = () => {

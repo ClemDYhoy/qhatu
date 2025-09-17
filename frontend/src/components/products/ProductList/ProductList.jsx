@@ -1,32 +1,34 @@
 import React from 'react';
 import ProductCard from '../ProductCard/ProductCard';
+import Button from '../../ui/Button/Button';
 import './ProductList.css';
 
-const ProductList = ({ products, isLoading }) => {
-if (isLoading) {
-    return (
-    <div className="product-list-loading">
-        <div className="loading-spinner"></div>
-        <p>Cargando productos...</p>
-    </div>
-    );
-}
-
-if (!products || products.length === 0) {
-    return (
-    <div className="product-list-empty">
-        <p>No se encontraron productos.</p>
-    </div>
-    );
-}
+function ProductList({ products, total, page, setPage }) {
+const limit = 10;
+const totalPages = Math.ceil(total / limit);
 
 return (
     <div className="product-list">
-    {products.map(product => (
-        <ProductCard key={product.id} product={product} />
+    {products.map((product) => (
+        <ProductCard key={product.id_producto} product={product} />
     ))}
+    <div className="pagination">
+        <Button
+        onClick={() => setPage(page - 1)}
+        disabled={page === 1}
+        >
+        Anterior
+        </Button>
+        <span>Página {page} de {totalPages}</span>
+        <Button
+        onClick={() => setPage(page + 1)}
+        disabled={page === totalPages}
+        >
+        Siguiente
+        </Button>
+    </div>
     </div>
 );
-};
+}
 
 export default ProductList;

@@ -1,47 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../../../contexts/CartContext';
-import Button from '../../ui/Button/Button';
 import './ProductCard.css';
 
-const ProductCard = ({ product }) => {
-const { addToCart } = useCart();
-
-const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCart(product);
-};
-
+function ProductCard({ product }) {
 return (
-    <Link to={`/product/${product.id}`} className="product-card">
-        <div className="product-image">
-            {product.image ? (
-            <img src={product.image} alt={product.name} />
-            ) : (
-            <div className="product-image-placeholder">
-                {product.name.charAt(0).toUpperCase()}
-            </div>
-            )}
-        </div>
-        
-        <div className="product-content">
-            <h3 className="product-title">{product.name}</h3>
-            <p className="product-description">{product.description}</p>
-            
-            <div className="product-footer">
-            <span className="product-price">${product.price}</span>
-            <Button 
-                variant="primary" 
-                size="small" 
-                onClick={handleAddToCart}
-            >
-                Agregar
-            </Button>
-            </div>
-        </div>
-    </Link>
+    <div className="product-card">
+    <img src={product.imagen_url} alt={product.nombre} className="product-image" />
+    <h3>{product.nombre}</h3>
+    <p>{product.descripcion}</p>
+    <p>Marca: {product.marca}</p>
+    <p>Precio: ${product.precio_final}</p>
+    <p>Etiquetas: {product.etiquetas}</p>
+    <p>Tipo: {product.tipos_comida}</p>
+    <p>Categoría: {product.nombre_categoria}</p>
+    <p>Stock: {product.stock}</p>
+    <Link to={`/product/${product.id_producto}`} className="product-link">Ver Detalles</Link>
+    </div>
 );
-};
+}
 
 export default ProductCard;

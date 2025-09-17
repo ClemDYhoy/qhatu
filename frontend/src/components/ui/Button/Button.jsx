@@ -1,27 +1,17 @@
 import React from 'react';
 import './Button.css';
 
-const Button = ({ 
-children, 
-variant = 'primary', 
-size = 'medium', 
-onClick, 
-disabled = false,
-type = 'button',
-className = '',
-...props 
-}) => {
+function Button({ children, type, onClick, disabled, className }) {
 return (
     <button
-    type={type}
-    className={`btn btn-${variant} btn-${size} ${className}`}
+    type={type || 'button'}
     onClick={onClick}
     disabled={disabled}
-    {...props}
+    className={`button ${className || ''}`}
     >
     {children}
     </button>
 );
-};
+}
 
 export default Button;

@@ -1,90 +1,158 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../utils/api';
+import { useNavigate } from 'react-router-dom';
+import { getCarousel, createCarouselSlide, updateCarouselSlide, deleteCarouselSlide } from '../../api';
+import Button from '../../components/ui/Button/Button';
+import Input from '../../components/ui/Input/Input';
+import '../../styles/global.css';
+import './CarouselEditor.css';
 
-const CarouselEditor = () => {
-const [images, setImages] = useState([]); // Estado para las imágenes del carrusel
+function CarouselEditor() {
+const [slides, setSlides] = useState([]);
+const [newSlide, setNewSlide] = useState({
+    id_producto: '',
+    imagen_url: '',
+    titulo: '',
+    descripcion: '',
+    descuento_porcentaje: '',
+    fecha_inicio: '',
+    fecha_fin: '',
+    prioridad: 0,
+});
+const navigate = useNavigate();
 
-// Cargar datos iniciales del carrusel al montar el componente
 useEffect(() => {
-    const fetchCarousel = async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || user.rol !== 'admin') {
+    navigate('/login');
+    }
+    const fetchSlides = async () => {
     try {
-        const response = await api.get('/carousel');
-        setImages(response.data.images || []);
-    } catch (err) {
-        console.error('Error al cargar el carrusel:', err);
+        const { data } = await getCarousel();
+        setSlides(data);
+    } catch (error) {
+        console.error('Error al obtener carrusel:', error);
     }
     };
-    fetchCarousel();
-}, []);
+    fetchSlides();
+}, [navigate]);
 
-// Agregar un nuevo slide al carrusel
-const handleAdd = () => {
-    setImages([...images, { url: '', title: '', description: '' }]);
-};
-
-// Actualizar un campo específico de un slide
-const handleChange = (index, field, value) => {
-    const newImages = [...images];
-    newImages[index][field] = value;
-    setImages(newImages);
-};
-
-// Guardar los cambios en el backend
-const handleSave = async () => {
+const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-    await api.put('/carousel', { images });
-    alert('Carrusel actualizado exitosamente');
-    } catch (err) {
-    console.error('Error al guardar:', err);
-    alert('Error al actualizar el carrusel');
+    await createCarouselSlide(newSlide);
+    alert('Slide creado');
+    setNewSlide({
+        id_producto: '',
+        imagen_url: '',
+        titulo: '',
+        descripcion: '',
+        descuento_porcentaje: '',
+        fecha_inicio: '',
+        fecha_fin: '',
+        prioridad: 0,
+    });
+    const { data } = await getCarousel();
+    setSlides(data);
+    } catch (error) {
+    alert(error.response?.data?.error || 'Error al crear slide');
+    }
+};
+
+const handleUpdate = async (id, updatedSlide) => {
+    try {
+    await updateCarouselSlide(id, updatedSlide);
+    alert('Slide actualizado');
+    const { data } = await getCarousel();
+    setSlides(data);
+    } catch (error) {
+    alert(error.response?.data?.error || 'Error al actualizar slide');
+    }
+};
+
+const handleDelete = async (id) => {
+    try {
+    await deleteCarouselSlide(id);
+    alert('Slide eliminado');
+    const { data } = await getCarousel();
+    setSlides(data);
+    } catch (error) {
+    alert(error.response?.data?.error || 'Error al eliminar slide');
     }
 };
 
 return (
-    <div style={{ padding: '20px' }}>
+    <div className="carousel-editor-container">
     <h2>Editor de Carrusel</h2>
-    {images.map((img, index) => (
-        <div key={index} style={{ marginBottom: '15px', border: '1px solid #ccc', padding: '10px' }}>
-        <label>URL de Imagen:</label>
-        <input
-            type="text"
-            value={img.url}
-            onChange={(e) => handleChange(index, 'url', e.target.value)}
-            placeholder="Pega la URL de la imagen (ej. desde S3 o web)"
-            style={{ width: '100%', marginBottom: '5px' }}
+    <section>
+        <h3>Crear Slide</h3>
+        <form onSubmit={handleSubmit}>
+        <Input
+            type="number"
+            label="Producto ID"
+            value={newSlide.id_producto}
+            onChange={(e) => setNewSlide({ ...newSlide, id_producto: e.target.value })}
         />
-        <label>Título:</label>
-        <input
+        <Input
             type="text"
-            value={img.title}
-            onChange={(e) => handleChange(index, 'title', e.target.value)}
-            placeholder="Título del slide"
-            style={{ width: '100%', marginBottom: '5px' }}
+            label="Imagen URL"
+            value={newSlide.imagen_url}
+            onChange={(e) => setNewSlide({ ...newSlide, imagen_url: e.target.value })}
+            required
         />
-        <label>Descripción:</label>
-        <input
+        <Input
             type="text"
-            value={img.description}
-            onChange={(e) => handleChange(index, 'description', e.target.value)}
-            placeholder="Descripción del slide"
-            style={{ width: '100%', marginBottom: '5px' }}
+            label="Título"
+            value={newSlide.titulo}
+            onChange={(e) => setNewSlide({ ...newSlide, titulo: e.target.value })}
+            required
         />
+        <Input
+            type="text"
+            label="Descripción"
+            value={newSlide.descripcion}
+            onChange={(e) => setNewSlide({ ...newSlide, descripcion: e.target.value })}
+        />
+        <Input
+            type="number"
+            label="Descuento (%)"
+            value={newSlide.descuento_porcentaje}
+            onChange={(e) => setNewSlide({ ...newSlide, descuento_porcentaje: e.target.value })}
+        />
+        <Input
+            type="datetime-local"
+            label="Fecha Inicio"
+            value={newSlide.fecha_inicio}
+            onChange={(e) => setNewSlide({ ...newSlide, fecha_inicio: e.target.value })}
+            required
+        />
+        <Input
+            type="datetime-local"
+            label="Fecha Fin"
+            value={newSlide.fecha_fin}
+            onChange={(e) => setNewSlide({ ...newSlide, fecha_fin: e.target.value })}
+            required
+        />
+        <Input
+            type="number"
+            label="Prioridad"
+            value={newSlide.prioridad}
+            onChange={(e) => setNewSlide({ ...newSlide, prioridad: e.target.value })}
+        />
+        <Button type="submit">Crear Slide</Button>
+        </form>
+    </section>
+    <section>
+        <h3>Slides Actuales</h3>
+        {slides.map((slide) => (
+        <div key={slide.id_carrusel} className="slide-item">
+            <img src={slide.imagen_url} alt={slide.titulo} />
+            <h4>{slide.titulo}</h4>
+            <Button onClick={() => handleDelete(slide.id_carrusel)}>Eliminar</Button>
         </div>
-    ))}
-    <button
-        onClick={handleAdd}
-        style={{ marginRight: '10px', padding: '5px 10px', backgroundColor: '#4CAF50', color: 'white', border: 'none', cursor: 'pointer' }}
-    >
-        Agregar Nuevo Slide
-    </button>
-    <button
-        onClick={handleSave}
-        style={{ padding: '5px 10px', backgroundColor: '#2196F3', color: 'white', border: 'none', cursor: 'pointer' }}
-    >
-        Guardar Cambios
-    </button>
+        ))}
+    </section>
     </div>
 );
-};
+}
 
 export default CarouselEditor;
