@@ -1,46 +1,147 @@
 import express from 'express';
-import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
+import crypto from 'crypto';
+import dotenv from 'dotenv';
+import User from '../models/User.js';
+import { sequelize } from '../config/database.js';
+
+dotenv.config();
 
 const router = express.Router();
 
-// Register
+// 📌 Registro de usuario
 router.post('/register', async (req, res) => {
-const { nombre, email, password, telefono } = req.body;
 try {
-    let user = await User.findOne({ email });
-    if (user) {
-    return res.status(400).json({ message: 'Usuario ya existe' });
+    const { nombre, correo, contrasena, telefono } = req.body;
+    const user = await User.create({ nombre, correo, contrasena, telefono });
+
+    const token = jwt.sign(
+    { id_usuario: user.id_usuario, rol: user.rol },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+    );
+
+    res.status(201).json({
+    token,
+    user: {
+        id_usuario: user.id_usuario,
+        nombre,
+        correo,
+        rol: user.rol
     }
-
-    user = new User({ nombre, email, password, telefono });
-    await user.save();
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.status(201).json({ token, user: { id: user._id, email, nombre } });
+    });
 } catch (error) {
-    res.status(500).json({ message: 'Error en registro', error: error.message });
+    if (error.name === 'SequelizeUniqueConstraintError') {
+    return res.status(400).json({ error: 'El correo ya está registrado' });
+    }
+    if (error.name === 'SequelizeValidationError') {
+    return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+    }
+    res.status(500).json({ error: 'Error al registrar usuario' });
 }
 });
 
-// Login
+// 🔐 Login de usuario
 router.post('/login', async (req, res) => {
-const { email, password } = req.body;
 try {
-    const user = await User.findOne({ email });
-    if (!user) {
-    return res.status(400).json({ message: 'Credenciales inválidas' });
+    const { correo, contrasena } = req.body;
+    const user = await User.findOne({ where: { correo } });
+
+    if (!user || !(await user.comparePassword(contrasena))) {
+    return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-    return res.status(400).json({ message: 'Credenciales inválidas' });
-    }
+    const token = jwt.sign(
+    { id_usuario: user.id_usuario, rol: user.rol },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+    );
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, user: { id: user._id, email, nombre: user.nombre } });
+    res.json({
+    token,
+    user: {
+        id_usuario: user.id_usuario,
+        nombre: user.nombre,
+        correo,
+        rol: user.rol
+    }
+    });
 } catch (error) {
-    res.status(500).json({ message: 'Error en login', error: error.message });
+    res.status(500).json({ error: 'Error al iniciar sesión' });
+}
+});
+
+// 📧 Recuperación de contraseña
+router.post('/forgot-password', async (req, res) => {
+try {
+    const { correo } = req.body;
+    const user = await User.findOne({ where: { correo } });
+
+    if (!user) {
+    return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 3600000); // 1 hora
+
+    await sequelize.query(
+    'INSERT INTO tokens_recuperacion (id_usuario, token, fecha_expiracion) VALUES (?, ?, ?)',
+    { replacements: [user.id_usuario, token, expires] }
+    );
+
+    const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+    });
+
+    await transporter.sendMail({
+    from: `"Qhatu Marca" <${process.env.EMAIL_USER}>`,
+    to: correo,
+    subject: 'Recuperar Contraseña - Qhatu Marca',
+    text: `Haz clic para restablecer tu contraseña: http://localhost:3000/reset-password/${token}`
+    });
+
+    res.json({ message: 'Correo de recuperación enviado' });
+} catch (error) {
+    res.status(500).json({ error: 'Error al enviar correo de recuperación' });
+}
+});
+
+// 🔄 Restablecer contraseña
+router.post('/reset-password/:token', async (req, res) => {
+try {
+    const { token } = req.params;
+    const { contrasena } = req.body;
+
+    const [results] = await sequelize.query(
+    'SELECT * FROM tokens_recuperacion WHERE token = ? AND fecha_expiracion > NOW() AND usado = FALSE',
+    { replacements: [token] }
+    );
+
+    if (!results.length) {
+    return res.status(400).json({ error: 'Token inválido o expirado' });
+    }
+
+    const user = await User.findByPk(results[0].id_usuario);
+    user.contrasena = contrasena;
+    await user.save();
+
+    await sequelize.query(
+    'UPDATE tokens_recuperacion SET usado = TRUE WHERE token = ?',
+    { replacements: [token] }
+    );
+
+    res.json({ message: 'Contraseña restablecida correctamente' });
+} catch (error) {
+    if (error.name === 'SequelizeValidationError') {
+    return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+    }
+    res.status(500).json({ error: 'Error al restablecer contraseña' });
 }
 });
 

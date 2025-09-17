@@ -1,49 +1,79 @@
-import mongoose from 'mongoose';
+import { Sequelize, DataTypes } from 'sequelize';
+import { sequelize } from '../config/database.js';
 
-const productSchema = new mongoose.Schema({
-name: {
-    type: String,
-    required: true,
-    trim: true
+const Product = sequelize.define(
+'productos',
+{
+    id_producto: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+    },
+    nombre: {
+    type: DataTypes.STRING(100),
+    allowNull: false
+    },
+    descripcion: {
+    type: DataTypes.TEXT,
+    allowNull: false
+    },
+    marca: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+    },
+    precio: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: { min: 0 }
+    },
+    precio_descuento: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    validate: { min: 0 }
+    },
+    stock: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    validate: { min: 0 }
+    },
+    es_importado: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+    },
+    id_categoria: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+    },
+    imagen_url: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+    },
+    peso_volumen: {
+    type: DataTypes.STRING(20),
+    allowNull: true
+    },
+    fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+    },
+    fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+    },
+    activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+    }
 },
-description: {
-    type: String,
-    required: true
-},
-price: {
-    type: Number,
-    required: true,
-    min: 0
-},
-image: {
-    type: String,
-    required: true
-},
-category: {
-    type: String,
-    required: true
-},
-features: [{
-    type: String
-}],
-stock: {
-    type: Number,
-    required: true,
-    min: 0
-},
-rating: {
-    type: Number,
-    min: 0,
-    max: 5,
-    default: 0
-},
-isActive: {
-    type: Boolean,
-    default: true
+{
+    timestamps: false,
+    tableName: 'productos'
 }
-}, {
-timestamps: true
-});
+);
 
-// Asegúrate de exportar el modelo CORRECTAMENTE
-export default mongoose.model('Product', productSchema);
+export default Product;

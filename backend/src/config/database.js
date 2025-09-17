@@ -1,19 +1,34 @@
-import mongoose from 'mongoose';
-import { config } from 'dotenv';
+import { Sequelize } from 'sequelize';
+import dotenv from 'dotenv';
 
-config();
+dotenv.config();
 
-const connectDB = async () => {
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    dialect: 'mysql',
+    logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  }
+);
+
+export async function testConnection() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('Conectado a MongoDB Atlas');
-  } catch (err) {
-    console.error('Error de conexión:', err);
+    await sequelize.authenticate();
+    console.log('Conexión a MySQL exitosa.');
+  } catch (error) {
+    console.error('Error al conectar a MySQL:', error.message);
     process.exit(1);
   }
-};
+}
 
-export default connectDB;
+export { sequelize };
