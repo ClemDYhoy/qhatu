@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { forgotPassword } from '../../api';
-import Button from '../../components/ui/Button/Button';
-import Input from '../../components/ui/Input/Input';
-import '../../styles/global.css';
+import { forgotPassword } from '../../../api';
+import Button from '../../../components/ui/Button/Button';
+import Input from '../../../components/ui/Input/Input';
+import '../../../styles/global.css';
 import './ForgotPassword.css';
 
 function ForgotPassword() {

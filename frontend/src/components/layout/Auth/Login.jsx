@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { login } from '../../api';
-import Button from '../../components/ui/Button/Button';
-import Input from '../../components/ui/Input/Input';
-import '../../styles/global.css';
+import { login } from '../../../api.js'; // Importación corregida (named export)
+import Button from '../../ui/Button/Button.jsx';
+import Input from '../../ui/Input/Input.jsx';
+import '../../../styles/global.css';
 import './Login.css';
 
 function Login() {
@@ -14,13 +14,14 @@ const navigate = useNavigate();
 
 const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
     const { data } = await login({ correo, contrasena });
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     navigate(data.user.rol === 'admin' ? '/admin' : '/products');
     } catch (error) {
-    setError(error.response?.data?.error || 'Error al iniciar sesión');
+    setError(error.message || 'Error al iniciar sesión');
     }
 };
 

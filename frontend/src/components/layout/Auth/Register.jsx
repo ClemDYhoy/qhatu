@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { register } from '../../api';
-import Button from '../../components/ui/Button/Button';
-import Input from '../../components/ui/Input/Input';
-import '../../styles/global.css';
+import { register } from '../../../api.js'; // Importación corregida (named export)
+import Button from '../../ui/Button/Button.jsx';
+import Input from '../../ui/Input/Input.jsx';
+import '../../../styles/global.css';
 import './Register.css';
 
 function Register() {
@@ -17,13 +16,14 @@ const navigate = useNavigate();
 
 const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
     const { data } = await register({ nombre, correo, contrasena, telefono });
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     navigate('/products');
     } catch (error) {
-    setError(error.response?.data?.error || 'Error al registrar');
+    setError(error.message || 'Error al registrar');
     }
 };
 
