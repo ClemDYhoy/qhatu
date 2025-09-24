@@ -1,17 +1,18 @@
 import React from 'react';
-import './Input.css';
+import './Input.css'; // O incluir en AuthModals.css
 
-function Input({ type, label, value, onChange, required, name }) {
+function Input({ label, type, value, onChange, required, className = '', placeholder, ...props }) {
 return (
-    <div className="input-container">
-    {label && <label>{label}</label>}
+    <div className={`input-group ${className}`}>
+    <label className="form-label">{label}</label>
     <input
         type={type}
         value={value}
         onChange={onChange}
         required={required}
-        name={name}
-        className="input"
+        className={`form-input ${className}`}
+        placeholder={placeholder}
+        {...props}
     />
     </div>
 );

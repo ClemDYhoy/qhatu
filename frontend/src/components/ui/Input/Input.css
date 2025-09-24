@@ -4,6 +4,7 @@ margin-bottom: 15px;
 
 .input-container label {
 display: block;
+color: #f7f7fa !important;
 margin-bottom: 5px;
 }
 
@@ -12,4 +13,5 @@ width: 100%;
 padding: 8px;
 border: 1px solid #ccc;
 border-radius: 4px;
+
 }

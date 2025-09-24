@@ -92,54 +92,54 @@ return (
     <>
     <header className={`oe-header ${isScrolled ? 'oe-header-scrolled' : ''}`}>
         <div className="container">
-        <div className="oe-header-content">
-            {/* Logo */}
-            <div className="oe-header-logo">
-            <Link to="/" className="oe-logo-link">
-                <img src="/logo-oe.png" alt="Oe" className="oe-logo-img" />
-            </Link>
-            </div>
+            <div className="oe-header-content">
+                {/* Logo */}
+                <div className="oe-header-logo">
+                <Link to="/" className="oe-logo-link">
+                    <img src="/logo-oe.png" alt="Oe" className="oe-logo-img" />
+                </Link>
+                </div>
 
-            {/* Navigation */}
-            <div className={`oe-header-nav ${isMobileMenuOpen ? 'oe-header-nav-open' : ''}`}>
-            <Navigation />
-            </div>
+                {/* Navigation */}
+                <div className={`oe-header-nav ${isMobileMenuOpen ? 'oe-header-nav-open' : ''}`}>
+                <Navigation />
+                </div>
 
-            {/* Actions */}
-            <div className="oe-header-actions">
-            <CartWidget />
-            <div className="oe-auth-buttons">
-                {user ? (
-                <>
-                    <span>Bienvenido, {user.nombre}</span>
-                    <button className="oe-logout-btn" onClick={handleLogout}>
-                    Cerrar Sesión
-                    </button>
-                </>
-                ) : (
-                <>
-                    <button className="oe-login-btn" onClick={() => setShowLogin(true)}>
-                    Iniciar
-                    </button>
-                    <button className="oe-register-btn" onClick={() => setShowRegister(true)}>
-                    Registrarse
-                    </button>
-                </>
-                )}
-            </div>
-            </div>
+                {/* Actions */}
+                <div className="oe-header-actions">
+                <CartWidget />
+                <div className="oe-auth-buttons">
+                    {user ? (
+                    <>
+                        <span>Bienvenido, {user.nombre}</span>
+                        <button className="oe-logout-btn" onClick={handleLogout}>
+                        Cerrar Sesión
+                        </button>
+                    </>
+                    ) : (
+                    <>
+                        <button className="oe-login-btn" onClick={() => setShowLogin(true)}>
+                        Iniciar
+                        </button>
+                        <button className="oe-register-btn" onClick={() => setShowRegister(true)}>
+                        Registrarse
+                        </button>
+                    </>
+                    )}
+                </div>
+                </div>
 
-            {/* Mobile Menu Toggle */}
-            <button
-            className={`oe-menu-toggle ${isMobileMenuOpen ? 'oe-menu-toggle-open' : ''}`}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Abrir menú"
-            >
-            <span></span>
-            <span></span>
-            <span></span>
-            </button>
-        </div>
+                {/* Mobile Menu Toggle */}
+                <button
+                className={`oe-menu-toggle ${isMobileMenuOpen ? 'oe-menu-toggle-open' : ''}`}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Abrir menú"
+                >
+                <span></span>
+                <span></span>
+                <span></span>
+                </button>
+            </div>
         </div>
     </header>
 

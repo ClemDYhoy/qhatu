@@ -23,11 +23,11 @@ correo: {
     }
 },
 contrasena: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.STRING,
     allowNull: false,
     validate: {
-    len: [8, 255],
-    is: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/
+    notEmpty: true,
+    len: [8, 255]
     }
 },
 rol: {
@@ -56,9 +56,11 @@ tableName: 'usuarios'
 }
 );
 
+
 // 🔐 Hashear contraseña antes de crear el usuario
 User.beforeCreate(async (user) => {
-user.contrasena = await bcrypt.hash(user.contrasena, 10);
+  console.log('Contraseña antes de hash:', user.contrasena); // <-- Agrega esta línea
+  user.contrasena = await bcrypt.hash(user.contrasena, 10);
 });
 
 // 🔍 Método para comparar contraseñas

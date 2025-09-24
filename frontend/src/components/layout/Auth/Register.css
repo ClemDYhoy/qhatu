@@ -1,34 +1,331 @@
+/* ===== ESTILOS ESPECÍFICOS PARA REGISTER ===== */
 
-.register-container {
-max-width: 400px;
-margin: 50px auto;
-padding: 20px;
-background-color: white;
-border-radius: 8px;
-box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+/* Mensaje de éxito siguiendo el diseño existente */
+.auth-success-message {
+background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+border: 1px solid rgba(16, 185, 129, 0.2);
+color: var(--success);
+padding: var(--space-3) var(--space-4);
+border-radius: var(--radius-lg);
+margin-bottom: var(--space-4);
+display: flex;
+align-items: center;
+gap: var(--space-3);
+font-weight: var(--font-medium);
+animation: fadeIn 0.4s ease-in-out;
+position: relative;
+overflow: hidden;
+backdrop-filter: blur(10px);
 }
 
-.register-container h2 {
-text-align: center;
-margin-bottom: 20px;
+.auth-success-message::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+animation: shimmer 1.5s ease-in-out;
 }
 
-.register-container .error {
-color: red;
-text-align: center;
-margin-bottom: 15px;
+.success-icon {
+background: linear-gradient(135deg, var(--success), #10b981);
+color: white;
+width: 22px;
+height: 22px;
+border-radius: var(--radius-full);
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: var(--text-xs);
+font-weight: var(--font-bold);
+flex-shrink: 0;
+box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+animation: bounce 0.6s ease-in-out;
 }
 
-.register-container p {
-text-align: center;
-margin-top: 10px;
+/* Animación de éxito para el modal */
+.register-success {
+animation: successPulse 0.8s ease-in-out;
+border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-.register-container a {
-color: #007bff;
-text-decoration: none;
+.register-success::after {
+content: '';
+position: absolute;
+top: 0;
+left: -100%;
+width: 100%;
+height: 100%;
+background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.15), transparent);
+animation: successShine 1.2s ease-in-out;
 }
 
-.register-container a:hover {
+/* Indicador de fortaleza de contraseña */
+.password-strength {
+margin-top: var(--space-3);
+padding: var(--space-3);
+background: rgba(255, 255, 255, 0.03);
+border-radius: var(--radius-lg);
+border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.strength-bar {
+width: 100%;
+height: 6px;
+background: rgba(255, 255, 255, 0.1);
+border-radius: var(--radius-full);
+overflow: hidden;
+margin-bottom: var(--space-2);
+}
+
+.strength-fill {
+height: 100%;
+border-radius: var(--radius-full);
+transition: all 0.4s ease;
+box-shadow: 0 0 10px currentColor;
+}
+
+.strength-text {
+font-size: var(--text-sm);
+color: var(--gray-40);
+margin-bottom: var(--space-3);
+}
+
+.strength-text span {
+font-weight: var(--font-bold);
+}
+
+/* Requisitos de contraseña */
+.password-requirements {
+display: grid;
+gap: var(--space-2);
+}
+
+.requirement {
+font-size: var(--text-xs);
+color: var(--gray-50);
+transition: all 0.3s ease;
+display: flex;
+align-items: center;
+}
+
+.requirement.met {
+color: var(--success);
+text-decoration: line-through;
+opacity: 0.7;
+}
+
+.requirement.met::before {
+content: '✓';
+margin-right: var(--space-2);
+font-weight: bold;
+}
+
+/* Mensajes de validación */
+.validation-message {
+font-size: var(--text-xs);
+margin-top: var(--space-2);
+padding: var(--space-2);
+border-radius: var(--radius-base);
+animation: slideDown 0.3s ease;
+}
+
+.validation-message.error {
+color: var(--error);
+background: rgba(239, 68, 68, 0.1);
+border-left: 3px solid var(--error);
+}
+
+.validation-message.success {
+color: var(--success);
+background: rgba(16, 185, 129, 0.1);
+border-left: 3px solid var(--success);
+}
+
+/* Texto de términos */
+.terms-text {
+font-size: var(--text-sm) !important;
+color: var(--gray-40) !important;
+line-height: 1.4;
+}
+
+.terms-text .auth-link {
+color: var(--primary);
 text-decoration: underline;
+}
+
+.terms-text .auth-link:hover {
+color: var(--primary-light);
+}
+
+/* ===== ANIMACIONES ===== */
+
+@keyframes fadeIn {
+from {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+to {
+    opacity: 1;
+    transform: translateY(0);
+}
+}
+
+@keyframes bounce {
+0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+}
+40% {
+    transform: translateY(-6px);
+}
+60% {
+    transform: translateY(-3px);
+}
+}
+
+@keyframes shimmer {
+0% {
+    transform: translateX(-100%);
+}
+100% {
+    transform: translateX(100%);
+}
+}
+
+@keyframes successPulse {
+0% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+}
+50% { 
+    transform: scale(1.02);
+    box-shadow: 0 0 20px 10px rgba(16, 185, 129, 0.3);
+}
+100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+}
+}
+
+@keyframes successShine {
+0% {
+    left: -100%;
+}
+100% {
+    left: 100%;
+}
+}
+
+@keyframes slideDown {
+from {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+to {
+    opacity: 1;
+    transform: translateY(0);
+}
+}
+
+/* ===== ESTADOS DEL BOTÓN DE ENVÍO ===== */
+
+.submit-btn.success {
+background: linear-gradient(135deg, var(--success), #10b981);
+border-color: var(--success);
+transform: scale(1.02);
+box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+}
+
+.submit-btn.success .btn-content {
+opacity: 0;
+}
+
+.submit-btn.success .checkmark {
+opacity: 1;
+stroke-dashoffset: 0;
+}
+
+.checkmark {
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+width: 24px;
+height: 24px;
+opacity: 0;
+transition: opacity 0.3s ease;
+}
+
+.checkmark path {
+stroke-dasharray: 50;
+stroke-dashoffset: 50;
+transition: stroke-dashoffset 0.6s ease;
+stroke: currentColor;
+stroke-linecap: round;
+stroke-linejoin: round;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+.password-requirements {
+    grid-template-columns: 1fr;
+}
+
+.password-strength {
+    padding: var(--space-2);
+}
+
+.auth-success-message {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+}
+
+.success-icon {
+    width: 20px;
+    height: 20px;
+}
+}
+
+/* ===== EFECTOS ADICIONALES ===== */
+
+/* Efecto de resplandor para el modal cuando hay éxito */
+.auth-modal-content.register-success {
+position: relative;
+overflow: hidden;
+}
+
+/* Mejora visual para el estado de carga */
+.submit-btn.loading {
+pointer-events: none;
+opacity: 0.8;
+}
+
+/* Animación suave para transiciones de estado */
+.auth-success-message,
+.auth-error-message {
+transition: all 0.3s ease;
+}
+
+/* Efecto hover mejorado para enlaces */
+.auth-link {
+transition: all 0.3s ease;
+position: relative;
+}
+
+.auth-link::after {
+content: '';
+position: absolute;
+bottom: -2px;
+left: 0;
+width: 0;
+height: 2px;
+background: var(--primary);
+transition: width 0.3s ease;
+}
+
+.auth-link:hover::after {
+width: 100%;
 }
