@@ -29,6 +29,7 @@ const [passwordStrength, setPasswordStrength] = useState({
     }
 });
 const [submitSuccess, setSubmitSuccess] = useState(false);
+const [showPasswordStrength, setShowPasswordStrength] = useState(true);
 const navigate = useNavigate();
 const submitBtnRef = useRef(null);
 
@@ -42,10 +43,19 @@ useEffect(() => {
     }
 }, [formData.correo]);
 
-// Validación de fortaleza de contraseña
+// Validación de fortaleza de contraseña y auto-ocultar
 useEffect(() => {
     if (formData.contrasena) {
     checkPasswordStrength(formData.contrasena);
+    
+    // Ocultar indicador de fortaleza cuando se cumplan todos los requisitos
+    if (passwordStrength.score === 5) {
+        setTimeout(() => {
+        setShowPasswordStrength(false);
+        }, 1500);
+    } else {
+        setShowPasswordStrength(true);
+    }
     } else {
     setPasswordStrength({
         score: 0,
@@ -57,8 +67,9 @@ useEffect(() => {
         special: false
         }
     });
+    setShowPasswordStrength(true);
     }
-}, [formData.contrasena]);
+}, [formData.contrasena, passwordStrength.score]);
 
 // Cerrar modal con ESC
 useEffect(() => {
@@ -108,7 +119,7 @@ const handleInputChange = (field, value) => {
 };
 
 const validateForm = () => {
-    // Validar nombre (mínimo 2 caracteres, solo letras y espacios)
+    // Validar nombre
     if (!formData.nombre.trim()) {
     setError('El nombre es obligatorio');
     return false;
@@ -124,6 +135,7 @@ const validateForm = () => {
     return false;
     }
 
+    // Validar email
     if (!formData.correo.trim()) {
     setError('El correo electrónico es obligatorio');
     return false;
@@ -138,11 +150,12 @@ const validateForm = () => {
     if (formData.telefono && formData.telefono.trim()) {
     const phoneRegex = /^(\+?51)?[0-9]{9}$/;
     if (!phoneRegex.test(formData.telefono.replace(/\s/g, ''))) {
-        setError('El número de teléfono debe tener 9 dígitos');
+        setError('El número de teléfono debe tener formato peruano (+51 999999999)');
         return false;
     }
     }
 
+    // Validar contraseña
     if (formData.contrasena.length < 8) {
     setError('La contraseña debe tener al menos 8 caracteres');
     return false;
@@ -171,7 +184,6 @@ const handleSubmit = async (e) => {
     setIsLoading(true);
 
     try {
-    // Normalizar datos antes de enviar
     const userData = {
         nombre: formData.nombre.trim(),
         correo: formData.correo.toLowerCase().trim(),
@@ -180,7 +192,7 @@ const handleSubmit = async (e) => {
         rol: 'cliente'
     };
 
-    const { data } = await register(userData);
+    const response = await register(userData);
     
     // Mostrar mensaje de éxito
     setSubmitSuccess(true);
@@ -191,35 +203,54 @@ const handleSubmit = async (e) => {
     }
     
     // Guardar datos del usuario
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('token', response.token);
+    localStorage.setItem('user', JSON.stringify(response.user));
     
     // Animación de éxito
     const modalContent = document.querySelector('.auth-modal-content');
     if (modalContent) {
-        modalContent.classList.add('success-animation');
+        modalContent.classList.add('register-success');
     }
     
-    // Cerrar modal después de mostrar el mensaje de éxito
+    // Cerrar modal automáticamente después del éxito
     setTimeout(() => {
         onClose();
         navigate('/products');
-    }, 2000);
+    }, 1200);
 
     } catch (error) {
+    console.error('Error en registro:', error);
+    
     let errorMessage = 'Error al registrar la cuenta';
     
-    // Manejar errores específicos
-    if (error.message.includes('correo')) {
-        errorMessage = 'Este correo electrónico ya está registrado';
-    } else if (error.message.includes('teléfono')) {
-        errorMessage = 'Este número de teléfono ya está registrado';
-    } else if (error.message.includes('nombre')) {
-        errorMessage = 'Ya existe un usuario con este nombre';
-    } else if (error.message.includes('usuario ya existe')) {
-        errorMessage = 'Ya existe una cuenta con estos datos';
-    } else {
-        errorMessage = error.message || 'Error al registrar la cuenta';
+    // Manejar errores específicos de la respuesta del servidor
+    if (error.response && error.response.data) {
+        const serverError = error.response.data.error || error.response.data.message;
+        
+        if (serverError) {
+        if (serverError.includes('correo') || serverError.includes('email')) {
+            errorMessage = 'Este correo electrónico ya está registrado. Prueba con otro correo.';
+        } else if (serverError.includes('teléfono') || serverError.includes('telefono')) {
+            errorMessage = 'Este número de teléfono ya está registrado. Prueba con otro número.';
+        } else if (serverError.includes('usuario') || serverError.includes('user')) {
+            errorMessage = 'Ya existe una cuenta con estos datos. Intenta iniciar sesión.';
+        } else if (serverError.includes('validation') || serverError.includes('validación')) {
+            errorMessage = 'Datos inválidos. Verifica que toda la información sea correcta.';
+        } else if (serverError.includes('required') || serverError.includes('obligatorio')) {
+            errorMessage = 'Faltan campos obligatorios. Completa todos los datos requeridos.';
+        } else {
+            errorMessage = serverError;
+        }
+        }
+    } else if (error.message) {
+        // Manejar errores de conexión
+        if (error.message.includes('timeout')) {
+        errorMessage = 'Tiempo de espera agotado. Verifica tu conexión e intenta de nuevo.';
+        } else if (error.message.includes('Network Error')) {
+        errorMessage = 'Error de conexión. Verifica que el servidor esté funcionando.';
+        } else {
+        errorMessage = error.message;
+        }
     }
     
     setError(errorMessage);
@@ -337,7 +368,7 @@ return (
             </div>
             
             {/* Indicador de fortaleza de contraseña */}
-            {formData.contrasena && (
+            {formData.contrasena && showPasswordStrength && (
             <div className="password-strength">
                 <div className="strength-bar">
                 <div 
@@ -372,6 +403,14 @@ return (
                     • Un carácter especial
                 </div>
                 </div>
+            </div>
+            )}
+            
+            {/* Mensaje cuando se complete la fortaleza */}
+            {formData.contrasena && passwordStrength.score === 5 && !showPasswordStrength && (
+            <div className="password-complete">
+                <span className="complete-icon">🔒</span>
+                Contraseña segura
             </div>
             )}
         </div>
@@ -427,7 +466,7 @@ return (
             <path d="M14.1 27.2l7.1 7.2 16.7-16.8" fill="none" stroke="#000" strokeWidth="6"/>
             </svg>
         </button>
-        </form> 
+        </form>
 
         <div className="auth-modal-footer text-center">
         <p className="mb-4">

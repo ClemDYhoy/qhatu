@@ -9,63 +9,42 @@ import { sequelize } from '../config/database.js';
 dotenv.config();
 
 
-const express = require('express');
 const router = express.Router();//esto siempre
-const jwt = require('jsonwebtoken');
-const { Op } = require('sequelize');
-const { User } = require('../models'); // Asegúrate de importar correctamente tu modelo
 
-// 📌 Registro de usuario robusto
+// 📌 Registro de usuario 
 router.post('/register', async (req, res) => {
   try {
-    let { nombre, correo, contrasena, telefono, rol } = req.body;
-
-    // Normalizar datos
-    nombre = nombre?.trim();
-    correo = correo?.toLowerCase();
-    telefono = telefono?.replace(/\s/g, '');
-
-    // Validar campos obligatorios
+    console.log('Datos recibidos:', req.body); // Para debugging
+    
+    const { nombre, correo, contrasena, telefono, rol } = req.body;
+    
+    // Validar datos obligatorios
     if (!nombre || !correo || !contrasena) {
       return res.status(400).json({ message: 'Nombre, correo y contraseña son obligatorios' });
     }
-
-    // Verificar si ya existe un usuario con el mismo correo o teléfono
-    const existingUser = await User.findOne({
-      where: {
-        [Op.or]: [
-          { correo },
-          ...(telefono ? [{ telefono }] : [])
-        ]
-      }
-    });
-
+    
+    // Verificar si el usuario ya existe
+    const existingUser = await User.findOne({ where: { correo } });
     if (existingUser) {
-      if (existingUser.correo === correo) {
-        return res.status(400).json({ message: 'Este correo electrónico ya está registrado' });
-      }
-      if (telefono && existingUser.telefono === telefono) {
-        return res.status(400).json({ message: 'Este número de teléfono ya está registrado' });
-      }
+      return res.status(400).json({ message: 'Este correo electrónico ya está registrado' });
     }
-
-    // Crear usuario
-    const user = await User.create({
-      nombre,
-      correo,
-      contrasena,
-      telefono: telefono || null,
+    
+    const user = await User.create({ 
+      nombre, 
+      correo, 
+      contrasena, 
+      telefono,
       rol: rol || 'cliente'
     });
 
-    // Generar token JWT
     const token = jwt.sign(
       { id_usuario: user.id_usuario, rol: user.rol },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    // Respuesta exitosa
+    console.log('Usuario creado exitosamente:', user.id_usuario); // Para debugging
+
     res.status(201).json({
       token,
       user: {
@@ -75,16 +54,16 @@ router.post('/register', async (req, res) => {
         rol: user.rol
       }
     });
-
   } catch (error) {
+    console.error('Error en registro:', error); // Para debugging
+    
     if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(400).json({ message: 'Ya existe una cuenta con estos datos' });
+      return res.status(400).json({ message: 'El correo ya está registrado' });
     }
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({ message: error.errors.map(e => e.message).join(', ') });
     }
-    console.error('Error al registrar usuario:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    res.status(500).json({ message: 'Error al registrar usuario' });
   }
 });
 

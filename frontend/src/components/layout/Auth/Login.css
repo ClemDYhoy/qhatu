@@ -658,3 +658,38 @@ border-radius: var(--radius-full);
 background: var(--primary);
 border-radius: var(--radius-full);
 }
+
+
+/* Mensaje de éxito para login */
+.auth-success-message {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--success);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: var(--font-medium);
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.success-icon {
+  background: var(--success);
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  animation: bounce 0.6s ease-in-out;
+}
+
+.login-success {
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  animation: successPulse 0.8s ease-in-out;
+}
