@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Navigation from '../Navigation/Navigation';
 import CartWidget from '../../cart/CartWidget/CartWidget';
 import Login from '../Auth/Login';
@@ -11,15 +11,52 @@ const [isScrolled, setIsScrolled] = useState(false);
 const [showLogin, setShowLogin] = useState(false);
 const [showRegister, setShowRegister] = useState(false);
 const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-const [user, setUser] = useState(null); // Estado para usuario autenticado
+const [user, setUser] = useState(null);
 const location = useLocation();
+const navigate = useNavigate();
 
-// Cargar usuario desde localStorage al montar
-useEffect(() => {
+// Función para cargar usuario
+const loadUser = () => {
+    const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-    setUser(JSON.parse(storedUser));
+    
+    if (storedToken && storedUser) {
+    try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+    } catch (error) {
+        console.error('Error parsing user data:', error);
+        // Si hay error, limpiar datos corruptos
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
     }
+    } else {
+    setUser(null);
+    }
+};
+
+// Cargar usuario al montar y cuando cambie la ruta
+useEffect(() => {
+    loadUser();
+}, [location.pathname]);
+
+// Listener para detectar cambios en localStorage
+useEffect(() => {
+    const handleStorageChange = () => {
+    loadUser();
+    };
+    
+    // Listener para cambios en localStorage desde otras pestañas
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Listener personalizado para cambios en la misma pestaña
+    window.addEventListener('userDataChanged', handleStorageChange);
+    
+    return () => {
+    window.removeEventListener('storage', handleStorageChange);
+    window.removeEventListener('userDataChanged', handleStorageChange);
+    };
 }, []);
 
 // Manejo de scroll
@@ -31,11 +68,31 @@ useEffect(() => {
     return () => window.removeEventListener('scroll', handleScroll);
 }, []);
 
-// Logout
+// Logout mejorado
 const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    
+    // Disparar evento personalizado para notificar el cambio
+    window.dispatchEvent(new Event('userDataChanged'));
+    
+    // Navegar al home
+    navigate('/');
+    
+    // Cerrar menú móvil si está abierto
+    setIsMobileMenuOpen(false);
+};
+
+// Función para manejar el cierre de modales y actualizar estado
+const handleCloseLogin = () => {
+    setShowLogin(false);
+    loadUser(); // Recargar usuario después de cerrar login
+};
+
+const handleCloseRegister = () => {
+    setShowRegister(false);
+    loadUser(); // Recargar usuario después de cerrar registro
 };
 
 // Contenido contextual según la ruta
@@ -92,54 +149,135 @@ return (
     <>
     <header className={`oe-header ${isScrolled ? 'oe-header-scrolled' : ''}`}>
         <div className="container">
-            <div className="oe-header-content">
-                {/* Logo */}
-                <div className="oe-header-logo">
-                <Link to="/" className="oe-logo-link">
-                    <img src="/logo-oe.png" alt="Oe" className="oe-logo-img" />
-                </Link>
-                </div>
-
-                {/* Navigation */}
-                <div className={`oe-header-nav ${isMobileMenuOpen ? 'oe-header-nav-open' : ''}`}>
-                <Navigation />
-                </div>
-
-                {/* Actions */}
-                <div className="oe-header-actions">
-                <CartWidget />
-                <div className="oe-auth-buttons">
-                    {user ? (
-                    <>
-                        <span>Bienvenido, {user.nombre}</span>
-                        <button className="oe-logout-btn" onClick={handleLogout}>
-                        Cerrar Sesión
-                        </button>
-                    </>
-                    ) : (
-                    <>
-                        <button className="oe-login-btn" onClick={() => setShowLogin(true)}>
-                        Iniciar
-                        </button>
-                        <button className="oe-register-btn" onClick={() => setShowRegister(true)}>
-                        Registrarse
-                        </button>
-                    </>
-                    )}
-                </div>
-                </div>
-
-                {/* Mobile Menu Toggle */}
-                <button
-                className={`oe-menu-toggle ${isMobileMenuOpen ? 'oe-menu-toggle-open' : ''}`}
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label="Abrir menú"
-                >
-                <span></span>
-                <span></span>
-                <span></span>
-                </button>
+        <div className="oe-header-content">
+            {/* Logo */}
+            <div className="oe-header-logo">
+            <Link to="/" className="oe-logo-link">
+                <img src="/logo-oe.png" alt="Oe" className="oe-logo-img" />
+            </Link>
             </div>
+
+            {/* Navigation */}
+            <div className={`oe-header-nav ${isMobileMenuOpen ? 'oe-header-nav-open' : ''}`}>
+            <Navigation />
+            </div>
+
+            {/* Actions */}
+            <div className="oe-header-actions">
+            <CartWidget />
+            <div className="oe-auth-buttons">
+                {user ? (
+                <div className="user-menu flex-center gap-4">
+                    {/* Menú de usuario con estilo premium */}
+                    <div className="flex-center gap-3">
+                    {/* Avatar/Icono de usuario */}
+                    <div className="user-avatar flex-center">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="user-icon">
+                        <path 
+                            d="M12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12Z" 
+                            stroke="currentColor" 
+                            strokeWidth="1.5"
+                        />
+                        <path 
+                            d="M20 21C20 19.6044 20 18.4067 19.8278 17.45C19.44 15.4321 17.8179 13.81 15.8 13.4222C14.8433 13.25 13.6456 13.25 12.25 13.25H11.75C10.3544 13.25 9.1567 13.25 8.2 13.4222C6.18207 13.81 4.56 15.4321 4.17221 17.45C4 18.4067 4 19.6044 4 21" 
+                            stroke="currentColor" 
+                            strokeWidth="1.5" 
+                            strokeLinecap="round"
+                        />
+                        </svg>
+                    </div>
+                    
+                    {/* Información del usuario */}
+                    <div className="user-info text-right">
+                        <span className="user-welcome text-sm text-tertiary">
+                        ¡Hola!
+                        </span>
+                        <div className="user-name font-semibold text-primary">
+                        {user.nombre}
+                        </div>
+                    </div>
+                    </div>
+
+                    {/* Separador visual */}
+                    <div className="separator h-6 w-px bg-border-medium"></div>
+
+                    {/* Botones de acción */}
+                    <div className="user-actions flex-center gap-3">
+                    {user.rol === 'admin' && (
+                        <Link 
+                        to="/admin" 
+                        className="admin-link btn btn-outline btn-sm flex-center gap-2"
+                        >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path 
+                            d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" 
+                            stroke="currentColor" 
+                            strokeWidth="1.5"
+                            />
+                            <path 
+                            d="M19.4 15C19.2669 15.3998 19.216 15.5838 19.1867 15.7833C19.0938 16.4494 18.5526 17.0696 17.8 17.2C17.6 17.2333 17.3333 17.2333 16.8 17.2333C16.5035 17.2333 16.2599 17.477 16.2417 17.7732C16.2255 18.0351 16.2174 18.166 16.1947 18.2866C16.0894 18.8458 15.6458 19.2894 15.0866 19.3947C14.966 19.4174 14.8351 19.4255 14.5732 19.4417C14.277 19.4599 14.0333 19.7035 14.0333 20V20C14.0333 20.4667 14.0333 20.7 13.9958 20.8882C13.6839 22.2568 11.9835 22.7183 10.9118 21.755C10.765 21.625 10.5402 21.4002 10.0907 20.9507L9.04933 19.9093C8.59978 19.4598 8.375 19.235 8.245 19.0882C7.28166 18.0165 7.74318 16.3161 9.11183 16.0042C9.30004 15.9667 9.53333 15.9667 10 15.9667C10.2965 15.9667 10.5401 15.723 10.5583 15.4268C10.5745 15.1649 10.5826 15.034 10.6053 14.9134C10.7106 14.3542 11.1542 13.9106 11.7134 13.8053C11.834 13.7826 11.9649 13.7745 12.2268 13.7583C12.523 13.7401 12.7667 13.4965 12.7667 13.2V13.2C12.7667 12.7333 12.7667 12.5 12.8042 12.3118C13.1161 10.9432 14.8165 10.4817 15.8882 11.445C16.035 11.575 16.2598 11.7998 16.7093 12.2493L17.7507 13.2907C18.2002 13.7402 18.425 13.965 18.5718 14.1118C19.5351 15.1835 19.0736 16.8839 17.705 17.1958C17.5168 17.2333 17.2833 17.2333 16.8167 17.2333" 
+                            stroke="currentColor" 
+                            strokeWidth="1.5" 
+                            strokeLinecap="round"
+                            />
+                        </svg>
+                        Panel Admin
+                        </Link>
+                    )}
+                    
+                    <button 
+                        className="logout-btn btn btn-accent btn-sm flex-center gap-2"
+                        onClick={handleLogout}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path 
+                            d="M15 3H16.2C17.8802 3 18.7202 3 19.362 3.32698C19.9265 3.6146 20.3854 4.07354 20.673 4.63803C21 5.27976 21 6.11984 21 7.8V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H15" 
+                            stroke="currentColor" 
+                            strokeWidth="1.5" 
+                            strokeLinecap="round"
+                        />
+                        <path 
+                            d="M10 12H3M3 12L6 9M3 12L6 15" 
+                            stroke="currentColor" 
+                            strokeWidth="1.5" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                        />
+                        </svg>
+                        Cerrar Sesión
+                    </button>
+                    </div>
+                </div>
+                ) : (
+                <>
+                    <button 
+                    className="oe-login-btn" 
+                    onClick={() => setShowLogin(true)}
+                    >
+                    Iniciar
+                    </button>
+                    <button 
+                    className="oe-register-btn" 
+                    onClick={() => setShowRegister(true)}
+                    >
+                    Registrarse
+                    </button>
+                </>
+                )}
+            </div>
+            </div>
+
+            {/* Mobile Menu Toggle */}
+            <button
+            className={`oe-menu-toggle ${isMobileMenuOpen ? 'oe-menu-toggle-open' : ''}`}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Abrir menú"
+            >
+            <span></span>
+            <span></span>
+            <span></span>
+            </button>
+        </div>
         </div>
     </header>
 
@@ -223,7 +361,7 @@ return (
     {/* Modals */}
     {showLogin && (
         <Login
-        onClose={() => setShowLogin(false)}
+        onClose={handleCloseLogin}
         onSwitchToRegister={() => {
             setShowLogin(false);
             setShowRegister(true);
@@ -233,7 +371,7 @@ return (
 
     {showRegister && (
         <Register
-        onClose={() => setShowRegister(false)}
+        onClose={handleCloseRegister}
         onSwitchToLogin={() => {
             setShowRegister(false);
             setShowLogin(true);

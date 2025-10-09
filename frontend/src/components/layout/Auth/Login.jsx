@@ -90,6 +90,8 @@ const handleSubmit = async (e) => {
     // Guardar datos del usuario
     localStorage.setItem('token', response.token);
     localStorage.setItem('user', JSON.stringify(response.user));
+
+    window.dispatchEvent(new Event('userDataChanged'));
     
     // Animación de éxito
     const modalContent = document.querySelector('.auth-modal-content');
