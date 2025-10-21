@@ -1,3 +1,4 @@
+// C:\qhatu\frontend\src\App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/layout/Header/Header';
@@ -26,10 +27,14 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
+  componentDidCatch(error, errorInfo) {
+    console.error('Error capturado:', error, errorInfo);
+  }
+
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '20px', textAlign: 'center', color: '#dc3545' }}>
+        <div className="error-boundary" style={{ padding: '20px', textAlign: 'center', color: '#dc3545' }}>
           <h1>Error al ejecutar</h1>
           <p>Error: {this.state.error?.message || 'Intente recargar la página'}</p>
           <button
@@ -46,6 +51,7 @@ class ErrorBoundary extends React.Component {
 }
 
 function App() {
+  console.log('App renderizado'); // Log para depuración
   return (
     <Router>
       <CartProvider>

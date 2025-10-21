@@ -1,17 +1,19 @@
+/* C:\qhatu\frontend\src\components\ui\Button\Button.css */
 .button {
-padding: 8px 16px;
-background-color: #007bff;
-color: white;
-border: none;
-border-radius: 4px;
-cursor: pointer;
-}
-
-.button:disabled {
-background-color: #ccc;
-cursor: not-allowed;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .button:hover:not(:disabled) {
-background-color: #0056b3;
+  background-color: #0056b3;
+}
+
+.button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
