@@ -1,82 +1,157 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useCart } from '../../../contexts/CartContext';
-import { useWhatsApp } from '../../../hooks/useWhatsApp';
-import Modal from '../../ui/Modal/Modal';
-import Button from '../../ui/Button/Button';
 import './CartModal.css';
 
 const CartModal = ({ isOpen, onClose }) => {
-const { cart, removeFromCart, updateQuantity, getTotal, clearCart } = useCart();
-const { openWhatsApp } = useWhatsApp();
+  const {
+    cart,
+    removeFromCart,
+    incrementQuantity,
+    decrementQuantity,
+    updateQuantity,
+    getCartTotal,
+    clearCart,
+    isEmpty
+  } = useCart();
 
-const handleCheckout = () => {
-    openWhatsApp();
-    clearCart();
-    onClose();
-};
+  const total = useMemo(() => getCartTotal(), [cart, getCartTotal]);
 
-if (!isOpen) return null;
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('es-PE', {
+      style: 'currency',
+      currency: 'PEN'
+    }).format(price);
+  };
 
-return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Tu Carrito de Compras">
-        <div className="cart-modal">
-            {cart.length === 0 ? (
-            <p className="cart-empty">Tu carrito está vacío</p>
-            ) : (
-            <>
-                <div className="cart-items">
-                {cart.map(item => (
-                    <div key={item.id} className="cart-item">
-                    <div className="cart-item-info">
-                        <h4 className="cart-item-name">{item.name}</h4>
-                        <p className="cart-item-price">${item.price} x {item.quantity}</p>
-                    </div>
-                    
-                    <div className="cart-item-actions">
-                        <div className="quantity-controls">
-                        <button
-                            onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                            className="quantity-btn"
-                        >
-                            -
-                        </button>
-                        <span className="quantity-display">{item.quantity}</span>
-                        <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="quantity-btn"
-                        >
-                            +
-                        </button>
-                        </div>
-                        
-                        <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="remove-btn"
-                        >
-                        Eliminar
-                        </button>
-                    </div>
-                    </div>
-                ))}
-                </div>
-                
-                <div className="cart-total">
-                <h3>Total: ${getTotal()}</h3>
-                </div>
-                
-                <div className="cart-actions">
-                <Button variant="secondary" onClick={clearCart}>
-                    Vaciar Carrito
-                </Button>
-                <Button variant="primary" onClick={handleCheckout} className="btn-full">
-                    Comprar por WhatsApp
-                </Button>
-                </div>
-            </>
-            )}
+  const handleCheckout = () => {
+    if (isEmpty()) return;
+
+    const message = cart.map(item => {
+      const price = item.precio_descuento || item.precio;
+      return `• ${item.nombre} x${item.quantity} - ${formatPrice(price * item.quantity)}`;
+    }).join('\n');
+
+    const whatsappMessage = encodeURIComponent(
+      `¡Hola! Quiero realizar el siguiente pedido:\n\n${message}\n\nTotal: ${formatPrice(total)}`
+    );
+
+    window.open(`https://wa.me/51123456789?text=${whatsappMessage}`, '_blank');
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="cart-modal-overlay" onClick={onClose}>
+      <div className="cart-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="cart-modal-header">
+          <h2>Carrito de Compras</h2>
+          <button className="close-btn" onClick={onClose}>×</button>
         </div>
-    </Modal>
-);
+
+        <div className="cart-modal-body">
+          {isEmpty() ? (
+            <div className="cart-empty">
+              <p>Tu carrito está vacío</p>
+              <button onClick={onClose}>Ir a comprar</button>
+            </div>
+          ) : (
+            <>
+              <div className="cart-items">
+                {cart.map((item) => {
+                  const price = item.precio_descuento || item.precio;
+                  const subtotal = price * item.quantity;
+
+                  return (
+                    <div key={item.producto_id} className="cart-item">
+                      <img
+                        src={item.url_imagen || '/placeholder.png'}
+                        alt={item.nombre}
+                        onError={(e) => e.target.src = '/placeholder.png'}
+                      />
+                      
+                      <div className="cart-item-info">
+                        <h4>{item.nombre}</h4>
+                        {item.categoria && (
+                          <span className="item-category">{item.categoria.nombre}</span>
+                        )}
+                        <div className="item-price">
+                          {item.precio_descuento ? (
+                            <>
+                              <span className="price-original">{formatPrice(item.precio)}</span>
+                              <span className="price-discount">{formatPrice(item.precio_descuento)}</span>
+                            </>
+                          ) : (
+                            <span>{formatPrice(item.precio)}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="cart-item-actions">
+                        <div className="quantity-controls">
+                          <button
+                            onClick={() => decrementQuantity(item.producto_id)}
+                            disabled={item.quantity <= 1}
+                          >
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const value = parseInt(e.target.value);
+                              if (value > 0) updateQuantity(item.producto_id, value);
+                            }}
+                            min="1"
+                            max={item.stock}
+                          />
+                          <button
+                            onClick={() => incrementQuantity(item.producto_id)}
+                            disabled={item.quantity >= item.stock}
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <div className="item-subtotal">
+                          {formatPrice(subtotal)}
+                        </div>
+
+                        <button
+                          className="remove-btn"
+                          onClick={() => removeFromCart(item.producto_id)}
+                          title="Eliminar"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="cart-actions">
+                <button className="clear-cart-btn" onClick={clearCart}>
+                  Vaciar carrito
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {!isEmpty() && (
+          <div className="cart-modal-footer">
+            <div className="cart-total">
+              <span>Total:</span>
+              <strong>{formatPrice(total)}</strong>
+            </div>
+            <button className="checkout-btn" onClick={handleCheckout}>
+              💬 Enviar pedido por WhatsApp
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default CartModal;

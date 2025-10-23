@@ -1,42 +1,64 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import Product from '../models/Product.js';
-import fs from 'fs';
+import { sequelize, Category, Product } from '../models/index.js';
 
-dotenv.config();
+const seedProducts = async () => {
+    try {
+        // Sincronizar modelos con la base de datos
+        await sequelize.sync({ force: false });
 
-const seedDatabase = async () => {
-try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
+        // Verificar categorías
+        const categories = await Category.findAll();
+        if (categories.length === 0) {
+            throw new Error('No hay categorías en la base de datos. Ejecuta la inicialización de categorías primero.');
+        }
 
-    await Product.deleteMany({});
-    console.log('Cleared existing products');
+        // Productos de ejemplo
+        const products = [
+            {
+                nombre: 'Chocolate Suizo Premium',
+                descripcion: 'Chocolate artesanal importado de Suiza',
+                precio: 15.50,
+                stock: 50,
+                categoria_id: 2, // Chocolates
+                destacado: true,
+                url_imagen: '/images/chocolate_suizo.png'
+            },
+            {
+                nombre: 'Ramen Picante Coreano',
+                descripcion: 'Ramen instantáneo con sabor picante',
+                precio: 8.99,
+                stock: 15,
+                categoria_id: 13, // Picante
+                destacado: false,
+                url_imagen: '/images/ramen_picante.png'
+            },
+            {
+                nombre: 'Bubble Tea de Mango',
+                descripcion: 'Bebida refrescante con perlas de tapioca',
+                precio: 5.75,
+                stock: 5,
+                categoria_id: 15, // Bubble Tea
+                destacado: true,
+                url_imagen: '/images/bubble_tea_mango.png'
+            },
+            {
+                nombre: 'Soju de Melocotón',
+                descripcion: 'Licor coreano de melocotón',
+                precio: 20.00,
+                stock: 0,
+                categoria_id: 20, // Soju
+                destacado: false,
+                url_imagen: '/images/soju_melocoton.png'
+            }
+        ];
 
-    const rawData = fs.readFileSync('./src/scripts/openfoodfacts_products.json', 'utf8');
-    const products = JSON.parse(rawData);
-
-    const filteredProducts = products.map(item => ({
-    name: item.product_name || 'Unnamed Product',
-    description: item.generic_name || item.ingredients_text || 'No description',
-    price: item.energy_100g || Math.floor(Math.random() * 100) + 10,
-    image: item.image_url || '/images/default-product.jpg',
-    category: item.categories_tags?.[0]?.split(',')[0] || 'Uncategorized',
-    features: item.allergens || item.ingredients || [],
-    stock: Math.floor(Math.random() * 50) + 10,
-    rating: Math.random() * 5,
-    isActive: true,
-    discount: Math.floor(Math.random() * 30)
-    })).filter(p => p.category && ['snacks', 'beverages', 'sweets', 'alcoholic-beverages', 'instant-foods'].some(cat => p.category.toLowerCase().includes(cat)));
-
-    await Product.insertMany(filteredProducts);
-    console.log(`Added ${filteredProducts.length} real products to database`);
-
-    process.exit(0);
-} catch (error) {
-    console.error('Error seeding database:', error);
-    process.exit(1);
-}
+        // Insertar en la tabla productos
+        await Product.bulkCreate(products, { ignoreDuplicates: true });
+        console.log('Productos inicializados con éxito');
+    } catch (error) {
+        console.error('Error al inicializar productos:', error);
+    } finally {
+        await sequelize.close();
+    }
 };
 
-seedDatabase();
+seedProducts();

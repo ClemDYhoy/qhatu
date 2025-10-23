@@ -4,31 +4,26 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  process.env.DB_NAME || 'qhatu_db',
+  process.env.DB_USER || 'root',
+  process.env.DB_PASSWORD || '',
   {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT) || 3306,
     dialect: 'mysql',
     logging: false,
+    timezone: '-05:00', // Perú timezone
     pool: {
       max: 5,
       min: 0,
       acquire: 30000,
       idle: 10000
+    },
+    define: {
+      timestamps: false,
+      freezeTableName: true
     }
   }
 );
 
-export async function testConnection() {
-  try {
-    await sequelize.authenticate();
-    console.log('Conexión a MySQL exitosa.');
-  } catch (error) {
-    console.error('Error al conectar a MySQL:', error.message);
-    process.exit(1);
-  }
-}
-
-export { sequelize };
+export default sequelize;

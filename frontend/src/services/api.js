@@ -1,71 +1,112 @@
-import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// Función helper para hacer requests
+const fetchAPI = async (endpoint, options = {}) => {
+  const token = localStorage.getItem('token');
+  
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers
+    },
+    ...options
+  };
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-api.interceptors.request.use(
-  (config) => {
-    console.log(`Making ${config.method?.toUpperCase()} request to: ${config.url}`);
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-    
-    // Manejo específico de errores
-    if (error.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    } else if (error.response?.status === 500) {
-      throw new Error('Error interno del servidor');
-    } else if (error.code === 'ECONNABORTED') {
-      throw new Error('Timeout: El servidor no responde');
-    } else {
-      throw new Error(error.message || 'Error de conexión');
-    }
-  }
-);
-
-// ✅ CORREGIDO: Usar axios en lugar de fetch
-export const checkEmail = async (email) => {
   try {
-    const response = await api.post('/auth/check-email', { email });
-    return response.data;
+    const response = await fetch(`${API_URL}${endpoint}`, config);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || 'Error en la petición');
+    }
+
+    return data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Error verificando el email');
+    console.error(`Error en ${endpoint}:`, error);
+    throw error;
   }
+};
+
+// === PRODUCTOS ===
+export const getProducts = async (filters = {}) => {
+  const queryParams = new URLSearchParams();
+  
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      queryParams.append(key, value);
+    }
+  });
+
+  const queryString = queryParams.toString();
+  return fetchAPI(`/products${queryString ? `?${queryString}` : ''}`);
+};
+
+export const getProductById = async (id) => {
+  return fetchAPI(`/products/${id}`);
+};
+
+export const getFeaturedProducts = async (limit = 4) => {
+  return fetchAPI(`/products/featured?limit=${limit}`);
+};
+
+export const getBestSellers = async (limit = 4) => {
+  return fetchAPI(`/products/best-sellers?limit=${limit}`);
+};
+
+export const getRecentProducts = async (limit = 4) => {
+  return fetchAPI(`/products/recent?limit=${limit}`);
+};
+
+export const getPriceRange = async (categoria_id) => {
+  const query = categoria_id ? `?categoria_id=${categoria_id}` : '';
+  return fetchAPI(`/products/price-range${query}`);
+};
+
+// === CATEGORÍAS ===
+export const getCategories = async () => {
+  return fetchAPI('/categories');
+};
+
+export const getCategoryById = async (id) => {
+  return fetchAPI(`/categories/${id}`);
+};
+
+// === CARRUSELES ===
+export const getCarousels = async () => {
+  return fetchAPI('/carousels');
+};
+
+// === AUTENTICACIÓN ===
+export const login = async (email, password) => {
+  return fetchAPI('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password })
+  });
 };
 
 export const register = async (userData) => {
-  try {
-    const response = await api.post('/auth/register', userData);
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Error en el registro');
-  }
+  return fetchAPI('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData)
+  });
 };
 
-export const login = async (credentials) => {
-  try {
-    const response = await api.post('/auth/login', credentials);
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.message || 'Error al iniciar sesión');
-  }
+export const getProfile = async () => {
+  return fetchAPI('/auth/profile');
 };
 
-export default api;
+export default {
+  getProducts,
+  getProductById,
+  getFeaturedProducts,
+  getBestSellers,
+  getRecentProducts,
+  getPriceRange,
+  getCategories,
+  getCategoryById,
+  getCarousels,
+  login,
+  register,
+  getProfile
+};

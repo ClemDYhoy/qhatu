@@ -1,45 +1,118 @@
-import React, { useState, useEffect } from 'react';
-import Button from '../ui/Button/Button';
+import React, { useState, useEffect, useCallback } from 'react';
 import './Carousel.css';
 
-function Carousel({ slides }) {
-const [currentSlide, setCurrentSlide] = useState(0);
+const Carousel = ({ items = [], autoPlayInterval = 5000 }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
-useEffect(() => {
-    const interval = setInterval(() => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+  const nextSlide = useCallback(() => {
+    if (isTransitioning || items.length <= 1) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => (prev + 1) % items.length);
+    setTimeout(() => setIsTransitioning(false), 600);
+  }, [items.length, isTransitioning]);
+
+  const prevSlide = useCallback(() => {
+    if (isTransitioning || items.length <= 1) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
+    setTimeout(() => setIsTransitioning(false), 600);
+  }, [items.length, isTransitioning]);
+
+  const goToSlide = useCallback((index) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex(index);
+    setTimeout(() => setIsTransitioning(false), 600);
+  }, [isTransitioning]);
+
+  useEffect(() => {
+    if (!isAutoPlaying || items.length <= 1) return;
+    const interval = setInterval(nextSlide, autoPlayInterval);
     return () => clearInterval(interval);
-}, [slides.length]);
+  }, [isAutoPlaying, nextSlide, autoPlayInterval, items.length]);
 
-const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-};
+  if (!items || items.length === 0) {
+    return null;
+  }
 
-const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-};
+  return (
+    <div 
+      className="carousel"
+      onMouseEnter={() => setIsAutoPlaying(false)}
+      onMouseLeave={() => setIsAutoPlaying(true)}
+    >
+      <div className="carousel-container">
+        {items.map((item, index) => (
+          <div
+            key={item.carrusel_id || index}
+            className={`carousel-slide ${index === currentIndex ? 'active' : ''} ${
+              index === (currentIndex - 1 + items.length) % items.length ? 'prev' : ''
+            } ${
+              index === (currentIndex + 1) % items.length ? 'next' : ''
+            }`}
+          >
+            <img
+              src={item.url_imagen}
+              alt={item.titulo || `Slide ${index + 1}`}
+              onError={(e) => e.target.src = '/placeholder.png'}
+            />
+          </div>
+        ))}
+      </div>
 
-if (!slides || slides.length === 0) {
-    return <p>No hay promociones disponibles</p>;
-}
+      {items.length > 1 && (
+        <>
+          <button
+            className="carousel-control prev"
+            onClick={prevSlide}
+            disabled={isTransitioning}
+            aria-label="Slide anterior"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+            </svg>
+          </button>
+          
+          <button
+            className="carousel-control next"
+            onClick={nextSlide}
+            disabled={isTransitioning}
+            aria-label="Slide siguiente"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+            </svg>
+          </button>
 
-return (
-    <div className="carousel">
-    <Button className="carousel-button prev" onClick={prevSlide}>←</Button>
-    <div className="carousel-slide">
-        <img src={slides[currentSlide].imagen_url} alt={slides[currentSlide].titulo} />
-        <div className="carousel-caption">
-        <h3>{slides[currentSlide].titulo}</h3>
-        <p>{slides[currentSlide].descripcion}</p>
-        {slides[currentSlide].descuento_porcentaje && (
-            <p>Descuento: {slides[currentSlide].descuento_porcentaje}%</p>
-        )}
-        </div>
+          <div className="carousel-indicators">
+            {items.map((_, index) => (
+              <button
+                key={index}
+                className={`indicator ${index === currentIndex ? 'active' : ''}`}
+                onClick={() => goToSlide(index)}
+                disabled={isTransitioning}
+                aria-label={`Ir a slide ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          {isAutoPlaying && (
+            <div className="carousel-progress">
+              <div 
+                className="carousel-progress-bar"
+                style={{ 
+                  animation: `progressBar ${autoPlayInterval}ms linear`
+                }}
+                key={currentIndex}
+              />
+            </div>
+          )}
+        </>
+      )}
     </div>
-    <Button className="carousel-button next" onClick={nextSlide}>→</Button>
-    </div>
-);
-}
+  );
+};
 
 export default Carousel;

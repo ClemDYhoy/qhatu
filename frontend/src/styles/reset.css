@@ -1,4 +1,4 @@
-/* Modern CSS Reset mejorado con estilo DoneDrinks */
+/* ===== MODERN CSS RESET MEJORADO ===== */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -28,11 +28,9 @@ body {
   overflow-x: hidden;
 }
 
-/* Mejora de rendimiento para animaciones */
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -40,23 +38,14 @@ body {
   }
 }
 
-/* Mejora de contraste para accesibilidad */
-@media (prefers-contrast: high) {
-  :root {
-    --text-primary: #000000;
-    --text-secondary: #333333;
-    --border-medium: #000000;
-  }
-}
-
-/* Optimización de medios */
+/* ===== MEDIA ELEMENTS ===== */
 img, picture, video, canvas, svg {
   display: block;
   max-width: 100%;
   height: auto;
 }
 
-/* Mejora de formularios */
+/* ===== FORM ELEMENTS ===== */
 input, button, textarea, select {
   font: inherit;
   color: inherit;
@@ -66,46 +55,39 @@ button {
   cursor: pointer;
   background: none;
   border: none;
+  padding: 0;
 }
 
-/* Mejora de enlaces */
+/* ===== INTERACTIVE ELEMENTS ===== */
 a {
   color: inherit;
   text-decoration: none;
-  transition: var(--transition-base);
+  transition: color var(--duration-fast) var(--ease-out);
 }
 
 a:hover {
-  color: var(--primary);
+  color: var(--gold-primary);
 }
 
-/* Mejora de listas */
 ul, ol {
   list-style: none;
 }
 
-/* Mejora de tablas */
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-}
-
-/* Focus visible mejorado */
+/* ===== ACCESSIBILITY ENHANCEMENTS ===== */
 :focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--border-focus);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-/* Selección de texto mejorada */
 ::selection {
-  background-color: var(--primary-light);
+  background-color: var(--gold-light);
   color: var(--text-primary);
 }
 
-/* Scrollbar personalizado estilo DoneDrinks */
+/* ===== SCROLLBAR STYLING ===== */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -114,44 +96,32 @@ table {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary);
+  background: var(--gray-40);
   border-radius: var(--radius-full);
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-dark);
+  background: var(--gray-50);
 }
 
-/* Firefox scrollbar */
 html {
   scrollbar-width: thin;
-  scrollbar-color: var(--primary) var(--bg-secondary);
+  scrollbar-color: var(--gray-40) var(--bg-secondary);
 }
 
-/* Placeholder styling */
+/* ===== UTILITY RESETS ===== */
 ::placeholder {
-  color: var(--text-tertiary);
+  color: var(--text-muted);
   opacity: 1;
 }
 
-/* Remove default button styles */
-button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-}
-
-/* Remove input number arrows */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-
-
-/* Hide clear button from search inputs */
 input[type="search"]::-webkit-search-decoration,
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-results-button,
@@ -159,19 +129,16 @@ input[type="search"]::-webkit-search-results-decoration {
   -webkit-appearance: none;
 }
 
-/* Ensure responsive images */
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Remove blue highlight on tap mobile */
 * {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Improve readability for long texts */
+/* ===== TYPOGRAPHY ENHANCEMENTS ===== */
 p {
+  max-width: 65ch;
+  margin-bottom: var(--space-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
   max-width: 65ch;
 }

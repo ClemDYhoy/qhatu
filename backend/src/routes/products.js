@@ -1,102 +1,368 @@
 import express from 'express';
+import { Op, Sequelize } from 'sequelize';
 import Product from '../models/Product.js';
-import { sequelize } from '../config/database.js';
-import { authMiddleware, adminMiddleware } from '../config/middleware/auth.js';
+import Category from '../models/Category.js';
 
 const router = express.Router();
 
-// 🛍️ Obtener productos con filtrado premium
+// Utilidades
+const parseNumber = (value, defaultValue = 0) => {
+  const parsed = parseFloat(value);
+  return isNaN(parsed) ? defaultValue : parsed;
+};
+
+const parseInt32 = (value, defaultValue = 0) => {
+  const parsed = parseInt(value);
+  return isNaN(parsed) || parsed < 0 ? defaultValue : parsed;
+};
+
+// GET /api/products - Obtener productos con filtros avanzados
 router.get('/', async (req, res) => {
   try {
     const {
+      search,
+      category,
       categoria_id,
-      tipo_comida_id,
-      etiqueta_id,
-      es_importado,
-      marca,
-      precio_min,
-      precio_max,
-      termino_busqueda,
-      page = 1,
-      limit = 10
+      priceMin,
+      priceMax,
+      availability,
+      highlighted,
+      orderBy = 'nombre',
+      order = 'ASC',
+      limit = 12,
+      offset = 0
     } = req.query;
 
-    const offset = (page - 1) * limit;
+    const where = { activo: true };
+    const include = [{
+      model: Category,
+      as: 'categoria',
+      attributes: ['categoria_id', 'nombre', 'padre_id']
+    }];
 
-    const [results] = await sequelize.query(
-      'CALL FiltrarProductosAvanzado(:categoria_id, :tipo_comida_id, :etiqueta_id, :es_importado, :marca, :precio_min, :precio_max, :termino_busqueda, :offset, :limit, @total_resultados)',
-      {
-        replacements: {
-          categoria_id: categoria_id ? parseInt(categoria_id) : null,
-          tipo_comida_id: tipo_comida_id ? parseInt(tipo_comida_id) : null,
-          etiqueta_id: etiqueta_id ? parseInt(etiqueta_id) : null,
-          es_importado: es_importado ? es_importado === 'true' : null,
-          marca: marca || null,
-          precio_min: precio_min ? parseFloat(precio_min) : null,
-          precio_max: precio_max ? parseFloat(precio_max) : null,
-          termino_busqueda: termino_busqueda || null,
-          offset: parseInt(offset),
-          limit: parseInt(limit)
-        }
+    // Filtro de búsqueda por texto
+    if (search && search.trim()) {
+      where[Op.or] = [
+        { nombre: { [Op.like]: `%${search.trim()}%` } },
+        { descripcion: { [Op.like]: `%${search.trim()}%` } }
+      ];
+    }
+
+    // Filtro por categoría (por ID directo)
+    if (categoria_id) {
+      const catId = parseInt32(categoria_id);
+      if (catId > 0) {
+        // Obtener categoría y sus subcategorías
+        const subCategories = await Category.findAll({
+          where: { padre_id: catId },
+          attributes: ['categoria_id']
+        });
+
+        const categoryIds = [catId, ...subCategories.map(c => c.categoria_id)];
+        where.categoria_id = { [Op.in]: categoryIds };
       }
-    );
+    }
+    // Filtro por categoría (por nombre)
+    else if (category && category.trim()) {
+      const cat = await Category.findOne({
+        where: { nombre: { [Op.like]: `%${category.trim()}%` } }
+      });
 
-    const [[{ total_resultados }]] = await sequelize.query(
-      'SELECT @total_resultados AS total_resultados'
-    );
+      if (cat) {
+        // Incluir subcategorías
+        const subCategories = await Category.findAll({
+          where: { padre_id: cat.categoria_id },
+          attributes: ['categoria_id']
+        });
+
+        const categoryIds = [cat.categoria_id, ...subCategories.map(c => c.categoria_id)];
+        where.categoria_id = { [Op.in]: categoryIds };
+      }
+    }
+
+    // Filtro por rango de precio
+    if (priceMin || priceMax) {
+      where.precio = {};
+      if (priceMin) {
+        const min = parseNumber(priceMin, 0);
+        if (min >= 0) where.precio[Op.gte] = min;
+      }
+      if (priceMax) {
+        const max = parseNumber(priceMax, 999999);
+        if (max > 0) where.precio[Op.lte] = max;
+      }
+    }
+
+    // Filtro por disponibilidad
+    if (availability) {
+      switch (availability.toLowerCase()) {
+        case 'in_stock':
+          where.stock = { [Op.gt]: 0 };
+          break;
+        case 'low':
+          where[Op.and] = [
+            { stock: { [Op.gt]: 0 } },
+            Sequelize.where(
+              Sequelize.col('stock'),
+              Op.lte,
+              Sequelize.col('umbral_bajo_stock')
+            )
+          ];
+          break;
+        case 'critical':
+          where[Op.and] = [
+            { stock: { [Op.gt]: 0 } },
+            Sequelize.where(
+              Sequelize.col('stock'),
+              Op.lte,
+              Sequelize.col('umbral_critico_stock')
+            )
+          ];
+          break;
+        case 'out':
+        case 'out_of_stock':
+          where.stock = 0;
+          break;
+      }
+    }
+
+    // Filtro por productos destacados
+    if (highlighted === 'true' || highlighted === '1') {
+      where.destacado = true;
+    }
+
+    // Validar y sanitizar ordenamiento
+    const validOrderFields = ['nombre', 'precio', 'stock', 'ventas', 'creado_en'];
+    const sanitizedOrderBy = validOrderFields.includes(orderBy) ? orderBy : 'nombre';
+    const sanitizedOrder = ['ASC', 'DESC'].includes(order.toUpperCase()) ? order.toUpperCase() : 'ASC';
+
+    // Validar paginación
+    const validLimit = parseInt32(limit, 12);
+    const validOffset = parseInt32(offset, 0);
+
+    // Ejecutar consulta
+    const { count, rows: products } = await Product.findAndCountAll({
+      where,
+      include,
+      order: [[sanitizedOrderBy, sanitizedOrder]],
+      limit: Math.min(validLimit, 100), // Máximo 100 productos por página
+      offset: validOffset,
+      distinct: true
+    });
+
+    // Calcular metadata de paginación
+    const totalPages = Math.ceil(count / validLimit);
+    const currentPage = Math.floor(validOffset / validLimit) + 1;
 
     res.json({
-      products: results,
-      total: total_resultados,
-      page: parseInt(page),
-      limit: parseInt(limit)
+      success: true,
+      data: products,
+      pagination: {
+        total: count,
+        limit: validLimit,
+        offset: validOffset,
+        currentPage,
+        totalPages,
+        hasNext: currentPage < totalPages,
+        hasPrev: currentPage > 1
+      }
     });
+
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener productos: ' + error.message });
+    console.error('Error al obtener productos:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener productos',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
-// ➕ Crear producto (solo admin)
-router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
+// GET /api/products/featured - Productos destacados
+router.get('/featured', async (req, res) => {
   try {
-    const product = await Product.create(req.body);
-    res.status(201).json(product);
+    const { limit = 4 } = req.query;
+    const validLimit = Math.min(parseInt32(limit, 4), 20);
+
+    const products = await Product.findAll({
+      where: {
+        activo: true,
+        destacado: true,
+        stock: { [Op.gt]: 0 }
+      },
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre']
+      }],
+      order: [['ventas', 'DESC']],
+      limit: validLimit
+    });
+
+    res.json({
+      success: true,
+      data: products
+    });
+
   } catch (error) {
-    if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+    console.error('Error al obtener productos destacados:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener productos destacados',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/products/best-sellers - Más vendidos
+router.get('/best-sellers', async (req, res) => {
+  try {
+    const { limit = 4 } = req.query;
+    const validLimit = Math.min(parseInt32(limit, 4), 20);
+
+    const products = await Product.findAll({
+      where: {
+        activo: true,
+        stock: { [Op.gt]: 0 },
+        ventas: { [Op.gt]: 0 }
+      },
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre']
+      }],
+      order: [['ventas', 'DESC']],
+      limit: validLimit
+    });
+
+    res.json({
+      success: true,
+      data: products
+    });
+
+  } catch (error) {
+    console.error('Error al obtener más vendidos:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener más vendidos',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/products/recent - Productos recientes
+router.get('/recent', async (req, res) => {
+  try {
+    const { limit = 4 } = req.query;
+    const validLimit = Math.min(parseInt32(limit, 4), 20);
+
+    const products = await Product.findAll({
+      where: {
+        activo: true,
+        stock: { [Op.gt]: 0 }
+      },
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre']
+      }],
+      order: [['creado_en', 'DESC']],
+      limit: validLimit
+    });
+
+    res.json({
+      success: true,
+      data: products
+    });
+
+  } catch (error) {
+    console.error('Error al obtener productos recientes:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener productos recientes',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/products/price-range - Rango de precios
+router.get('/price-range', async (req, res) => {
+  try {
+    const { categoria_id } = req.query;
+    const where = { activo: true };
+
+    if (categoria_id) {
+      const catId = parseInt32(categoria_id);
+      if (catId > 0) where.categoria_id = catId;
     }
-    res.status(500).json({ error: 'Error al crear producto' });
+
+    const result = await Product.findOne({
+      where,
+      attributes: [
+        [Sequelize.fn('MIN', Sequelize.col('precio')), 'min'],
+        [Sequelize.fn('MAX', Sequelize.col('precio')), 'max']
+      ],
+      raw: true
+    });
+
+    res.json({
+      success: true,
+      data: {
+        min: parseNumber(result?.min, 0),
+        max: parseNumber(result?.max, 0)
+      }
+    });
+
+  } catch (error) {
+    console.error('Error al obtener rango de precios:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener rango de precios',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
-// 🔄 Actualizar producto (solo admin)
-router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+// GET /api/products/:id - Obtener producto por ID
+router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const { id } = req.params;
+    const productId = parseInt32(id);
+
+    if (productId <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID de producto inválido'
+      });
+    }
+
+    const product = await Product.findByPk(productId, {
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre', 'padre_id']
+      }]
+    });
+
     if (!product) {
-      return res.status(404).json({ error: 'Producto no encontrado' });
+      return res.status(404).json({
+        success: false,
+        error: 'Producto no encontrado'
+      });
     }
-    await product.update(req.body);
-    res.json(product);
-  } catch (error) {
-    if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
-    }
-    res.status(500).json({ error: 'Error al actualizar producto' });
-  }
-});
 
-// 🗑️ Eliminar producto (solo admin)
-router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const product = await Product.findByPk(req.params.id);
-    if (!product) {
-      return res.status(404).json({ error: 'Producto no encontrado' });
-    }
-    await product.destroy();
-    res.json({ message: 'Producto eliminado' });
+    res.json({
+      success: true,
+      data: product
+    });
+
   } catch (error) {
-    res.status(500).json({ error: 'Error al eliminar producto' });
+    console.error('Error al obtener producto:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener producto',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

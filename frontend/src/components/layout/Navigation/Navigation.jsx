@@ -12,7 +12,7 @@ const navItems = [
     { path: '/nosotros', label: 'Nosotros' },
     { path: '/contact', label: 'Contacto' },
 ];
-6
+
 const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
 };

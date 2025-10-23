@@ -1,99 +1,287 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react'; // Añadido React
-import { cartService } from '../services/cartService';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 
-const CartContext = createContext();
+// Crear el contexto
+export const CartContext = createContext();
 
-function cartReducer(state, action) {
-  switch (action.type) {
-    case 'SET_CART':
-      return { ...state, items: action.payload || [] };
-    case 'ADD_TO_CART':
-      const existingItem = state.items.find((item) => item.id === action.payload.id);
-      if (existingItem) {
-        return {
-          ...state,
-          items: state.items.map((item) =>
-            item.id === action.payload.id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          ),
-        };
-      }
-      return {
-        ...state,
-        items: [...state.items, { ...action.payload, quantity: 1 }],
-      };
-    case 'REMOVE_FROM_CART':
-      return {
-        ...state,
-        items: state.items.filter((item) => item.id !== action.payload),
-      };
-    case 'UPDATE_QUANTITY':
-      return {
-        ...state,
-        items: state.items.map((item) =>
-          item.id === action.payload.id
-            ? { ...item, quantity: Math.max(1, action.payload.quantity) } // Evita cantidades negativas
-            : item
-        ),
-      };
-    case 'CLEAR_CART':
-      return { ...state, items: [] };
-    default:
-      return state;
+// Hook personalizado con validación
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart debe ser usado dentro de un CartProvider');
   }
-}
+  return context;
+};
 
-export function CartProvider({ children }) {
-  const [state, dispatch] = useReducer(cartReducer, { items: [] });
+// Constantes
+const CART_STORAGE_KEY = 'qhatu_cart';
+const MAX_QUANTITY = 99;
 
-  // Cargar carrito desde localStorage al inicializar
-  useEffect(() => {
+// Utilidades
+const safeJSONParse = (value, fallback = []) => {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const safeJSONStringify = (value) => {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return '[]';
+  }
+};
+
+// Provider del carrito
+export const CartProvider = ({ children }) => {
+  const [cart, setCart] = useState(() => {
     try {
-      const savedCart = cartService.get() || [];
-      if (Array.isArray(savedCart)) {
-        dispatch({ type: 'SET_CART', payload: savedCart });
-      } else {
-        console.warn('Cart data from localStorage is not an array, resetting to empty');
-        dispatch({ type: 'SET_CART', payload: [] });
-      }
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      return savedCart ? safeJSONParse(savedCart) : [];
     } catch (error) {
-      console.error('Error loading cart from localStorage:', error);
-      dispatch({ type: 'SET_CART', payload: [] });
+      console.error('Error al cargar carrito desde localStorage:', error);
+      return [];
     }
-  }, []);
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
 
   // Guardar carrito en localStorage cuando cambie
   useEffect(() => {
     try {
-      cartService.save(state.items);
+      localStorage.setItem(CART_STORAGE_KEY, safeJSONStringify(cart));
+      // Disparar evento para sincronizar entre pestañas
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
+      console.error('Error al guardar carrito en localStorage:', error);
     }
-  }, [state.items]);
+  }, [cart]);
 
+  // Sincronizar entre pestañas
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === CART_STORAGE_KEY) {
+        setCart(safeJSONParse(e.newValue));
+      }
+    };
+
+    const handleCartUpdate = () => {
+      try {
+        const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+        setCart(safeJSONParse(savedCart));
+      } catch (error) {
+        console.error('Error al sincronizar carrito:', error);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('cartUpdated', handleCartUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, []);
+
+  // Agregar producto al carrito
+  const addToCart = useCallback((product, quantity = 1) => {
+    if (!product || !product.producto_id) {
+      console.error('Producto inválido:', product);
+      return false;
+    }
+
+    const validQuantity = Math.max(1, Math.min(quantity, MAX_QUANTITY));
+
+    setCart((prevCart) => {
+      const existingItem = prevCart.find(
+        (item) => item.producto_id === product.producto_id
+      );
+
+      if (existingItem) {
+        // Actualizar cantidad sin exceder el máximo
+        return prevCart.map((item) =>
+          item.producto_id === product.producto_id
+            ? {
+                ...item,
+                quantity: Math.min(
+                  item.quantity + validQuantity,
+                  MAX_QUANTITY
+                ),
+              }
+            : item
+        );
+      }
+
+      // Agregar nuevo producto
+      return [
+        ...prevCart,
+        {
+          ...product,
+          quantity: validQuantity,
+          addedAt: Date.now(), // Timestamp para ordenar
+        },
+      ];
+    });
+
+    return true;
+  }, []);
+
+  // Remover producto del carrito
+  const removeFromCart = useCallback((productId) => {
+    if (!productId) {
+      console.error('ID de producto inválido');
+      return false;
+    }
+
+    setCart((prevCart) =>
+      prevCart.filter((item) => item.producto_id !== productId)
+    );
+
+    return true;
+  }, []);
+
+  // Actualizar cantidad de un producto
+  const updateQuantity = useCallback((productId, quantity) => {
+    if (!productId) {
+      console.error('ID de producto inválido');
+      return false;
+    }
+
+    const validQuantity = Math.max(0, Math.min(quantity, MAX_QUANTITY));
+
+    if (validQuantity === 0) {
+      return removeFromCart(productId);
+    }
+
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.producto_id === productId
+          ? { ...item, quantity: validQuantity }
+          : item
+      )
+    );
+
+    return true;
+  }, [removeFromCart]);
+
+  // Incrementar cantidad
+  const incrementQuantity = useCallback((productId) => {
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.producto_id === productId
+          ? {
+              ...item,
+              quantity: Math.min(item.quantity + 1, MAX_QUANTITY),
+            }
+          : item
+      )
+    );
+  }, []);
+
+  // Decrementar cantidad
+  const decrementQuantity = useCallback((productId) => {
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.producto_id === productId
+          ? {
+              ...item,
+              quantity: Math.max(1, item.quantity - 1),
+            }
+          : item
+      )
+    );
+  }, []);
+
+  // Limpiar carrito
+  const clearCart = useCallback(() => {
+    setCart([]);
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    } catch (error) {
+      console.error('Error al limpiar carrito:', error);
+    }
+  }, []);
+
+  // Calcular total del carrito
+  const getCartTotal = useCallback(() => {
+    return cart.reduce((total, item) => {
+      const price = parseFloat(item.precio || item.price || 0);
+      return total + price * item.quantity;
+    }, 0);
+  }, [cart]);
+
+  // Calcular cantidad total de items (suma de cantidades)
+  const getTotalItems = useCallback(() => {
+    return cart.reduce((count, item) => count + item.quantity, 0);
+  }, [cart]);
+
+  // Calcular cantidad de productos únicos
+  const getUniqueItemsCount = useCallback(() => {
+    return cart.length;
+  }, [cart]);
+
+  // Verificar si un producto está en el carrito
+  const isInCart = useCallback(
+    (productId) => {
+      return cart.some((item) => item.producto_id === productId);
+    },
+    [cart]
+  );
+
+  // Obtener cantidad de un producto específico
+  const getProductQuantity = useCallback(
+    (productId) => {
+      const item = cart.find((item) => item.producto_id === productId);
+      return item ? item.quantity : 0;
+    },
+    [cart]
+  );
+
+  // Obtener producto del carrito por ID
+  const getCartItem = useCallback(
+    (productId) => {
+      return cart.find((item) => item.producto_id === productId) || null;
+    },
+    [cart]
+  );
+
+  // Verificar si el carrito está vacío
+  const isEmpty = useCallback(() => {
+    return cart.length === 0;
+  }, [cart]);
+
+  // Valor del contexto
   const value = {
-    cart: state.items,
-    addToCart: (product) => dispatch({ type: 'ADD_TO_CART', payload: product }),
-    removeFromCart: (productId) => dispatch({ type: 'REMOVE_FROM_CART', payload: productId }),
-    updateQuantity: (productId, quantity) =>
-      dispatch({
-        type: 'UPDATE_QUANTITY',
-        payload: { id: productId, quantity: Number(quantity) || 1 }, // Asegura que sea un número
-      }),
-    clearCart: () => dispatch({ type: 'CLEAR_CART' }),
-    getTotal: () =>
-      state.items.reduce((total, item) => total + (item.price * item.quantity || 0), 0),
-    getTotalItems: () => state.items.reduce((total, item) => total + (item.quantity || 0), 0),
+    // Estado
+    cart,
+    isLoading,
+    
+    // Acciones
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    incrementQuantity,
+    decrementQuantity,
+    clearCart,
+    
+    // Getters
+    getCartTotal,
+    getTotalItems,
+    getUniqueItemsCount,
+    isInCart,
+    getProductQuantity,
+    getCartItem,
+    isEmpty,
+    
+    // Constantes útiles
+    MAX_QUANTITY,
   };
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
-}
-
-export function useCart() {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart debe usarse dentro de un CartProvider');
-  }
-  return context;
-}
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+    </CartContext.Provider>
+  );
+};

@@ -1,47 +1,96 @@
-import api from './api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export const productService = {
-getAll: async (params = {}) => {
-    try {
-    const response = await api.get('/products', { params });
-    console.log('ProductService.getAll response:', response.data); // Depuración
-    return response.data;
-    } catch (error) {
-    console.error('Error fetching products:', error);
-    throw error;
-    }
-},
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
-getById: async (id) => {
-    try {
-    const response = await api.get(`/products/${id}`);
-    return response.data;
-    } catch (error) {
-    console.error('Error fetching product:', error);
-    throw error;
-    }
-},
-
-search: async (query) => {
-    try {
-    const response = await api.get('/products/search', {
-        params: { q: query }
+export const getProducts = async (filters = {}) => {
+    const query = new URLSearchParams(filters).toString();
+    const response = await fetch(`${API_URL}/products${query ? `?${query}` : ''}`, {
+        headers: getAuthHeaders()
     });
-    return response.data;
-    } catch (error) {
-    console.error('Error searching products:', error);
-    throw error;
-    }
-},
+    if (!response.ok) throw new Error((await response.json()).error || 'Error al obtener productos');
+    return await response.json();
+};
 
-create: async (productData, token) => {
-    try {
-    const response = await api.post('/products', productData, {
-        headers: { Authorization: `Bearer ${token}` }
+export const getCategories = async () => {
+    const response = await fetch(`${API_URL}/categories`, {
+        headers: getAuthHeaders()
     });
-    return response.data;
-    } catch (error) {
-    throw error;
-    }
-}
+    if (!response.ok) throw new Error((await response.json()).error || 'Error al obtener categorías');
+    return await response.json();
+};
+
+export const getCarousels = async () => {
+    const response = await fetch(`${API_URL}/carousels`, {
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error((await response.json()).error || 'Error al obtener carruseles');
+    return await response.json();
+};
+
+export const createCarousel = async (carouselData) => {
+    const response = await fetch(`${API_URL}/carousels`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+        },
+        body: JSON.stringify(carouselData)
+    });
+    if (!response.ok) throw new Error((await response.json()).error || 'Error al crear carrusel');
+    return await response.json();
+};
+
+export const updateCarousel = async (id, carouselData) => {
+    const response = await fetch(`${API_URL}/carousels/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+        },
+        body: JSON.stringify(carouselData)
+    });
+    if (!response.ok) throw new Error((await response.json()).error || 'Error al actualizar carrusel');
+    return await response.json();
+};
+
+export const deleteCarousel = async (id) => {
+    const response = await fetch(`${API_URL}/carousels/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error((await response.json()).error || 'Error al eliminar carrusel');
+    return await response.json();
+};
+
+export const register = async (email, password) => {
+    const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+    });
+    if (!response.ok) throw new Error((await response.json()).error || 'Error al registrar usuario');
+    return await response.json();
+};
+
+export const login = async (email, password) => {
+    const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+    });
+    if (!response.ok) throw new Error((await response.json()).error || 'Error al iniciar sesión');
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    return data;
+};
+
+export const getProfile = async () => {
+    const response = await fetch(`${API_URL}/users/profile`, {
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error((await response.json()).error || 'Error al obtener perfil');
+    return await response.json();
 };

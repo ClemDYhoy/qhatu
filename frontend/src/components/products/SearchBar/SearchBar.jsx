@@ -1,89 +1,114 @@
-import React, { useState } from 'react';
-import Input from '../../ui/Input/Input';
-import Button from '../../ui/Button/Button';
+import React, { useState, useEffect } from 'react';
+import { getCategories, getProducts } from '../../services/productService';
 import './SearchBar.css';
 
-function SearchBar({ onFilterChange }) {
-const [filters, setFilters] = useState({
-    categoria_id: '',
-    tipo_comida_id: '',
-    etiqueta_id: '',
-    es_importado: '',
-    marca: '',
-    precio_min: '',
-    precio_max: '',
-    termino_busqueda: '',
-});
+const SearchBar = ({ onFilterChange }) => {
+    const [categories, setCategories] = useState([]);
+    const [filters, setFilters] = useState({
+        category: '',
+        priceMin: '',
+        priceMax: '',
+        availability: 'all',
+        search: '',
+        highlighted: false
+    });
 
-const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilters({ ...filters, [name]: value });
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const data = await getCategories();
+                setCategories(data);
+            } catch (error) {
+                console.error('Error al cargar categorías:', error);
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFilters((prev) => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const products = await getProducts(filters);
+            onFilterChange(products);
+        } catch (error) {
+            console.error('Error al filtrar productos:', error);
+        }
+    };
+
+    return (
+        <div className="p-4 bg-gray-100">
+            <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4">
+                <select
+                    name="category"
+                    value={filters.category}
+                    onChange={handleInputChange}
+                    className="p-2 border rounded"
+                >
+                    <option value="">Todas las Categorías</option>
+                    {categories.map((cat) => (
+                        <option key={cat.categoria_id} value={cat.nombre}>
+                            {cat.nombre} {cat.padre_id ? '(Subcategoría)' : ''}
+                        </option>
+                    ))}
+                </select>
+                <input
+                    type="number"
+                    name="priceMin"
+                    value={filters.priceMin}
+                    onChange={handleInputChange}
+                    placeholder="Precio Mín."
+                    className="p-2 border rounded"
+                />
+                <input
+                    type="number"
+                    name="priceMax"
+                    value={filters.priceMax}
+                    onChange={handleInputChange}
+                    placeholder="Precio Máx."
+                    className="p-2 border rounded"
+                />
+                <select
+                    name="availability"
+                    value={filters.availability}
+                    onChange={handleInputChange}
+                    className="p-2 border rounded"
+                >
+                    <option value="all">Todos (En Stock)</option>
+                    <option value="low">Pocas Unidades (&lt;20)</option>
+                    <option value="critical">Stock Crítico (&lt;=10)</option>
+                    <option value="out">Agotado</option>
+                </select>
+                <input
+                    type="text"
+                    name="search"
+                    value={filters.search}
+                    onChange={handleInputChange}
+                    placeholder="Buscar productos..."
+                    className="p-2 border rounded"
+                />
+                <label className="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        name="highlighted"
+                        checked={filters.highlighted}
+                        onChange={handleInputChange}
+                    />
+                    Destacados
+                </label>
+                <button type="submit" className="p-2 bg-blue-500 text-white rounded">
+                    Filtrar
+                </button>
+            </form>
+        </div>
+    );
 };
-
-const handleSubmit = (e) => {
-    e.preventDefault();
-    onFilterChange(filters);
-};
-
-return (
-    <form className="search-bar" onSubmit={handleSubmit}>
-    <Input
-        type="text"
-        name="termino_busqueda"
-        label="Buscar productos"
-        value={filters.termino_busqueda}
-        onChange={handleChange}
-    />
-    <Input
-        type="number"
-        name="categoria_id"
-        label="ID Categoría"
-        value={filters.categoria_id}
-        onChange={handleChange}
-    />
-    <Input
-        type="number"
-        name="tipo_comida_id"
-        label="ID Tipo de Comida"
-        value={filters.tipo_comida_id}
-        onChange={handleChange}
-    />
-    <Input
-        type="number"
-        name="etiqueta_id"
-        label="ID Etiqueta"
-        value={filters.etiqueta_id}
-        onChange={handleChange}
-    />
-    <select name="es_importado" value={filters.es_importado} onChange={handleChange}>
-        <option value="">Todos</option>
-        <option value="true">Importado</option>
-        <option value="false">Local</option>
-    </select>
-    <Input
-        type="text"
-        name="marca"
-        label="Marca"
-        value={filters.marca}
-        onChange={handleChange}
-    />
-    <Input
-        type="number"
-        name="precio_min"
-        label="Precio Mín."
-        value={filters.precio_min}
-        onChange={handleChange}
-    />
-    <Input
-        type="number"
-        name="precio_max"
-        label="Precio Máx."
-        value={filters.precio_max}
-        onChange={handleChange}
-    />
-    <Button type="submit">Filtrar</Button>
-    </form>
-);
-}
 
 export default SearchBar;

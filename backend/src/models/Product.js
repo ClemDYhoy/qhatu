@@ -1,79 +1,85 @@
-import { Sequelize, DataTypes } from 'sequelize';
-import { sequelize } from '../config/database.js';
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
-const Product = sequelize.define(
-'productos',
-{
-    id_producto: {
+const Product = sequelize.define('Product', {
+  producto_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
-    },
-    nombre: {
-    type: DataTypes.STRING(100),
+  },
+  nombre: {
+    type: DataTypes.STRING(200),
     allowNull: false
-    },
-    descripcion: {
+  },
+  descripcion: {
     type: DataTypes.TEXT,
-    allowNull: false
-    },
-    marca: {
+    allowNull: true
+  },
+  precio: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0.00
+  },
+  precio_descuento: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  stock: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  },
+  umbral_bajo_stock: {
+    type: DataTypes.INTEGER,
+    defaultValue: 10
+  },
+  umbral_critico_stock: {
+    type: DataTypes.INTEGER,
+    defaultValue: 5
+  },
+  categoria_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'categorias',
+      key: 'categoria_id'
+    }
+  },
+  url_imagen: {
+    type: DataTypes.STRING(500),
+    allowNull: true
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
+  destacado: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  ventas: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  peso: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  unidad_medida: {
     type: DataTypes.STRING(50),
     allowNull: true
-    },
-    precio: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: false,
-    validate: { min: 0 }
-    },
-    precio_descuento: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: true,
-    validate: { min: 0 }
-    },
-    stock: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-    validate: { min: 0 }
-    },
-    es_importado: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false
-    },
-    id_categoria: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-    },
-    imagen_url: {
-    type: DataTypes.STRING(255),
-    allowNull: true
-    },
-    peso_volumen: {
-    type: DataTypes.STRING(20),
-    allowNull: true
-    },
-    fecha_creacion: {
+  },
+  creado_en: {
     type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-    },
-    fecha_actualizacion: {
+    defaultValue: DataTypes.NOW
+  },
+  actualizado_en: {
     type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-    },
-    activo: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true
-    }
-},
-{
-    timestamps: false,
-    tableName: 'productos'
-}
-);
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'productos',
+  timestamps: false
+});
 
 export default Product;
