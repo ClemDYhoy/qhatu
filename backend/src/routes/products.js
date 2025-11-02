@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
       offset = 0
     } = req.query;
 
-    const where = { activo: true };
+    const where = {};
     const include = [{
       model: Category,
       as: 'categoria',
@@ -186,7 +186,6 @@ router.get('/featured', async (req, res) => {
 
     const products = await Product.findAll({
       where: {
-        activo: true,
         destacado: true,
         stock: { [Op.gt]: 0 }
       },
@@ -222,7 +221,6 @@ router.get('/best-sellers', async (req, res) => {
 
     const products = await Product.findAll({
       where: {
-        activo: true,
         stock: { [Op.gt]: 0 },
         ventas: { [Op.gt]: 0 }
       },
@@ -258,7 +256,6 @@ router.get('/recent', async (req, res) => {
 
     const products = await Product.findAll({
       where: {
-        activo: true,
         stock: { [Op.gt]: 0 }
       },
       include: [{
@@ -289,7 +286,7 @@ router.get('/recent', async (req, res) => {
 router.get('/price-range', async (req, res) => {
   try {
     const { categoria_id } = req.query;
-    const where = { activo: true };
+    const where = {};
 
     if (categoria_id) {
       const catId = parseInt32(categoria_id);

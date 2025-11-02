@@ -26,4 +26,27 @@ const sequelize = new Sequelize(
   }
 );
 
+// Función para probar la conexión
+export const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✓ Conexión a base de datos exitosa');
+    return true;
+  } catch (error) {
+    console.error('✗ Error al conectar a la base de datos:', error.message);
+    return false;
+  }
+};
+
+// Función para sincronizar modelos
+export const syncDatabase = async (options = {}) => {
+  try {
+    await sequelize.sync(options);
+    console.log('✓ Modelos sincronizados con la base de datos');
+  } catch (error) {
+    console.error('✗ Error al sincronizar modelos:', error.message);
+    throw error;
+  }
+};
+
 export default sequelize;

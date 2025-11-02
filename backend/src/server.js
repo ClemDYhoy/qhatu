@@ -3,6 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import sequelize from './config/database.js';
 
+// IMPORTANTE: Importar modelos ANTES de las rutas para cargar las asociaciones
+import './models/index.js';
+
 // Importar rutas
 import productRoutes from './routes/products.js';
 import carouselRoutes from './routes/carousel.js';

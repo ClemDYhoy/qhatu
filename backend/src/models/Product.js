@@ -8,7 +8,7 @@ const Product = sequelize.define('Product', {
     autoIncrement: true
   },
   nombre: {
-    type: DataTypes.STRING(200),
+    type: DataTypes.STRING(255),
     allowNull: false
   },
   descripcion: {
@@ -17,8 +17,7 @@ const Product = sequelize.define('Product', {
   },
   precio: {
     type: DataTypes.DECIMAL(10, 2),
-    allowNull: false,
-    defaultValue: 0.00
+    allowNull: false
   },
   precio_descuento: {
     type: DataTypes.DECIMAL(10, 2),
@@ -29,29 +28,29 @@ const Product = sequelize.define('Product', {
     allowNull: false,
     defaultValue: 0
   },
+  estado_stock: {
+    type: DataTypes.ENUM('Habido', 'Agotado'),
+    allowNull: true
+  },
+  porcentaje_stock: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true
+  },
   umbral_bajo_stock: {
     type: DataTypes.INTEGER,
-    defaultValue: 10
+    defaultValue: 20
   },
   umbral_critico_stock: {
     type: DataTypes.INTEGER,
-    defaultValue: 5
+    defaultValue: 10
   },
   categoria_id: {
     type: DataTypes.INTEGER,
-    allowNull: true,
+    allowNull: false,
     references: {
       model: 'categorias',
       key: 'categoria_id'
     }
-  },
-  url_imagen: {
-    type: DataTypes.STRING(500),
-    allowNull: true
-  },
-  activo: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
   },
   destacado: {
     type: DataTypes.BOOLEAN,
@@ -67,6 +66,10 @@ const Product = sequelize.define('Product', {
   },
   unidad_medida: {
     type: DataTypes.STRING(50),
+    allowNull: true
+  },
+  url_imagen: {
+    type: DataTypes.STRING(255),
     allowNull: true
   },
   creado_en: {
