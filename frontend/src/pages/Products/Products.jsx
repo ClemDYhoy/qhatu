@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../../components/products/ProductCard/ProductCard';
@@ -54,6 +55,48 @@ const ClearIcon = () => (
   </svg>
 );
 
+// Iconos de categorías
+const CategoryChipIcon = ({ type }) => {
+  const icons = {
+    dulces: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="8"/>
+        <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+      </svg>
+    ),
+    snacks: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M3 12h18M3 6h18M3 18h18"/>
+      </svg>
+    ),
+    ramen: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M8 2v20M16 2v20M4 12h16"/>
+        <circle cx="12" cy="12" r="8"/>
+      </svg>
+    ),
+    bebidas: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M6 2l2 20h8l2-20H6z"/>
+        <path d="M6 8h12"/>
+      </svg>
+    ),
+    licores: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M8 2h8v6l-4 4-4-4V2z"/>
+        <path d="M6 12v8a2 2 0 002 2h8a2 2 0 002-2v-8"/>
+      </svg>
+    ),
+    otros: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M9 9h6v6H9z"/>
+      </svg>
+    )
+  };
+  return icons[type] || icons.otros;
+};
+
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
@@ -88,7 +131,8 @@ const Products = () => {
   const loadCategories = async () => {
     try {
       const response = await getCategories();
-      setCategories(response.data || response || []);
+      const cats = response.data || response || [];
+      setCategories(cats);
     } catch (error) {
       console.error('Error al cargar categorías:', error);
     }
@@ -96,7 +140,7 @@ const Products = () => {
 
   const loadPriceRange = async () => {
     try {
-      const response = await getProducts({ limit: 1 }); // Obtener rango real
+      const response = await getProducts({ limit: 1 });
       const allProducts = response.data || [];
       const prices = allProducts.map(p => p.precio).filter(p => p != null);
       setPriceRange({
@@ -132,8 +176,6 @@ const Products = () => {
   const updateFilter = useCallback((key, value) => {
     setFilters(prev => {
       const newFilters = { ...prev, [key]: value, offset: 0 };
-      
-      // Actualizar URL
       const params = new URLSearchParams();
       Object.entries(newFilters).forEach(([k, v]) => {
         if (v && k !== 'limit' && k !== 'offset') {
@@ -141,7 +183,6 @@ const Products = () => {
         }
       });
       setSearchParams(params);
-      
       return newFilters;
     });
   }, [setSearchParams]);
@@ -181,9 +222,44 @@ const Products = () => {
     }
   };
 
+  // Categorías principales con iconos
+  const mainCategories = [
+    { id: '', name: 'Todos', icon: 'otros', count: 0 },
+    ...categories
+      .filter(cat => !cat.padre_id)
+      .map(cat => ({
+        id: cat.categoria_id,
+        name: cat.nombre,
+        icon: cat.nombre.toLowerCase().includes('dulce') ? 'dulces' :
+              cat.nombre.toLowerCase().includes('snack') ? 'snacks' :
+              cat.nombre.toLowerCase().includes('ramen') ? 'ramen' :
+              cat.nombre.toLowerCase().includes('bebida') ? 'bebidas' :
+              cat.nombre.toLowerCase().includes('licor') ? 'licores' : 'otros',
+        count: categories.filter(sub => sub.padre_id === cat.categoria_id).length + 1
+      }))
+  ];
+
   return (
     <div className="products-page">
       <div className="container">
+
+        {/* Barra de Categorías Horizontal */}
+        <div className="categories-bar">
+          <div className="categories-scroll">
+            {mainCategories.map(cat => (
+              <button
+                key={cat.id}
+                className={`category-chip ${filters.categoria_id == cat.id ? 'active' : ''}`}
+                onClick={() => updateFilter('categoria_id', cat.id === '' ? '' : cat.id)}
+              >
+                <CategoryChipIcon type={cat.icon} />
+                <span className="category-name">{cat.name}</span>
+                {cat.count > 0 && <span className="category-count">{cat.count}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Header móvil */}
         <div className="mobile-filters-header">
           <button 
@@ -193,7 +269,6 @@ const Products = () => {
             <FilterIcon />
             Filtros
           </button>
-          
           <div className="products-count-mobile">
             {pagination && (
               <span className="count-badge">
@@ -230,36 +305,6 @@ const Products = () => {
                 onChange={(e) => updateFilter('search', e.target.value)}
                 className="search-input"
               />
-            </div>
-
-            {/* Categorías */}
-            <div className="filter-group">
-              <label>
-                <CategoryIcon />
-                Categoría
-              </label>
-              <select
-                value={filters.categoria_id}
-                onChange={(e) => updateFilter('categoria_id', e.target.value)}
-              >
-                <option value="">Todas las categorías</option>
-                {categories
-                  .filter(cat => !cat.padre_id)
-                  .map(cat => (
-                    <optgroup key={cat.categoria_id} label={cat.nombre}>
-                      <option value={cat.categoria_id}>
-                        📦 {cat.nombre}
-                      </option>
-                      {categories
-                        .filter(sub => sub.padre_id === cat.categoria_id)
-                        .map(sub => (
-                          <option key={sub.categoria_id} value={sub.categoria_id}>
-                            &nbsp;&nbsp;📋 {sub.nombre}
-                          </option>
-                        ))}
-                    </optgroup>
-                  ))}
-              </select>
             </div>
 
             {/* Rango de precio */}
@@ -305,9 +350,9 @@ const Products = () => {
                 onChange={(e) => updateFilter('availability', e.target.value)}
               >
                 <option value="">Todos los productos</option>
-                <option value="in_stock">🟢 En stock</option>
-                <option value="low">🟡 Pocas unidades</option>
-                <option value="out">🔴 Agotado</option>
+                <option value="in_stock">En stock</option>
+                <option value="low">Pocas unidades</option>
+                <option value="out">Agotado</option>
               </select>
             </div>
 
@@ -376,15 +421,16 @@ const Products = () => {
                   value={`${filters.orderBy}-${filters.order}`}
                   onChange={(e) => {
                     const [orderBy, order] = e.target.value.split('-');
-                    setFilters(prev => ({ ...prev, orderBy, order }));
+                    updateFilter('orderBy', orderBy);
+                    updateFilter('order', order);
                   }}
                 >
-                  <option value="nombre-ASC">🅰️ Nombre (A-Z)</option>
-                  <option value="nombre-DESC">🅱️ Nombre (Z-A)</option>
-                  <option value="precio-ASC">💰 Precio (menor a mayor)</option>
-                  <option value="precio-DESC">💎 Precio (mayor a menor)</option>
-                  <option value="ventas-DESC">🔥 Más vendidos</option>
-                  <option value="creado_en-DESC">🆕 Más recientes</option>
+                  <option value="nombre-ASC">Nombre (A-Z)</option>
+                  <option value="nombre-DESC">Nombre (Z-A)</option>
+                  <option value="precio-ASC">Precio (menor a mayor)</option>
+                  <option value="precio-DESC">Precio (mayor a menor)</option>
+                  <option value="ventas-DESC">Más vendidos</option>
+                  <option value="creado_en-DESC">Más recientes</option>
                 </select>
               </div>
             </div>
@@ -434,7 +480,7 @@ const Products = () => {
             ) : (
               <div className="products-empty">
                 <div className="empty-state">
-                  <div className="empty-icon">📦</div>
+                  <div className="empty-icon">Caja</div>
                   <h3>No se encontraron productos</h3>
                   <p>Intenta ajustar los filtros o buscar otros términos</p>
                   <button onClick={clearFilters} className="btn btn-gold">
