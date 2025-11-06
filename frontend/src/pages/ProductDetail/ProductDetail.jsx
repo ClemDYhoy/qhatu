@@ -10,12 +10,37 @@ const ProductDetail = () => {
     const [product, setProduct] = useState(null);
     const [error, setError] = useState(null);
 
+    // === Agregado: Guardar en "Productos vistos recientemente" ===
+    const saveToRecentlyViewed = (product) => {
+        try {
+            let viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+           
+            // Remover si ya existe
+            viewed = viewed.filter(p => p.producto_id !== product.producto_id);
+           
+            // Agregar al inicio
+            viewed.unshift(product);
+           
+            // Mantener solo los últimos 10
+            viewed = viewed.slice(0, 10);
+           
+            localStorage.setItem('recentlyViewed', JSON.stringify(viewed));
+        } catch (err) {
+            console.error('Error al guardar en historial:', err);
+        }
+    };
+
+    // === useEffect mejorado (reemplaza el original) ===
     useEffect(() => {
         const fetchProduct = async () => {
             try {
                 const products = await getProducts({ id });
                 if (products.length > 0) {
-                    setProduct(products[0]);
+                    const productData = products[0];
+                    setProduct(productData);
+                   
+                    // Guardar en productos vistos recientemente
+                    saveToRecentlyViewed(productData);
                 } else {
                     setError('Producto no encontrado');
                 }

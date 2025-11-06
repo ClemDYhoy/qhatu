@@ -366,7 +366,7 @@ const Header = () => {
                   <div className="oe-contact-method">
                     <span className="oe-contact-icon">📱</span>
                     <a
-                      href="https://wa.me/1234567890"
+                      href="https://wa.me/952682285"
                       className="oe-contact-link"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -383,7 +383,7 @@ const Header = () => {
                       <span>📧</span> Enviar Email
                     </a>
                     <a
-                      href="https://wa.me/1234567890"
+                      href="https://wa.me/952682285"
                       className="oe-contact-btn oe-contact-btn-secondary"
                       target="_blank"
                       rel="noopener noreferrer"

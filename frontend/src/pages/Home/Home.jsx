@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Carousel from '../../components/Carousel/Carousel';
 import ProductCard from '../../components/products/ProductCard/ProductCard';
-import { getCarousels, getFeaturedProducts, getBestSellers, getRecentProducts } from '../../services/api';
+import { getCarousels, getFeaturedProducts, getBestSellers, getRecentProducts, getProductsByCategory } from '../../services/api';
 import './Home.css';
 
 // SVG Icons Component
@@ -78,6 +78,16 @@ const icons = {
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
         <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
     </svg>
+    ),
+    eye: (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+    </svg>
+    ),
+    candy: (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.51-3.49L17.5 6.5 9.99 9.99 6.5 17.5zm5.5-6.6c.61 0 1.1.49 1.1 1.1s-.49 1.1-1.1 1.1-1.1-.49-1.1-1.1.49-1.1 1.1-1.1z"/>
+    </svg>
     )
 };
 
@@ -89,29 +99,43 @@ const [carousels, setCarousels] = useState([]);
 const [featuredProducts, setFeaturedProducts] = useState([]);
 const [bestSellers, setBestSellers] = useState([]);
 const [recentProducts, setRecentProducts] = useState([]);
+const [recentlyViewed, setRecentlyViewed] = useState([]);
+const [dulcesProducts, setDulcesProducts] = useState([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(null);
 
 useEffect(() => {
     loadHomeData();
+    loadRecentlyViewed();
 }, []);
+
+const loadRecentlyViewed = () => {
+    try {
+    const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+    setRecentlyViewed(viewed.slice(0, 8)); // Últimos 8 productos vistos
+    } catch (err) {
+    console.error('Error al cargar productos vistos:', err);
+    }
+};
 
 const loadHomeData = async () => {
     try {
     setLoading(true);
     setError(null);
 
-    const [carouselsRes, featuredRes, bestSellersRes, recentRes] = await Promise.all([
+    const [carouselsRes, featuredRes, bestSellersRes, recentRes, dulcesRes] = await Promise.all([
         getCarousels().catch(() => ({ data: [] })),
         getFeaturedProducts(8).catch(() => ({ data: [] })),
         getBestSellers(8).catch(() => ({ data: [] })),
-        getRecentProducts(8).catch(() => ({ data: [] }))
+        getRecentProducts(8).catch(() => ({ data: [] })),
+        getProductsByCategory(1, 12).catch(() => ({ data: [] })) // Categoría Dulces ID=1
     ]);
 
     setCarousels(carouselsRes.data || carouselsRes || []);
     setFeaturedProducts(featuredRes.data || featuredRes || []);
     setBestSellers(bestSellersRes.data || bestSellersRes || []);
     setRecentProducts(recentRes.data || recentRes || []);
+    setDulcesProducts(dulcesRes.data || dulcesRes || []);
 
     } catch (err) {
     console.error('Error al cargar datos:', err);
@@ -154,6 +178,102 @@ return (
             </div>
         </div>
         </section>
+    )}
+
+    {/* === SECCIÓN AGREGADA: Vistos Recientemente (debajo del carrusel) === */}
+    {recentlyViewed.length > 0 && (
+    <section className="recently-viewed-section">
+        <div className="section-container">
+        <div className="section-header">
+            <div className="section-badge">
+            <SVGIcon name="eye" className="badge-icon" />
+            </div>
+            <h2 className="section-title">Vistos Recientemente</h2>
+            <p className="section-subtitle">Productos que has explorado</p>
+        </div>
+        <div className="products-grid">
+            {recentlyViewed.map((product) => (
+            <ProductCard key={product.producto_id} product={product} />
+            ))}
+        </div>
+        </div>
+    </section>
+    )}
+
+    {/* === SECCIÓN AGREGADA: Más Vendidos (debajo de Vistos Recientemente) === */}
+    {bestSellers.length > 0 && (
+    <section className="best-sellers-section">
+        <div className="section-container">
+        <div className="section-header">
+            <div className="section-badge fire-badge">
+            <SVGIcon name="fire" className="badge-icon" />
+            </div>
+            <h2 className="section-title">Más Vendidos</h2>
+            <p className="section-subtitle">Los favoritos de nuestros clientes</p>
+        </div>
+        <div className="products-grid">
+            {bestSellers.slice(0, 5).map((product) => (
+            <ProductCard key={product.producto_id} product={product} />
+            ))}
+        </div>
+        <div className="section-footer">
+            <Link to="/products?orderBy=ventas&order=DESC" className="btn btn-red btn-lg">
+            Ver Todos los Más Vendidos
+            <span className="btn-arrow">→</span>
+            </Link>
+        </div>
+        </div>
+    </section>
+    )}
+
+    {/* Productos Vistos Recientemente */}
+    {recentlyViewed.length > 0 && (
+        <section className="recently-viewed-section">
+        <div className="section-container">
+            <div className="section-header">
+            <div className="section-badge">
+                <SVGIcon name="eye" className="badge-icon" />
+            </div>
+            <h2 className="section-title">Vistos Recientemente</h2>
+            <p className="section-subtitle">
+                Productos que has explorado antes
+            </p>
+            </div>
+            <div className="products-grid">
+            {recentlyViewed.map((product) => (
+                <ProductCard key={product.producto_id} product={product} />
+            ))}
+            </div>
+        </div>
+        </section>
+    )}
+
+    {/* Productos de Dulces */}
+    {dulcesProducts.length > 0 && (
+    <section className="dulces-section">
+        <div className="section-container">
+        <div className="section-header">
+            <div className="section-badge candy-badge">
+            <SVGIcon name="candy" className="badge-icon" />
+            </div>
+            <h2 className="section-title">Dulces Importados</h2>
+            <p className="section-subtitle">
+            Los mejores dulces del mundo directo a tu puerta
+            </p>
+        </div>
+        <div className="products-grid">
+            {dulcesProducts.slice(0, 5).map((product) => (
+            <ProductCard key={product.producto_id} product={product} />
+            ))}
+        </div>
+        <div className="section-footer">
+            <Link to="/products?category=1" className="btn btn-gold btn-lg">
+            Ver Todos los Dulces
+            <span className="btn-arrow">→</span>
+            </Link>
+        </div>
+        </div>
+    </section>
     )}
 
     {/* Error Handling */}
@@ -249,8 +369,9 @@ return (
                 <div className="info-content">
                 <h4>WhatsApp</h4>
                 <a href="https://wa.me/51123456789" target="_blank" rel="noopener noreferrer" className="contact-link">
-                    +51 123 456 789
+                    +51 952682285
                 </a>
+                <br></br>
                 <small>Atendemos 24/7</small>
                 </div>
             </div>

@@ -896,3 +896,185 @@
     padding: 3rem 1.5rem;
   }
 }
+
+
+/* ==============================================
+   PRODUCTOS VISTOS RECIENTEMENTE
+   ============================================== */
+.recently-viewed-section {
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.recently-viewed-section .section-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.recently-viewed-section .section-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.recently-viewed-section .section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50px;
+  margin-bottom: 16px;
+}
+
+.recently-viewed-section .badge-icon {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.recently-viewed-section .section-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #2d3748;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+
+.recently-viewed-section .section-subtitle {
+  font-size: 1.1rem;
+  color: #718096;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ==============================================
+   PRODUCTOS DE DULCES
+   ============================================== */
+.dulces-section {
+  padding: 80px 20px;
+  background: linear-gradient(135deg, #fff5f7 0%, #fff0f3 50%, #ffe8f0 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.dulces-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(255, 192, 203, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 105, 180, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.dulces-section .section-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.dulces-section .section-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.dulces-section .candy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+  border-radius: 50px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.dulces-section .badge-icon {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.dulces-section .section-title {
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 16px;
+  letter-spacing: -1px;
+}
+
+.dulces-section .section-subtitle {
+  font-size: 1.2rem;
+  color: #718096;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.dulces-section .section-footer {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.dulces-section .btn-arrow {
+  display: inline-block;
+  margin-left: 8px;
+  transition: transform 0.3s ease;
+}
+
+.dulces-section .btn:hover .btn-arrow {
+  transform: translateX(5px);
+}
+
+/* ==============================================
+   PRODUCTS GRID
+   ============================================== */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  
+  .recently-viewed-section .section-title,
+  .dulces-section .section-title {
+    font-size: 2rem;
+  }
+  
+  .recently-viewed-section,
+  .dulces-section {
+    padding: 40px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}
+
+
+  
