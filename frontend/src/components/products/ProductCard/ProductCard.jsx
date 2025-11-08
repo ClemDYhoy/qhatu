@@ -1,14 +1,35 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, memo, useMemo } from 'react';
 import { useCart } from '../../../contexts/CartContext';
 import whatsappService from '../../../services/whatsappService';
 import './ProductCard.css';
 
-// === ICONOS SVG ===
-const CartIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+// ============================================
+// ICONOS SVG MEJORADOS
+// ============================================
+
+const CartIcon = ({ className = "" }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="9" cy="21" r="1"/>
     <circle cx="20" cy="21" r="1"/>
     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+  </svg>
+);
+
+const CartCheckIcon = ({ className = "" }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+    {/* Carrito (más delgado) */}
+    <g strokeWidth="2" opacity="0.7">
+      <circle cx="9" cy="21" r="1"/>
+      <circle cx="20" cy="21" r="1"/>
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+    </g>
+    {/* Check EXTRA grande y prominente */}
+    <polyline 
+      points="10 10 13.5 13.5 20 7" 
+      strokeWidth="3.5" 
+      stroke="currentColor"
+      transform="scale(1.5) translate(-5.5 -3)"
+    />
   </svg>
 );
 
@@ -95,94 +116,163 @@ const SavingsIcon = () => (
   </svg>
 );
 
-// === COMPONENTE PRINCIPAL ===
+// ============================================
+// COMPONENTE PRINCIPAL MEJORADO
+// ============================================
+
 const ProductCard = memo(({ product }) => {
-  const { addToCart, isInCart, getProductQuantity } = useCart();
+  const { addToCart, isInCart, getProductQuantity, updateQuantity } = useCart();
   const [showDetails, setShowDetails] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
 
-  if (!product || !product.producto_id) return null;
+  if (!product?.producto_id) return null;
 
-  // Precios
-  const precio = parseFloat(product.precio) || 0;
-  const precioDescuento = product.precio_descuento ? parseFloat(product.precio_descuento) : null;
-  const hasDiscount = precioDescuento && precioDescuento < precio;
-  const discountPercent = hasDiscount ? Math.round(((precio - precioDescuento) / precio) * 100) : 0;
-  const finalPrice = hasDiscount ? precioDescuento : precio;
+  // ✅ Cálculos memoizados para mejor performance
+  const prices = useMemo(() => {
+    const precio = parseFloat(product.precio) || 0;
+    const precioDescuento = product.precio_descuento ? parseFloat(product.precio_descuento) : null;
+    const hasDiscount = precioDescuento && precioDescuento < precio;
+    const discountPercent = hasDiscount ? Math.round(((precio - precioDescuento) / precio) * 100) : 0;
+    const finalPrice = hasDiscount ? precioDescuento : precio;
 
-  const stock = product.stock || 0;
-  const isOutOfStock = stock === 0;
-  const isLowStock = stock > 0 && stock < 10;
-  const inCart = isInCart(product.producto_id);
-  const cartQuantity = getProductQuantity(product.producto_id);
-  const maxAvailable = Math.min(stock - cartQuantity, 99);
+    return { precio, precioDescuento, hasDiscount, discountPercent, finalPrice };
+  }, [product.precio, product.precio_descuento]);
 
-  // Handlers
-  const handleAddToCart = useCallback((e) => {
-    e.stopPropagation();
-    if (isOutOfStock || quantity < 1) return;
+  const stockInfo = useMemo(() => {
+    const stock = product.stock || 0;
+    const isOutOfStock = stock === 0;
+    const isLowStock = stock > 0 && stock < 10;
+    const cartQuantity = getProductQuantity(product.producto_id);
+    const inCart = isInCart(product.producto_id);
+    const maxAvailable = Math.max(0, Math.min(stock - cartQuantity, 99));
 
-    const qtyToAdd = Math.min(quantity, maxAvailable);
-    if (qtyToAdd > 0) {
-      addToCart(product, qtyToAdd);
-      setQuantity(1); // Reset
+    return { stock, isOutOfStock, isLowStock, cartQuantity, inCart, maxAvailable };
+  }, [product.stock, product.producto_id, getProductQuantity, isInCart]);
+
+  // ✅ Handler mejorado con feedback visual
+  const handleAddToCart = useCallback(async (e) => {
+    e?.stopPropagation();
+    
+    if (stockInfo.isOutOfStock || quantity < 1 || isAdding) return;
+
+    const qtyToAdd = Math.min(quantity, stockInfo.maxAvailable);
+    if (qtyToAdd <= 0) return;
+
+    setIsAdding(true);
+
+    try {
+      const success = addToCart(product, qtyToAdd);
+      if (success) {
+        // Feedback visual exitoso
+        setQuantity(1);
+        
+        // Auto-cerrar modal si está abierto
+        if (showDetails) {
+          setTimeout(() => {
+            // El modal permanece abierto para seguir comprando
+          }, 300);
+        }
+      }
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
+    } finally {
+      // Delay para mostrar animación
+      setTimeout(() => {
+        setIsAdding(false);
+      }, 600);
     }
-  }, [product, quantity, isOutOfStock, maxAvailable, addToCart]);
+  }, [product, quantity, stockInfo.isOutOfStock, stockInfo.maxAvailable, addToCart, isAdding, showDetails]);
 
-  const handleQuantityChange = (e) => {
+  // ✅ Control de cantidad con validación
+  const handleQuantityChange = useCallback((e) => {
     const val = parseInt(e.target.value) || 1;
-    setQuantity(Math.max(1, Math.min(val, maxAvailable)));
-  };
+    const newQty = Math.max(1, Math.min(val, stockInfo.maxAvailable));
+    setQuantity(newQty);
+  }, [stockInfo.maxAvailable]);
 
-  const handleIncrement = () => {
-    if (quantity < maxAvailable) setQuantity(q => q + 1);
-  };
+  const handleIncrement = useCallback(() => {
+    setQuantity(q => {
+      const newQty = q + 1;
+      return newQty <= stockInfo.maxAvailable ? newQty : q;
+    });
+  }, [stockInfo.maxAvailable]);
 
-  const handleDecrement = () => {
-    if (quantity > 1) setQuantity(q => q - 1);
-  };
+  const handleDecrement = useCallback(() => {
+    setQuantity(q => Math.max(1, q - 1));
+  }, []);
 
-  const openModal = () => {
+  // ✅ Modal handlers
+  const openModal = useCallback(() => {
     setShowDetails(true);
     document.body.style.overflow = 'hidden';
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setShowDetails(false);
     document.body.style.overflow = 'unset';
-  };
+  }, []);
 
-  const handleWhatsApp = (e) => {
+  const handleWhatsApp = useCallback((e) => {
     e.stopPropagation();
-    whatsappService.consultProduct({ ...product, precio, precio_descuento: precioDescuento });
-  };
+    whatsappService.consultProduct({ 
+      ...product, 
+      precio: prices.precio, 
+      precio_descuento: prices.precioDescuento 
+    });
+  }, [product, prices]);
 
-  const formatPrice = (price) => `S/. ${(parseFloat(price) || 0).toFixed(2)}`;
+  const formatPrice = useCallback((price) => {
+    return `S/. ${(parseFloat(price) || 0).toFixed(2)}`;
+  }, []);
+
   const imageUrl = imageError ? '/awaiting-image.jpeg' : (product.url_imagen || '/awaiting-image.jpeg');
+
+  // ✅ Clases dinámicas para el botón de agregar
+  const addButtonClasses = `btn btn--primary ${
+    stockInfo.inCart ? 'btn--in-cart' : ''
+  } ${isAdding ? 'btn--adding' : ''}`;
 
   return (
     <>
-      {/* TARJETA */}
+      {/* ============================================ */}
+      {/* TARJETA DE PRODUCTO */}
+      {/* ============================================ */}
       <article className="product-card">
-        {/* Badges */}
-        {(hasDiscount || isOutOfStock || product.destacado) && (
+        {/* Badges superiores */}
+        {(prices.hasDiscount || stockInfo.isOutOfStock || product.destacado) && (
           <div className="product-card__badges">
-            {product.destacado && !isOutOfStock && (
-              <span className="badge badge--featured"><StarIcon /> Destacado</span>
+            {product.destacado && !stockInfo.isOutOfStock && (
+              <span className="badge badge--featured">
+                <StarIcon /> Destacado
+              </span>
             )}
-            {hasDiscount && !isOutOfStock && (
-              <span className="badge badge--discount"><TagIcon /> -{discountPercent}%</span>
+            {prices.hasDiscount && !stockInfo.isOutOfStock && (
+              <span className="badge badge--discount">
+                <TagIcon /> -{prices.discountPercent}%
+              </span>
             )}
-            {isOutOfStock && (
+            {stockInfo.isOutOfStock && (
               <span className="badge badge--out">Agotado</span>
             )}
           </div>
         )}
 
-        {/* Imagen */}
+        {/* Imagen con overlay de carrito */}
         <div className="product-card__image" onClick={openModal}>
-          <img src={imageUrl} alt={product.nombre} loading="lazy" onError={() => setImageError(true)} />
+          <img 
+            src={imageUrl} 
+            alt={product.nombre} 
+            loading="lazy" 
+            onError={() => setImageError(true)} 
+          />
+          {stockInfo.inCart && (
+            <div className="product-card__in-cart-badge">
+              <span>{stockInfo.cartQuantity}</span>
+              <CartCheckIcon className="icon-check" />
+            </div>
+          )}
         </div>
 
         {/* Contenido */}
@@ -190,135 +280,280 @@ const ProductCard = memo(({ product }) => {
           {product.categoria?.nombre && (
             <p className="product-card__category">{product.categoria.nombre}</p>
           )}
-          <h3 className="product-card__title" title={product.nombre}>{product.nombre}</h3>
+          
+          <h3 className="product-card__title" title={product.nombre}>
+            {product.nombre}
+          </h3>
 
           {/* Precio */}
           <div className="product-card__price">
-            {hasDiscount ? (
+            {prices.hasDiscount ? (
               <>
-                <span className="price price--old">{formatPrice(precio)}</span>
-                <span className="price price--current price--discount">{formatPrice(precioDescuento)}</span>
+                <span className="price price--old">{formatPrice(prices.precio)}</span>
+                <span className="price price--current price--discount">
+                  {formatPrice(prices.precioDescuento)}
+                </span>
               </>
             ) : (
-              <span className="price price--current">{formatPrice(precio)}</span>
+              <span className="price price--current">{formatPrice(prices.precio)}</span>
             )}
           </div>
 
-          {/* Stock */}
+          {/* Stock status */}
           <div className="product-card__stock">
-            {isOutOfStock ? (
-              <span className="stock-status stock-status--out"><AlertIcon /> Agotado</span>
-            ) : isLowStock ? (
-              <span className="stock-status stock-status--low"><AlertIcon /> Pocas unidades</span>
+            {stockInfo.isOutOfStock ? (
+              <span className="stock-status stock-status--out">
+                <AlertIcon /> Agotado
+              </span>
+            ) : stockInfo.isLowStock ? (
+              <span className="stock-status stock-status--low">
+                <AlertIcon /> Solo {stockInfo.stock} unidades
+              </span>
             ) : (
-              <span className="stock-status stock-status--available"><CheckIcon /> Disponible</span>
+              <span className="stock-status stock-status--available">
+                <CheckIcon /> Disponible
+              </span>
             )}
           </div>
 
-          {/* Cantidad + Agregar */}
-          {!isOutOfStock && (
+          {/* Selector de cantidad */}
+          {!stockInfo.isOutOfStock && !stockInfo.inCart && (
             <div className="product-card__quantity">
-              <button onClick={handleDecrement} disabled={quantity <= 1} className="qty-btn"><MinusIcon /></button>
+              <button 
+                onClick={handleDecrement} 
+                disabled={quantity <= 1} 
+                className="qty-btn"
+                aria-label="Disminuir cantidad"
+              >
+                <MinusIcon />
+              </button>
               <input
                 type="number"
                 value={quantity}
                 onChange={handleQuantityChange}
                 min="1"
-                max={maxAvailable}
+                max={stockInfo.maxAvailable}
                 className="qty-input"
+                aria-label="Cantidad"
               />
-              <button onClick={handleIncrement} disabled={quantity >= maxAvailable} className="qty-btn"><PlusIcon /></button>
+              <button 
+                onClick={handleIncrement} 
+                disabled={quantity >= stockInfo.maxAvailable} 
+                className="qty-btn"
+                aria-label="Aumentar cantidad"
+              >
+                <PlusIcon />
+              </button>
             </div>
           )}
 
           {/* Acciones */}
           <div className="product-card__actions">
             <button
-              className="btn btn--primary"
+              className={addButtonClasses}
               onClick={handleAddToCart}
-              disabled={isOutOfStock || maxAvailable <= 0}
+              disabled={stockInfo.isOutOfStock || stockInfo.maxAvailable <= 0 || stockInfo.inCart || isAdding}
+              aria-label={stockInfo.inCart ? 'Producto en carrito' : 'Agregar al carrito'}
             >
-              <CartIcon />
-              <span>{inCart ? `(${cartQuantity})` : 'Agregar'}</span>
+              {stockInfo.inCart ? (
+                <>
+                  <CartCheckIcon className="icon-animated" />
+                </>
+              ) : isAdding ? (
+                <>
+                  <CartIcon className="icon-spin" />
+                </>
+              ) : (
+                <>
+                  <CartIcon className="w-4 h-4 inline-block" />
+                </>
+              )}
             </button>
-            <button className="btn btn--secondary" onClick={openModal}>
+            
+            <button 
+              className="btn btn--secondary" 
+              onClick={openModal}
+              aria-label="Ver detalles"
+            >
               <EyeIcon />
             </button>
           </div>
         </div>
       </article>
 
-      {/* MODAL */}
+      {/* ============================================ */}
+      {/* MODAL DE DETALLES */}
+      {/* ============================================ */}
       {showDetails && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <button className="modal__close" onClick={closeModal}><CloseIcon /></button>
+            <button className="modal__close" onClick={closeModal} aria-label="Cerrar">
+              <CloseIcon />
+            </button>
 
             <div className="modal__content">
+              {/* Imagen grande */}
               <div className="modal__image">
                 <img src={imageUrl} alt={product.nombre} onError={() => setImageError(true)} />
-                {product.destacado && <div className="modal__image-badge"><StarIcon /> Destacado</div>}
+                {product.destacado && (
+                  <div className="modal__image-badge">
+                    <StarIcon /> Destacado
+                  </div>
+                )}
+                {stockInfo.inCart && (
+                  <div className="modal__image-in-cart">
+                    <CartCheckIcon />
+                    <span>{stockInfo.cartQuantity} en tu carrito</span>
+                  </div>
+                )}
               </div>
 
+              {/* Información */}
               <div className="modal__info">
-                {product.categoria?.nombre && <span className="modal__category">{product.categoria.nombre}</span>}
+                {product.categoria?.nombre && (
+                  <span className="modal__category">{product.categoria.nombre}</span>
+                )}
+                
                 <h2 className="modal__title">{product.nombre}</h2>
-                {product.descripcion && <p className="modal__description">{product.descripcion}</p>}
+                
+                {product.descripcion && (
+                  <p className="modal__description">{product.descripcion}</p>
+                )}
 
-                {/* Precio */}
+                {/* Precio detallado */}
                 <div className="modal__price-box">
-                  {hasDiscount ? (
+                  {prices.hasDiscount ? (
                     <>
                       <div className="price-detail">
                         <span className="price-detail__label">Precio regular:</span>
-                        <span className="price-detail__value price-detail__value--old">{formatPrice(precio)}</span>
+                        <span className="price-detail__value price-detail__value--old">
+                          {formatPrice(prices.precio)}
+                        </span>
                       </div>
                       <div className="price-detail price-detail--main">
-                        <span className="price-detail__label"><SavingsIcon /> Precio oferta:</span>
-                        <span className="price-detail__value price-detail__value--discount">{formatPrice(precioDescuento)}</span>
+                        <span className="price-detail__label">
+                          <SavingsIcon /> Precio oferta:
+                        </span>
+                        <span className="price-detail__value price-detail__value--discount">
+                          {formatPrice(prices.precioDescuento)}
+                        </span>
                       </div>
                       <div className="price-detail__savings">
-                        Ahorras {formatPrice(precio - precioDescuento)}
+                        🎉 Ahorras {formatPrice(prices.precio - prices.precioDescuento)}
                       </div>
                     </>
                   ) : (
                     <div className="price-detail price-detail--main">
                       <span className="price-detail__label">Precio:</span>
-                      <span className="price-detail__value">{formatPrice(precio)}</span>
+                      <span className="price-detail__value">
+                        {formatPrice(prices.precio)}
+                      </span>
                     </div>
                   )}
                 </div>
 
                 {/* Stock */}
                 <div className="modal__stock">
-                  {isOutOfStock ? (
-                    <span className="stock-badge stock-badge--out"><AlertIcon /> Agotado</span>
-                  ) : isLowStock ? (
-                    <span className="stock-badge stock-badge--low"><AlertIcon /> Solo quedan {stock} unidades</span>
+                  {stockInfo.isOutOfStock ? (
+                    <span className="stock-badge stock-badge--out">
+                      <AlertIcon /> Agotado
+                    </span>
+                  ) : stockInfo.isLowStock ? (
+                    <span className="stock-badge stock-badge--low">
+                      <AlertIcon /> Solo quedan {stockInfo.stock} unidades
+                    </span>
                   ) : (
-                    <span className="stock-badge stock-badge--available"><CheckIcon /> {stock} disponibles</span>
+                    <span className="stock-badge stock-badge--available">
+                      <CheckIcon /> {stockInfo.stock} disponibles
+                    </span>
                   )}
                 </div>
 
                 {/* Info extra */}
                 {(product.peso || product.unidad_medida) && (
                   <div className="modal__extra-info">
-                    {product.peso && <p><WeightIcon /> <strong>Peso:</strong> {product.peso}g</p>}
-                    {product.unidad_medida && <p><PackageIcon /> <strong>Unidad:</strong> {product.unidad_medida}</p>}
+                    {product.peso && (
+                      <p>
+                        <WeightIcon /> <strong>Peso:</strong> {product.peso}g
+                      </p>
+                    )}
+                    {product.unidad_medida && (
+                      <p>
+                        <PackageIcon /> <strong>Unidad:</strong> {product.unidad_medida}
+                      </p>
+                    )}
                   </div>
                 )}
 
-                {/* Acciones */}
+                {/* Selector de cantidad en modal */}
+                {!stockInfo.isOutOfStock && !stockInfo.inCart && (
+                  <div className="modal__quantity-selector">
+                    <label htmlFor="modal-quantity">Cantidad:</label>
+                    <div className="quantity-controls">
+                      <button 
+                        onClick={handleDecrement} 
+                        disabled={quantity <= 1} 
+                        className="qty-btn"
+                      >
+                        <MinusIcon />
+                      </button>
+                      <input
+                        id="modal-quantity"
+                        type="number"
+                        value={quantity}
+                        onChange={handleQuantityChange}
+                        min="1"
+                        max={stockInfo.maxAvailable}
+                        className="qty-input qty-input--large"
+                      />
+                      <button 
+                        onClick={handleIncrement} 
+                        disabled={quantity >= stockInfo.maxAvailable} 
+                        className="qty-btn"
+                      >
+                        <PlusIcon />
+                      </button>
+                    </div>
+                    <span className="quantity-hint">
+                      Máximo disponible: {stockInfo.maxAvailable}
+                    </span>
+                  </div>
+                )}
+
+                {/* Acciones del modal */}
                 <div className="modal__actions">
                   <button
-                    className="btn btn--large btn--primary"
+                    className={`btn btn--large ${addButtonClasses}`}
                     onClick={handleAddToCart}
-                    disabled={isOutOfStock || maxAvailable <= 0}
+                    disabled={stockInfo.isOutOfStock || stockInfo.maxAvailable <= 0 || stockInfo.inCart || isAdding}
                   >
-                    <CartIcon />
-                    <span>{isOutOfStock ? 'No disponible' : inCart ? `En carrito (${cartQuantity})` : 'Agregar al carrito'}</span>
+                    {stockInfo.inCart ? (
+                      <>
+                        <CartCheckIcon className="icon-animated" />
+                        <span>Ya está en tu carrito ({stockInfo.cartQuantity})</span>
+                      </>
+                    ) : isAdding ? (
+                      <>
+                        <CartIcon className="icon-spin" />
+                        <span>Agregando...</span>
+                      </>
+                    ) : stockInfo.isOutOfStock ? (
+                      <>
+                        <AlertIcon />
+                        <span>No disponible</span>
+                      </>
+                    ) : (
+                      <>
+                        <CartIcon />
+                        <span>Agregar al carrito</span>
+                      </>
+                    )}
                   </button>
-                  <button className="btn btn--large btn--whatsapp" onClick={handleWhatsApp}>
+                  
+                  <button 
+                    className="btn btn--large btn--whatsapp" 
+                    onClick={handleWhatsApp}
+                  >
                     <WhatsAppIcon />
                     <span>Consultar por WhatsApp</span>
                   </button>
@@ -334,8 +569,23 @@ const ProductCard = memo(({ product }) => {
 
 ProductCard.displayName = 'ProductCard';
 
-// === GRID ===
+// ============================================
+// GRID DE PRODUCTOS
+// ============================================
+
 export const ProductsGrid = memo(({ products, title, subtitle }) => {
+  if (!products || products.length === 0) {
+    return (
+      <section className="products-section">
+        <div className="container">
+          <div className="products-empty">
+            <p>No hay productos disponibles</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="products-section">
       <div className="container">

@@ -12,6 +12,7 @@ import carouselRoutes from './routes/carousel.js';
 import categoryRoutes from './routes/categories.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
+import discountBannersRoutes from './routes/discountBanners.js'; // ← NUEVO
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use('/api/carousels', carouselRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/banners-descuento', discountBannersRoutes); // ← NUEVO
 
 // Ruta de salud
 app.get('/health', (req, res) => {
@@ -52,7 +54,8 @@ app.get('/', (req, res) => {
       carousels: '/api/carousels',
       categories: '/api/categories',
       auth: '/api/auth',
-      users: '/api/users'
+      users: '/api/users',
+      banners: '/api/banners-descuento' // ← NUEVO
     }
   });
 });
@@ -85,6 +88,10 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`✓ Servidor corriendo en http://localhost:${PORT}`);
       console.log(`✓ API disponible en http://localhost:${PORT}/api`);
+      console.log(`✓ Endpoints:`);
+      console.log(`  - Products: http://localhost:${PORT}/api/products`);
+      console.log(`  - Categories: http://localhost:${PORT}/api/categories`);
+      console.log(`  - Banners: http://localhost:${PORT}/api/banners-descuento/activos`);
       console.log(`✓ Entorno: ${process.env.NODE_ENV || 'development'}`);
     });
   } catch (error) {

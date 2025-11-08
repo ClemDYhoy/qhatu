@@ -1,6 +1,12 @@
+// Configuración base
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Función helper para hacer requests
+/**
+ * Función helper centralizada para hacer requests a la API
+ * @param {string} endpoint - Endpoint de la API
+ * @param {Object} options - Opciones de fetch
+ * @returns {Promise<any>} Respuesta de la API
+ */
 const fetchAPI = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token');
   
@@ -15,10 +21,16 @@ const fetchAPI = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(`${API_URL}${endpoint}`, config);
+    
+    // Manejo especial para respuestas vacías (204, etc)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return { success: true };
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || data.message || 'Error en la petición');
+      throw new Error(data.error || data.message || `Error ${response.status}`);
     }
 
     return data;
@@ -28,21 +40,14 @@ const fetchAPI = async (endpoint, options = {}) => {
   }
 };
 
+// ============================================
 // === PRODUCTOS ===
+// ============================================
 
 /**
- * Obtener productos con filtros
- * @param {Object} filters - Filtros de búsqueda
- * @param {string} filters.search - Texto de búsqueda
- * @param {number} filters.categoria_id - ID de categoría
- * @param {number} filters.priceMin - Precio mínimo
- * @param {number} filters.priceMax - Precio máximo
- * @param {string} filters.availability - Disponibilidad (in_stock, low, critical, out)
- * @param {boolean} filters.highlighted - Solo destacados
- * @param {string} filters.orderBy - Campo de ordenamiento
- * @param {string} filters.order - Dirección (ASC, DESC)
- * @param {number} filters.limit - Límite de resultados
- * @param {number} filters.offset - Offset para paginación
+ * Obtener productos con filtros avanzados
+ * @param {Object} filters - Objeto con filtros opcionales
+ * @returns {Promise<Object>} Lista de productos y metadata
  */
 export const getProducts = async (filters = {}) => {
   const queryParams = new URLSearchParams();
@@ -92,7 +97,7 @@ export const getRecentProducts = async (limit = 4) => {
 /**
  * Obtener productos por categoría
  * @param {number} categoryId - ID de la categoría
- * @param {number} limit - Cantidad de productos
+ * @param {number} limit - Cantidad de productos (opcional)
  */
 export const getProductsByCategory = async (categoryId, limit = null) => {
   const params = limit ? `?limit=${limit}` : '';
@@ -100,7 +105,7 @@ export const getProductsByCategory = async (categoryId, limit = null) => {
 };
 
 /**
- * Obtener rango de precios
+ * Obtener rango de precios de productos
  * @param {number} categoria_id - ID de categoría (opcional)
  */
 export const getPriceRange = async (categoria_id = null) => {
@@ -117,7 +122,16 @@ export const searchProducts = async (query, limit = 10) => {
   return fetchAPI(`/products/search?q=${encodeURIComponent(query)}&limit=${limit}`);
 };
 
+/**
+ * Obtener estadísticas de productos por categoría
+ */
+export const getCategoryStats = async () => {
+  return fetchAPI('/products/stats-by-category');
+};
+
+// ============================================
 // === CATEGORÍAS ===
+// ============================================
 
 /**
  * Obtener todas las categorías
@@ -149,7 +163,9 @@ export const getSubCategories = async (parentId) => {
   return fetchAPI(`/categories?parent_id=${parentId}`);
 };
 
+// ============================================
 // === CARRUSELES ===
+// ============================================
 
 /**
  * Obtener todos los carruseles activos
@@ -166,7 +182,9 @@ export const getCarouselById = async (id) => {
   return fetchAPI(`/carousels/${id}`);
 };
 
+// ============================================
 // === AUTENTICACIÓN ===
+// ============================================
 
 /**
  * Iniciar sesión
@@ -183,9 +201,6 @@ export const login = async (email, password) => {
 /**
  * Registrar nuevo usuario
  * @param {Object} userData - Datos del usuario
- * @param {string} userData.email - Email
- * @param {string} userData.password - Contraseña
- * @param {string} userData.nombre - Nombre completo
  */
 export const register = async (userData) => {
   return fetchAPI('/auth/register', {
@@ -222,7 +237,7 @@ export const requestPasswordReset = async (email) => {
 };
 
 /**
- * Restablecer contraseña
+ * Restablecer contraseña con token
  * @param {string} token - Token de restablecimiento
  * @param {string} newPassword - Nueva contraseña
  */
@@ -233,7 +248,9 @@ export const resetPassword = async (token, newPassword) => {
   });
 };
 
+// ============================================
 // === USUARIOS (Admin) ===
+// ============================================
 
 /**
  * Obtener todos los usuarios (requiere admin)
@@ -264,7 +281,9 @@ export const deleteUser = async (id) => {
   });
 };
 
+// ============================================
 // === ANALYTICS (Admin) ===
+// ============================================
 
 /**
  * Obtener estadísticas del dashboard
@@ -281,14 +300,48 @@ export const getLowStockProducts = async () => {
 };
 
 /**
- * Obtener productos más vendidos (período específico)
+ * Obtener productos más vendidos en período específico
  * @param {string} period - Período (day, week, month, year)
  */
 export const getTopSelling = async (period = 'month') => {
   return fetchAPI(`/analytics/top-selling?period=${period}`);
 };
 
-// Exportar todas las funciones como default también
+// ============================================
+// === BANNERS DE DESCUENTO ===
+// ============================================
+
+/**
+ * Obtener banners de descuento activos
+ */
+export const getActiveDiscountBanners = async () => {
+  return fetchAPI('/banners-descuento/activos');
+};
+
+/**
+ * Obtener un banner específico por ID
+ * @param {number} id - ID del banner
+ */
+export const getDiscountBannerById = async (id) => {
+  return fetchAPI(`/banners-descuento/${id}`);
+};
+
+/**
+ * Registrar interacción con banner (vista o click)
+ * @param {number} bannerId - ID del banner
+ * @param {string} tipo - 'vista' o 'click'
+ */
+export const registerBannerInteraction = async (bannerId, tipo) => {
+  return fetchAPI('/banners-descuento/interaccion', {
+    method: 'POST',
+    body: JSON.stringify({ banner_id: bannerId, tipo })
+  });
+};
+
+// ============================================
+// === EXPORTACIÓN DEFAULT ===
+// ============================================
+
 export default {
   // Productos
   getProducts,
@@ -299,6 +352,7 @@ export default {
   getProductsByCategory,
   getPriceRange,
   searchProducts,
+  getCategoryStats,
   
   // Categorías
   getCategories,

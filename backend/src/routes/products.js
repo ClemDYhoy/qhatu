@@ -5,34 +5,494 @@ import Category from '../models/Category.js';
 
 const router = express.Router();
 
-// === Utilidades ===
+// ============================================
+// === UTILIDADES ===
+// ============================================
+
+/**
+ * Parsea un número flotante de forma segura
+ * @param {*} value - Valor a parsear
+ * @param {number} defaultValue - Valor por defecto
+ * @returns {number}
+ */
 const parseNumber = (value, defaultValue = 0) => {
   const parsed = parseFloat(value);
   return isNaN(parsed) || parsed < 0 ? defaultValue : parsed;
 };
 
+/**
+ * Parsea un entero de forma segura
+ * @param {*} value - Valor a parsear
+ * @param {number} defaultValue - Valor por defecto
+ * @returns {number}
+ */
 const parseInt32 = (value, defaultValue = 0) => {
   const parsed = parseInt(value, 10);
   return isNaN(parsed) || parsed < 0 ? defaultValue : parsed;
 };
 
-// === Función auxiliar: Obtener IDs de categoría + subcategorías ===
+/**
+ * Obtiene IDs de una categoría y todas sus subcategorías
+ * @param {number|string} categoryId - ID de la categoría padre
+ * @returns {Promise<number[]>} Array de IDs (incluye padre + hijos)
+ */
 const getCategoryAndSubcategories = async (categoryId) => {
   const catId = parseInt32(categoryId);
   if (catId <= 0) return [];
 
-  const category = await Category.findByPk(catId, { attributes: ['categoria_id'] });
-  if (!category) return [];
+  try {
+    const category = await Category.findByPk(catId, {
+      attributes: ['categoria_id']
+    });
 
-  const subCategories = await Category.findAll({
-    where: { padre_id: catId },
-    attributes: ['categoria_id']
-  });
+    if (!category) return [];
 
-  return [catId, ...subCategories.map(c => c.categoria_id)];
+    const subCategories = await Category.findAll({
+      where: { padre_id: catId },
+      attributes: ['categoria_id']
+    });
+
+    return [catId, ...subCategories.map(c => c.categoria_id)];
+  } catch (error) {
+    console.error('Error al obtener subcategorías:', error);
+    return [catId];
+  }
 };
 
-// === GET /api/products - Lista con filtros avanzados ===
+/**
+ * Construye el objeto where para filtros de disponibilidad
+ * @param {string} availability - Tipo de disponibilidad
+ * @returns {Object} Condición para Sequelize
+ */
+const buildAvailabilityFilter = (availability) => {
+  const avail = availability.toLowerCase();
+  
+  switch (avail) {
+    case 'in_stock':
+      return { stock: { [Op.gt]: 0 } };
+    
+    case 'out':
+    case 'out_of_stock':
+      return { stock: 0 };
+    
+    case 'low':
+      return {
+        [Op.and]: [
+          { stock: { [Op.gt]: 0 } },
+          Sequelize.where(
+            Sequelize.col('stock'),
+            Op.lte,
+            Sequelize.col('umbral_bajo_stock')
+          )
+        ]
+      };
+    
+    case 'critical':
+      return {
+        [Op.and]: [
+          { stock: { [Op.gt]: 0 } },
+          Sequelize.where(
+            Sequelize.col('stock'),
+            Op.lte,
+            Sequelize.col('umbral_critico_stock')
+          )
+        ]
+      };
+    
+    default:
+      return {};
+  }
+};
+
+/**
+ * Valida y sanitiza parámetros de ordenamiento
+ * @param {string} orderBy - Campo de ordenamiento
+ * @param {string} order - Dirección (ASC/DESC)
+ * @returns {Object} { field, direction }
+ */
+const sanitizeOrderParams = (orderBy = 'nombre', order = 'ASC') => {
+  const validFields = ['nombre', 'precio', 'stock', 'ventas', 'creado_en'];
+  const field = validFields.includes(orderBy) ? orderBy : 'nombre';
+  const direction = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+  return { field, direction };
+};
+
+/**
+ * Calcula metadata de paginación
+ * @param {number} total - Total de registros
+ * @param {number} limit - Límite por página
+ * @param {number} offset - Offset actual
+ * @returns {Object} Metadata de paginación
+ */
+const calculatePagination = (total, limit, offset) => {
+  const totalPages = Math.ceil(total / limit);
+  const currentPage = Math.floor(offset / limit) + 1;
+  
+  return {
+    total,
+    limit,
+    offset,
+    currentPage,
+    totalPages,
+    hasNext: currentPage < totalPages,
+    hasPrev: currentPage > 1
+  };
+};
+
+// ============================================
+// === RUTAS ESPECÍFICAS (antes de /:id) ===
+// ============================================
+
+/**
+ * GET /api/products/stats-by-category
+ * Estadísticas de productos agrupados por categoría
+ */
+router.get('/stats-by-category', async (req, res) => {
+  try {
+    // Obtener todas las categorías
+    const categories = await Category.findAll({
+      attributes: ['categoria_id', 'nombre', 'padre_id']
+    });
+
+    // Obtener conteo de productos por categoría
+    const productCounts = await Product.findAll({
+      attributes: [
+        'categoria_id',
+        [Sequelize.fn('COUNT', Sequelize.col('producto_id')), 'total_productos'],
+        [Sequelize.fn('SUM', Sequelize.literal('CASE WHEN stock > 0 THEN 1 ELSE 0 END')), 'disponibles']
+      ],
+      group: ['categoria_id'],
+      raw: true
+    });
+
+    // Crear mapa de conteos para búsqueda rápida
+    const countsMap = productCounts.reduce((map, count) => {
+      map[count.categoria_id] = {
+        total: parseInt(count.total_productos) || 0,
+        disponibles: parseInt(count.disponibles) || 0
+      };
+      return map;
+    }, {});
+
+    // Construir categorías principales con sus estadísticas
+    const mainCategories = categories
+      .filter(cat => !cat.padre_id)
+      .map(cat => {
+        const subCategories = categories.filter(sub => sub.padre_id === cat.categoria_id);
+        
+        // Sumar productos de categoría principal + subcategorías
+        let totalCount = countsMap[cat.categoria_id]?.total || 0;
+        let disponiblesCount = countsMap[cat.categoria_id]?.disponibles || 0;
+        
+        subCategories.forEach(sub => {
+          totalCount += countsMap[sub.categoria_id]?.total || 0;
+          disponiblesCount += countsMap[sub.categoria_id]?.disponibles || 0;
+        });
+
+        return {
+          categoria_id: cat.categoria_id,
+          nombre: cat.nombre,
+          total_productos: totalCount,
+          disponibles: disponiblesCount,
+          agotados: totalCount - disponiblesCount,
+          subcategorias: subCategories.map(sub => ({
+            categoria_id: sub.categoria_id,
+            nombre: sub.nombre,
+            total_productos: countsMap[sub.categoria_id]?.total || 0,
+            disponibles: countsMap[sub.categoria_id]?.disponibles || 0
+          }))
+        };
+      })
+      .filter(cat => cat.total_productos > 0);
+
+    const totalGeneral = mainCategories.reduce((sum, cat) => sum + cat.total_productos, 0);
+
+    res.json({
+      success: true,
+      data: {
+        total_general: totalGeneral,
+        categorias: mainCategories
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en /stats-by-category:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener estadísticas por categoría',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * GET /api/products/featured
+ * Productos destacados
+ */
+router.get('/featured', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt32(req.query.limit, 4), 20);
+
+    const products = await Product.findAll({
+      where: {
+        destacado: true,
+        stock: { [Op.gt]: 0 }
+      },
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre']
+      }],
+      order: [['ventas', 'DESC']],
+      limit
+    });
+
+    res.json({
+      success: true,
+      data: products
+    });
+
+  } catch (error) {
+    console.error('Error en /featured:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener productos destacados',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * GET /api/products/best-sellers
+ * Productos más vendidos
+ */
+router.get('/best-sellers', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt32(req.query.limit, 4), 20);
+
+    const products = await Product.findAll({
+      where: {
+        stock: { [Op.gt]: 0 },
+        ventas: { [Op.gt]: 0 }
+      },
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre']
+      }],
+      order: [['ventas', 'DESC']],
+      limit
+    });
+
+    res.json({
+      success: true,
+      data: products
+    });
+
+  } catch (error) {
+    console.error('Error en /best-sellers:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener productos más vendidos',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * GET /api/products/recent
+ * Productos recientes
+ */
+router.get('/recent', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt32(req.query.limit, 4), 20);
+
+    const products = await Product.findAll({
+      where: {
+        stock: { [Op.gt]: 0 }
+      },
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre']
+      }],
+      order: [['creado_en', 'DESC']],
+      limit
+    });
+
+    res.json({
+      success: true,
+      data: products
+    });
+
+  } catch (error) {
+    console.error('Error en /recent:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener productos recientes',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * GET /api/products/price-range
+ * Rango de precios min/max
+ */
+router.get('/price-range', async (req, res) => {
+  try {
+    const { categoria_id } = req.query;
+    const where = {};
+
+    if (categoria_id) {
+      const categoryIds = await getCategoryAndSubcategories(categoria_id);
+      if (categoryIds.length > 0) {
+        where.categoria_id = { [Op.in]: categoryIds };
+      }
+    }
+
+    const result = await Product.findOne({
+      where,
+      attributes: [
+        [Sequelize.fn('MIN', Sequelize.col('precio')), 'min'],
+        [Sequelize.fn('MAX', Sequelize.col('precio')), 'max']
+      ],
+      raw: true
+    });
+
+    res.json({
+      success: true,
+      data: {
+        min: parseNumber(result?.min, 0),
+        max: parseNumber(result?.max, 1000)
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en /price-range:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener rango de precios',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * GET /api/products/search
+ * Búsqueda rápida de productos
+ */
+router.get('/search', async (req, res) => {
+  try {
+    const { q, limit = 10 } = req.query;
+
+    if (!q || !q.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Parámetro de búsqueda "q" requerido'
+      });
+    }
+
+    const validLimit = Math.min(parseInt32(limit, 10), 50);
+
+    const products = await Product.findAll({
+      where: {
+        [Op.or]: [
+          { nombre: { [Op.like]: `%${q.trim()}%` } },
+          { descripcion: { [Op.like]: `%${q.trim()}%` } }
+        ],
+        stock: { [Op.gt]: 0 }
+      },
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre']
+      }],
+      order: [['ventas', 'DESC']],
+      limit: validLimit
+    });
+
+    res.json({
+      success: true,
+      data: products,
+      query: q.trim()
+    });
+
+  } catch (error) {
+    console.error('Error en /search:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error en la búsqueda',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * GET /api/products/category/:categoryId
+ * Productos por categoría específica
+ */
+router.get('/category/:categoryId', async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const {
+      limit = 12,
+      offset = 0,
+      orderBy = 'nombre',
+      order = 'ASC'
+    } = req.query;
+
+    const categoryIds = await getCategoryAndSubcategories(categoryId);
+    
+    if (categoryIds.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Categoría no encontrada'
+      });
+    }
+
+    const limitNum = Math.min(parseInt32(limit, 12), 100);
+    const offsetNum = parseInt32(offset, 0);
+    const { field, direction } = sanitizeOrderParams(orderBy, order);
+
+    const { count, rows: products } = await Product.findAndCountAll({
+      where: { categoria_id: { [Op.in]: categoryIds } },
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre', 'padre_id']
+      }],
+      order: [[field, direction]],
+      limit: limitNum,
+      offset: offsetNum,
+      distinct: true
+    });
+
+    res.json({
+      success: true,
+      data: products,
+      categoryId: parseInt32(categoryId),
+      pagination: calculatePagination(count, limitNum, offsetNum)
+    });
+
+  } catch (error) {
+    console.error('Error en /category/:categoryId:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener productos por categoría',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// ============================================
+// === RUTAS PRINCIPALES ===
+// ============================================
+
+/**
+ * GET /api/products
+ * Lista de productos con filtros avanzados
+ */
 router.get('/', async (req, res) => {
   try {
     const {
@@ -56,6 +516,8 @@ router.get('/', async (req, res) => {
       attributes: ['categoria_id', 'nombre', 'padre_id']
     }];
 
+    // === FILTROS ===
+
     // Búsqueda por texto
     if (search?.trim()) {
       where[Op.or] = [
@@ -64,7 +526,7 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    // Filtro por categoría (por ID)
+    // Filtro por categoría (ID directo)
     if (categoria_id) {
       const categoryIds = await getCategoryAndSubcategories(categoria_id);
       if (categoryIds.length > 0) {
@@ -96,241 +558,90 @@ router.get('/', async (req, res) => {
 
     // Disponibilidad
     if (availability) {
-      const avail = availability.toLowerCase();
-      if (['in_stock', 'low', 'critical', 'out', 'out_of_stock'].includes(avail)) {
-        if (avail === 'in_stock') where.stock = { [Op.gt]: 0 };
-        else if (avail === 'out' || avail === 'out_of_stock') where.stock = 0;
-        else if (avail === 'low') {
-          where[Op.and] = [
-            { stock: { [Op.gt]: 0 } },
-            Sequelize.where(Sequelize.col('stock'), Op.lte, Sequelize.col('umbral_bajo_stock'))
-          ];
-        }
-        else if (avail === 'critical') {
-          where[Op.and] = [
-            { stock: { [Op.gt]: 0 } },
-            Sequelize.where(Sequelize.col('stock'), Op.lte, Sequelize.col('umbral_critico_stock'))
-          ];
-        }
-      }
+      Object.assign(where, buildAvailabilityFilter(availability));
     }
 
-    // Destacados
+    // Productos destacados
     if (highlighted === 'true' || highlighted === '1') {
       where.destacado = true;
     }
 
-    // Ordenamiento seguro
-    const validFields = ['nombre', 'precio', 'stock', 'ventas', 'creado_en'];
-    const orderField = validFields.includes(orderBy) ? orderBy : 'nombre';
-    const orderDir = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+    // === ORDENAMIENTO Y PAGINACIÓN ===
 
-    // Paginación
+    const { field, direction } = sanitizeOrderParams(orderBy, order);
     const limitNum = Math.min(parseInt32(limit, 12), 100);
     const offsetNum = parseInt32(offset, 0);
+
+    // === CONSULTA ===
 
     const { count, rows: products } = await Product.findAndCountAll({
       where,
       include,
-      order: [[orderField, orderDir]],
+      order: [[field, direction]],
       limit: limitNum,
       offset: offsetNum,
       distinct: true
     });
 
-    const totalPages = Math.ceil(count / limitNum);
-    const currentPage = Math.floor(offsetNum / limitNum) + 1;
-
     res.json({
       success: true,
       data: products,
-      pagination: {
-        total: count,
-        limit: limitNum,
-        offset: offsetNum,
-        currentPage,
-        totalPages,
-        hasNext: currentPage < totalPages,
-        hasPrev: currentPage > 1
-      }
+      pagination: calculatePagination(count, limitNum, offsetNum)
     });
 
   } catch (error) {
     console.error('Error en GET /products:', error);
     res.status(500).json({
       success: false,
-      error: 'Error interno al obtener productos'
+      error: 'Error al obtener productos',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// === NUEVA RUTA: GET /api/products/category/:categoryId ===
-router.get('/category/:categoryId', async (req, res) => {
+/**
+ * GET /api/products/:id
+ * Obtener un producto específico por ID
+ */
+router.get('/:id', async (req, res) => {
   try {
-    const { categoryId } = req.params;
-    const { limit = 12, offset = 0, orderBy = 'nombre', order = 'ASC' } = req.query;
+    const productId = parseInt32(req.params.id);
 
-    const categoryIds = await getCategoryAndSubcategories(categoryId);
-    if (categoryIds.length === 0) {
-      return res.status(404).json({
+    if (productId <= 0) {
+      return res.status(400).json({
         success: false,
-        error: 'Categoría no encontrada'
+        error: 'ID de producto inválido'
       });
     }
 
-    const limitNum = Math.min(parseInt32(limit, 12), 100);
-    const offsetNum = parseInt32(offset, 0);
-    const orderField = ['nombre', 'precio', 'stock', 'ventas'].includes(orderBy) ? orderBy : 'nombre';
-    const orderDir = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
-
-    const { count, rows: products } = await Product.findAndCountAll({
-      where: { categoria_id: { [Op.in]: categoryIds } },
+    const product = await Product.findByPk(productId, {
       include: [{
         model: Category,
         as: 'categoria',
         attributes: ['categoria_id', 'nombre', 'padre_id']
-      }],
-      order: [[orderField, orderDir]],
-      limit: limitNum,
-      offset: offsetNum
-    });
-
-    const totalPages = Math.ceil(count / limitNum);
-    const currentPage = Math.floor(offsetNum / limitNum) + 1;
-
-    res.json({
-      success: true,
-      data: products,
-      categoryId: parseInt32(categoryId),
-      pagination: {
-        total: count,
-        limit: limitNum,
-        offset: offsetNum,
-        currentPage,
-        totalPages,
-        hasNext: currentPage < totalPages,
-        hasPrev: currentPage > 1
-      }
-    });
-
-  } catch (error) {
-    console.error('Error en GET /category/:categoryId:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error al obtener productos por categoría'
-    });
-  }
-});
-
-// === GET /api/products/featured ===
-router.get('/featured', async (req, res) => {
-  try {
-    const limit = Math.min(parseInt32(req.query.limit, 4), 20);
-    const products = await Product.findAll({
-      where: { destacado: true, stock: { [Op.gt]: 0 } },
-      include: { model: Category, as: 'categoria', attributes: ['categoria_id', 'nombre'] },
-      order: [['ventas', 'DESC']],
-      limit
-    });
-
-    res.json({ success: true, data: products });
-  } catch (error) {
-    console.error('Error en /featured:', error);
-    res.status(500).json({ success: false, error: 'Error al obtener destacados' });
-  }
-});
-
-// === GET /api/products/best-sellers ===
-router.get('/best-sellers', async (req, res) => {
-  try {
-    const limit = Math.min(parseInt32(req.query.limit, 4), 20);
-    const products = await Product.findAll({
-      where: { stock: { [Op.gt]: 0 }, ventas: { [Op.gt]: 0 } },
-      include: { model: Category, as: 'categoria', attributes: ['categoria_id', 'nombre'] },
-      order: [['ventas', 'DESC']],
-      limit
-    });
-
-    res.json({ success: true, data: products });
-  } catch (error) {
-    console.error('Error en /best-sellers:', error);
-    res.status(500).json({ success: false, error: 'Error al obtener más vendidos' });
-  }
-});
-
-// === GET /api/products/recent ===
-router.get('/recent', async (req, res) => {
-  try {
-    const limit = Math.min(parseInt32(req.query.limit, 4), 20);
-    const products = await Product.findAll({
-      where: { stock: { [Op.gt]: 0 } },
-      include: { model: Category, as: 'categoria', attributes: ['categoria_id', 'nombre'] },
-      order: [['creado_en', 'DESC']],
-      limit
-    });
-
-    res.json({ success: true, data: products });
-  } catch (error) {
-    console.error('Error en /recent:', error);
-    res.status(500).json({ success: false, error: 'Error al obtener recientes' });
-  }
-});
-
-// === GET /api/products/price-range ===
-router.get('/price-range', async (req, res) => {
-  try {
-    const { categoria_id } = req.query;
-    const where = {};
-
-    if (categoria_id) {
-      const catIds = await getCategoryAndSubcategories(categoria_id);
-      if (catIds.length > 0) where.categoria_id = { [Op.in]: catIds };
-    }
-
-    const result = await Product.findOne({
-      where,
-      attributes: [
-        [Sequelize.fn('MIN', Sequelize.col('precio')), 'min'],
-        [Sequelize.fn('MAX', Sequelize.col('precio')), 'max']
-      ],
-      raw: true
-    });
-
-    res.json({
-      success: true,
-      data: {
-        min: parseNumber(result?.min, 0),
-        max: parseNumber(result?.max, 0)
-      }
-    });
-  } catch (error) {
-    console.error('Error en /price-range:', error);
-    res.status(500).json({ success: false, error: 'Error al obtener rango de precios' });
-  }
-});
-
-// === GET /api/products/:id ===
-router.get('/:id', async (req, res) => {
-  try {
-    const productId = parseInt32(req.params.id);
-    if (productId <= 0) {
-      return res.status(400).json({ success: false, error: 'ID inválido' });
-    }
-
-    const product = await Product.findByPk(productId, {
-      include: { model: Category, as: 'categoria', attributes: ['categoria_id', 'nombre', 'padre_id'] }
+      }]
     });
 
     if (!product) {
-      return res.status(404).json({ success: false, error: 'Producto no encontrado' });
+      return res.status(404).json({
+        success: false,
+        error: 'Producto no encontrado'
+      });
     }
 
-    res.json({ success: true, data: product });
+    res.json({
+      success: true,
+      data: product
+    });
+
   } catch (error) {
     console.error('Error en GET /:id:', error);
-    res.status(500).json({ success: false, error: 'Error al obtener producto' });
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener producto',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
 export default router;
-

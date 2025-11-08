@@ -1,7 +1,7 @@
 @import 'variables.css';
 @import 'reset.css';
 
-/* ===== ESTILOS GLOBALES PREMIUM ===== */
+/* =====GLOBAL.css ===== */
 body {
   font-family: var(--font-primary);
   font-weight: var(--font-regular);
