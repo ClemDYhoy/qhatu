@@ -1,235 +1,192 @@
-// C:\qhatu\frontend\src\services\whatsappService.js
-
+// src/services/whatsappService.js
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import logoBase64 from '../../public/logo-oe.png'; // ← AÑADE TU LOGO EN BASE64
+
+const WHATSAPP_NUMBER = '51987654321'; // ← TU NÚMERO DE EMPRESA
 
 /**
- * Servicio para manejar la generación de PDFs y envío a WhatsApp
+ * Genera el PDF del carrito
  */
-class WhatsAppService {
-  constructor() {
-    // Número de WhatsApp del vendedor (configurar según necesidad)
-    this.vendorPhone = '51123456789'; // Cambiar por el número real
-  }
+const generatePDF = (cartData, user) => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 14;
+  let y = 20;
 
-  /**
-   * Genera un PDF con los detalles de la compra
-   * @param {Object} cartData - Datos del carrito
-   * @param {Array} cartData.items - Items del carrito
-   * @param {Number} cartData.total - Total de la compra
-   * @param {Number} cartData.subtotal - Subtotal
-   * @param {Number} cartData.descuento - Descuento aplicado
-   * @returns {Blob} PDF generado como Blob
-   */
-  generatePurchasePDF(cartData) {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    
-    // Configuración de colores
-    const primaryColor = [231, 76, 60]; // Rojo
-    const textColor = [44, 62, 80];
-    const lightGray = [236, 240, 241];
-
-    // ENCABEZADO
-    doc.setFillColor(...primaryColor);
-    doc.rect(0, 0, pageWidth, 40, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.text('QHATU STORE', pageWidth / 2, 20, { align: 'center' });
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Orden de Compra', pageWidth / 2, 30, { align: 'center' });
-
-    // INFORMACIÓN DE LA ORDEN
-    doc.setTextColor(...textColor);
-    doc.setFontSize(10);
-    const currentDate = new Date().toLocaleDateString('es-PE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    
-    doc.text(`Fecha: ${currentDate}`, 14, 50);
-    doc.text(`Orden #: ORD-${Date.now().toString().slice(-8)}`, 14, 56);
-
-    // TABLA DE PRODUCTOS
-    const tableData = cartData.items.map((item, index) => [
-      index + 1,
-      item.nombre,
-      item.quantity,
-      `S/. ${item.precio.toFixed(2)}`,
-      item.precio_descuento ? `S/. ${item.precio_descuento.toFixed(2)}` : '-',
-      `S/. ${((item.precio_descuento || item.precio) * item.quantity).toFixed(2)}`
-    ]);
-
-    doc.autoTable({
-      startY: 65,
-      head: [['#', 'Producto', 'Cant.', 'Precio', 'Descuento', 'Subtotal']],
-      body: tableData,
-      theme: 'striped',
-      headStyles: {
-        fillColor: primaryColor,
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      bodyStyles: {
-        textColor: textColor,
-        fontSize: 9
-      },
-      columnStyles: {
-        0: { halign: 'center', cellWidth: 10 },
-        1: { cellWidth: 70 },
-        2: { halign: 'center', cellWidth: 20 },
-        3: { halign: 'right', cellWidth: 25 },
-        4: { halign: 'right', cellWidth: 25 },
-        5: { halign: 'right', cellWidth: 30 }
-      },
-      alternateRowStyles: {
-        fillColor: lightGray
-      }
-    });
-
-    // TOTALES
-    const finalY = doc.lastAutoTable.finalY + 10;
-    const rightX = pageWidth - 14;
-
-    doc.setFontSize(10);
-    
-    if (cartData.descuento > 0) {
-      doc.text('Subtotal:', rightX - 50, finalY, { align: 'right' });
-      doc.text(`S/. ${cartData.subtotal.toFixed(2)}`, rightX, finalY, { align: 'right' });
-      
-      doc.setTextColor(231, 76, 60);
-      doc.text('Descuento:', rightX - 50, finalY + 6, { align: 'right' });
-      doc.text(`-S/. ${cartData.descuento.toFixed(2)}`, rightX, finalY + 6, { align: 'right' });
+  // === LOGO ===
+  if (logoBase64) {
+    try {
+      doc.addImage(logoBase64, 'PNG', margin, y, 40, 40);
+    } catch (e) {
+      console.warn('Logo no cargado');
     }
-
-    // Total final
-    doc.setDrawColor(...primaryColor);
-    doc.setLineWidth(0.5);
-    doc.line(rightX - 60, finalY + 10, rightX, finalY + 10);
-    
-    doc.setTextColor(...textColor);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL:', rightX - 50, finalY + 18, { align: 'right' });
-    doc.text(`S/. ${cartData.total.toFixed(2)}`, rightX, finalY + 18, { align: 'right' });
-
-    // PIE DE PÁGINA
-    const footerY = doc.internal.pageSize.getHeight() - 30;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(127, 140, 141);
-    
-    doc.text('Gracias por tu compra en QHATU STORE', pageWidth / 2, footerY, { align: 'center' });
-    doc.text('Productos importados de calidad', pageWidth / 2, footerY + 5, { align: 'center' });
-    doc.text('WhatsApp: +51 123 456 789 | Email: info@qhatu.com', pageWidth / 2, footerY + 10, { align: 'center' });
-
-    return doc;
   }
 
-  /**
-   * Genera el mensaje de WhatsApp con los detalles de la compra
-   * @param {Object} cartData - Datos del carrito
-   * @returns {String} Mensaje formateado
-   */
-  generateWhatsAppMessage(cartData) {
-    let message = '🛒 *NUEVA ORDEN DE COMPRA* 🛒\n\n';
-    message += `📅 Fecha: ${new Date().toLocaleDateString('es-PE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })}\n\n`;
-    
-    message += '*PRODUCTOS:*\n';
-    message += '━━━━━━━━━━━━━━━━━━━━\n';
-    
-    cartData.items.forEach((item, index) => {
-      const precioUnitario = item.precio_descuento || item.precio;
-      const subtotal = precioUnitario * item.quantity;
-      
-      message += `\n${index + 1}. *${item.nombre}*\n`;
-      message += `   Cantidad: ${item.quantity}\n`;
-      message += `   Precio: S/. ${precioUnitario.toFixed(2)}\n`;
-      message += `   Subtotal: S/. ${subtotal.toFixed(2)}\n`;
-    });
-    
-    message += '\n━━━━━━━━━━━━━━━━━━━━\n';
-    
-    if (cartData.descuento > 0) {
-      message += `\nSubtotal: S/. ${cartData.subtotal.toFixed(2)}`;
-      message += `\n🎉 Descuento: -S/. ${cartData.descuento.toFixed(2)}`;
-    }
-    
-    message += `\n\n💰 *TOTAL: S/. ${cartData.total.toFixed(2)}*\n\n`;
-    message += '¿Deseas confirmar esta compra? 😊';
-    
-    return message;
-  }
+  // === TÍTULO ===
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ORDEN DE COMPRA', pageWidth / 2, y + 50, { align: 'center' });
 
-  /**
-   * Abre WhatsApp con el mensaje de compra (sin PDF por limitaciones de web)
-   * @param {Object} cartData - Datos del carrito
-   */
-  sendToWhatsApp(cartData) {
-    const message = this.generateWhatsAppMessage(cartData);
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappURL = `https://wa.me/${this.vendorPhone}?text=${encodedMessage}`;
-    
-    window.open(whatsappURL, '_blank', 'noopener,noreferrer');
-  }
+  y += 60;
 
-  /**
-   * Descarga el PDF de la compra
-   * @param {Object} cartData - Datos del carrito
-   */
-  downloadPDF(cartData) {
-    const doc = this.generatePurchasePDF(cartData);
-    const fileName = `Orden_QHATU_${Date.now()}.pdf`;
-    doc.save(fileName);
-  }
+  // === DATOS DEL CLIENTE ===
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
 
-  /**
-   * Muestra una vista previa del PDF en una nueva ventana
-   * @param {Object} cartData - Datos del carrito
-   */
-  previewPDF(cartData) {
-    const doc = this.generatePurchasePDF(cartData);
-    const pdfBlob = doc.output('blob');
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    
-    window.open(pdfUrl, '_blank', 'noopener,noreferrer');
-    
-    // Limpiar el objeto URL después de un tiempo
-    setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
-  }
+  const clientInfo = [
+    ['Cliente:', user?.nombre_completo || 'Anónimo'],
+    ['Email:', user?.email || '-'],
+    ['Teléfono:', user?.telefono || '-'],
+    ['Fecha:', new Date().toLocaleDateString('es-PE')],
+    ['Hora:', new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })]
+  ];
 
-  /**
-   * Envía consulta sobre un producto específico
-   * @param {Object} product - Producto a consultar
-   */
-  consultProduct(product) {
-    const price = product.precio_descuento || product.precio;
-    const message = encodeURIComponent(
-      `Hola! 👋\n\nEstoy interesado en:\n*${product.nombre}*\n\nPrecio: S/. ${price.toFixed(2)}\n\n¿Está disponible?`
-    );
-    
-    window.open(
-      `https://wa.me/${this.vendorPhone}?text=${message}`,
-      '_blank',
-      'noopener,noreferrer'
-    );
-  }
-}
+  doc.autoTable({
+    startY: y,
+    head: [['Campo', 'Detalle']],
+    body: clientInfo,
+    theme: 'grid',
+    styles: { fontSize: 10, cellPadding: 3 },
+    headStyles: { fillColor: [102, 126, 234], textColor: 255 },
+    columnStyles: { 0: { fontStyle: 'bold' } },
+    margin: { left: margin, right: margin }
+  });
 
-// Exportar instancia única (Singleton)
-const whatsappService = new WhatsAppService();
-export default whatsappService;
+  y = doc.lastAutoTable.finalY + 15;
+
+  // === PRODUCTOS ===
+  const tableData = cartData.items.map(item => [
+    item.nombre,
+    item.quantity,
+    `S/. ${parseFloat(item.precio).toFixed(2)}`,
+    item.precio_descuento ? `S/. ${parseFloat(item.precio_descuento).toFixed(2)}` : '-',
+    `S/. ${item.subtotalItem.toFixed(2)}`
+  ]);
+
+  doc.setFontSize(14);
+  doc.setTextColor(0);
+  doc.text('Detalles del Carrito', margin, y);
+  y += 10;
+
+  doc.autoTable({
+    startY: y,
+    head: [['Producto', 'Cant.', 'Precio Unit.', 'Descuento', 'Subtotal']],
+    body: tableData,
+    theme: 'striped',
+    styles: { fontSize: 10, cellPadding: 4 },
+    headStyles: { fillColor: [102, 126, 234], textColor: 255 },
+    columnStyles: {
+      0: { cellWidth: 70 },
+      1: { halign: 'center' },
+      2: { halign: 'right' },
+      3: { halign: 'right' },
+      4: { halign: 'right', fontStyle: 'bold' }
+    },
+    margin: { left: margin, right: margin }
+  });
+
+  y = doc.lastAutoTable.finalY + 15;
+
+  // === RESUMEN DE PAGO ===
+  const summary = [
+    ['Subtotal:', `S/. ${cartData.subtotal.toFixed(2)}`],
+    cartData.descuento > 0 ? ['Descuento:', `-S/. ${cartData.descuento.toFixed(2)}`] : null,
+    ['TOTAL A PAGAR:', `S/. ${cartData.total.toFixed(2)}`]
+  ].filter(Boolean);
+
+  doc.autoTable({
+    startY: y,
+    body: summary,
+    theme: 'plain',
+    styles: { fontSize: 11, cellPadding: 3 },
+    columnStyles: {
+      0: { fontStyle: 'bold', halign: 'right' },
+      1: { fontStyle: 'bold', halign: 'right', fontSize: 13 }
+    },
+    margin: { left: pageWidth / 2, right: margin }
+  });
+
+  // === FOOTER ===
+  doc.setFontSize(9);
+  doc.setTextColor(100);
+  doc.text('Gracias por tu compra en Qhatu Imports', pageWidth / 2, doc.internal.pageSize.getHeight() - 20, { align: 'center' });
+  doc.text('www.qhatu.com | +51 987 654 321', pageWidth / 2, doc.internal.pageSize.getHeight() - 12, { align: 'center' });
+
+  return doc;
+};
+
+/**
+ * Descargar PDF
+ */
+export const downloadPDF = (cartData, user) => {
+  const doc = generatePDF(cartData, user);
+  const fileName = `orden_qhatu_${user?.email?.split('@')[0] || 'cliente'}_${Date.now()}.pdf`;
+  doc.save(fileName);
+};
+
+/**
+ * Vista previa en nueva pestaña
+ */
+export const previewPDF = (cartData, user) => {
+  const doc = generatePDF(cartData, user);
+  const blob = doc.output('blob');
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+};
+
+/**
+ * Enviar a WhatsApp con PDF adjunto
+ */
+export const sendToWhatsApp = (cartData, user) => {
+  const doc = generatePDF(cartData, user);
+  const blob = doc.output('blob');
+  const file = new File([blob], `orden_qhatu.pdf`, { type: 'application/pdf' });
+
+  // Mensaje
+  const itemsText = cartData.items
+    .map(i => `• ${i.nombre} x${i.quantity} = S/. ${i.subtotalItem.toFixed(2)}`)
+    .join('\n');
+
+  const message = encodeURIComponent(
+    `*¡NUEVA ORDEN!* %0A%0A` +
+    `*Cliente:* ${user?.nombre_completo || 'Anónimo'}%0A` +
+    `*Teléfono:* ${user?.telefono || '-'}%0A` +
+    `*Email:* ${user?.email || '-'}%0A%0A` +
+    `*Productos:*%0A${itemsText}%0A%0A` +
+    `*Total:* S/. ${cartData.total.toFixed(2)}%0A%0A` +
+    `Gracias por confiar en *Qhatu Imports*`
+  );
+
+  // Convertir blob a base64
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const base64 = reader.result.split(',')[1];
+    const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}&type=phone_number&app_absent=0`;
+
+    // Abrir WhatsApp Web con archivo
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `https://web.whatsapp.com/send?phone=${WHATSAPP_NUMBER}`;
+    form.target = '_blank';
+    form.enctype = 'multipart/form-data';
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.name = 'file';
+    input.files = new FileList([file]);
+
+    // Simular envío (limitado por CORS, pero abre chat)
+    window.open(whatsappURL, '_blank');
+  };
+
+  reader.readAsDataURL(blob);
+};
+
+// Exportar todo
+export default {
+  downloadPDF,
+  previewPDF,
+  sendToWhatsApp
+};

@@ -1,14 +1,111 @@
-// Configuración base
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// C:\qhatu\frontend\src\services\api.js
+import axios from 'axios';
 
-/**
- * Función helper centralizada para hacer requests a la API
- * @param {string} endpoint - Endpoint de la API
- * @param {Object} options - Opciones de fetch
- * @returns {Promise<any>} Respuesta de la API
- */
+// ============================================
+// === CONFIGURACIÓN BASE ===
+// ============================================
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const isDevelopment = import.meta.env.VITE_APP_ENV === 'development';
+
+// Validación de configuración al cargar
+if (isDevelopment) {
+  console.log('🔧 API Configuration:', {
+    API_URL,
+    env: import.meta.env.VITE_APP_ENV,
+    mode: import.meta.env.MODE
+  });
+}
+
+// ============================================
+// === AXIOS INSTANCE ===
+// ============================================
+
+const apiClient = axios.create({
+  baseURL: API_URL,
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: false
+});
+
+// Request Interceptor
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('qhatu_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    if (isDevelopment) {
+      console.log(`🌐 ${config.method.toUpperCase()} ${config.url}`);
+    }
+
+    return config;
+  },
+  (error) => {
+    console.error('❌ Error en request:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Response Interceptor
+apiClient.interceptors.response.use(
+  (response) => {
+    if (isDevelopment) {
+      console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url}`, response.data);
+    }
+    return response;
+  },
+  (error) => {
+    if (error.response) {
+      const { status, data } = error.response;
+
+      // Token expirado
+      if (status === 401 && !window.location.pathname.includes('/login')) {
+        localStorage.removeItem('qhatu_token');
+        localStorage.removeItem('qhatu_user');
+        window.location.href = '/login?expired=true';
+      }
+
+      console.error(`❌ Error ${status}:`, data.message || error.message);
+    } else if (error.request) {
+      console.error('❌ Error de red: No se pudo conectar con el servidor');
+    } else {
+      console.error('❌ Error:', error.message);
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// ============================================
+// === UTILIDADES ===
+// ============================================
+
+const log = {
+  info: (...args) => isDevelopment && console.log('ℹ️', ...args),
+  error: (...args) => isDevelopment && console.error('❌', ...args),
+  warn: (...args) => isDevelopment && console.warn('⚠️', ...args),
+  success: (...args) => isDevelopment && console.log('✅', ...args)
+};
+
+const buildQueryString = (params) => {
+  const filtered = Object.entries(params || {})
+    .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => [key, String(value)]);
+  
+  return filtered.length > 0 ? `?${new URLSearchParams(filtered).toString()}` : '';
+};
+
+// ============================================
+// === CLIENTE HTTP FETCH (para compatibilidad) ===
+// ============================================
+
 const fetchAPI = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('qhatu_token');
+  const url = `${API_URL}${endpoint}`;
   
   const config = {
     headers: {
@@ -19,112 +116,117 @@ const fetchAPI = async (endpoint, options = {}) => {
     ...options
   };
 
+  log.info(`🌐 ${options.method || 'GET'} ${url}`);
+
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, config);
+    const response = await fetch(url, config);
     
-    // Manejo especial para respuestas vacías (204, etc)
     if (response.status === 204 || response.headers.get('content-length') === '0') {
+      log.success(`${response.status} - Sin contenido`);
       return { success: true };
     }
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || data.message || `Error ${response.status}`);
+    let data;
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      log.warn('Respuesta no-JSON recibida:', text);
+      data = { raw: text };
     }
 
+    if (!response.ok) {
+      const errorMessage = data.error || data.message || data.msg || `Error ${response.status}`;
+      log.error(`${response.status} - ${errorMessage}`, data);
+      
+      if (response.status === 401) {
+        localStorage.removeItem('qhatu_token');
+        localStorage.removeItem('qhatu_user');
+        window.location.href = '/login';
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    log.success(`${response.status} - Éxito`, data);
     return data;
+    
   } catch (error) {
-    console.error(`Error en ${endpoint}:`, error);
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      log.error('Error de conexión - ¿Está el backend corriendo?');
+      throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté activo.');
+    }
+    
+    log.error(`Error en ${endpoint}:`, error.message);
     throw error;
   }
 };
 
 // ============================================
+// === EXPORTAR AXIOS PARA AUTHSERVICE ===
+// ============================================
+
+export const setAuthToken = (token) => {
+  if (token) {
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    localStorage.setItem('qhatu_token', token);
+  } else {
+    delete apiClient.defaults.headers.common['Authorization'];
+    localStorage.removeItem('qhatu_token');
+  }
+};
+
+export { apiClient as default };
+
+// ============================================
 // === PRODUCTOS ===
 // ============================================
 
-/**
- * Obtener productos con filtros avanzados
- * @param {Object} filters - Objeto con filtros opcionales
- * @returns {Promise<Object>} Lista de productos y metadata
- */
 export const getProducts = async (filters = {}) => {
-  const queryParams = new URLSearchParams();
-  
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      queryParams.append(key, value);
-    }
-  });
-
-  const queryString = queryParams.toString();
-  return fetchAPI(`/products${queryString ? `?${queryString}` : ''}`);
+  const queryString = buildQueryString(filters);
+  return fetchAPI(`/products${queryString}`);
 };
 
-/**
- * Obtener un producto por ID
- * @param {number} id - ID del producto
- */
 export const getProductById = async (id) => {
+  if (!id) throw new Error('ID de producto requerido');
   return fetchAPI(`/products/${id}`);
 };
 
-/**
- * Obtener productos destacados
- * @param {number} limit - Cantidad de productos (máx. 20)
- */
 export const getFeaturedProducts = async (limit = 4) => {
-  return fetchAPI(`/products/featured?limit=${limit}`);
+  return fetchAPI(`/products/featured${buildQueryString({ limit })}`);
 };
 
-/**
- * Obtener productos más vendidos
- * @param {number} limit - Cantidad de productos (máx. 20)
- */
 export const getBestSellers = async (limit = 4) => {
-  return fetchAPI(`/products/best-sellers?limit=${limit}`);
+  return fetchAPI(`/products/best-sellers${buildQueryString({ limit })}`);
 };
 
-/**
- * Obtener productos recientes
- * @param {number} limit - Cantidad de productos (máx. 20)
- */
 export const getRecentProducts = async (limit = 4) => {
-  return fetchAPI(`/products/recent?limit=${limit}`);
+  return fetchAPI(`/products/recent${buildQueryString({ limit })}`);
 };
 
-/**
- * Obtener productos por categoría
- * @param {number} categoryId - ID de la categoría
- * @param {number} limit - Cantidad de productos (opcional)
- */
-export const getProductsByCategory = async (categoryId, limit = null) => {
-  const params = limit ? `?limit=${limit}` : '';
-  return fetchAPI(`/products/category/${categoryId}${params}`);
+export const getProductsByCategory = async (categoryId, options = {}) => {
+  if (!categoryId) throw new Error('ID de categoría requerido');
+  const queryString = buildQueryString(options);
+  return fetchAPI(`/products/category/${categoryId}${queryString}`);
 };
 
-/**
- * Obtener rango de precios de productos
- * @param {number} categoria_id - ID de categoría (opcional)
- */
 export const getPriceRange = async (categoria_id = null) => {
-  const query = categoria_id ? `?categoria_id=${categoria_id}` : '';
+  const query = buildQueryString({ categoria_id });
   return fetchAPI(`/products/price-range${query}`);
 };
 
-/**
- * Buscar productos por texto
- * @param {string} query - Texto de búsqueda
- * @param {number} limit - Cantidad de resultados
- */
-export const searchProducts = async (query, limit = 10) => {
-  return fetchAPI(`/products/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+export const searchProducts = async (query, options = {}) => {
+  if (!query || query.trim().length === 0) {
+    throw new Error('Consulta de búsqueda requerida');
+  }
+  
+  const params = { q: query.trim(), ...options };
+  const queryString = buildQueryString(params);
+  return fetchAPI(`/products/search${queryString}`);
 };
 
-/**
- * Obtener estadísticas de productos por categoría
- */
 export const getCategoryStats = async () => {
   return fetchAPI('/products/stats-by-category');
 };
@@ -133,115 +235,94 @@ export const getCategoryStats = async () => {
 // === CATEGORÍAS ===
 // ============================================
 
-/**
- * Obtener todas las categorías
- */
-export const getCategories = async () => {
-  return fetchAPI('/categories');
+export const getCategories = async (options = {}) => {
+  const queryString = buildQueryString(options);
+  return fetchAPI(`/categories${queryString}`);
 };
 
-/**
- * Obtener una categoría por ID
- * @param {number} id - ID de la categoría
- */
 export const getCategoryById = async (id) => {
+  if (!id) throw new Error('ID de categoría requerido');
   return fetchAPI(`/categories/${id}`);
 };
 
-/**
- * Obtener categorías principales (sin padre)
- */
 export const getMainCategories = async () => {
-  return fetchAPI('/categories?main=true');
+  return getCategories({ main: true });
 };
 
-/**
- * Obtener subcategorías de una categoría
- * @param {number} parentId - ID de la categoría padre
- */
 export const getSubCategories = async (parentId) => {
-  return fetchAPI(`/categories?parent_id=${parentId}`);
+  if (!parentId) throw new Error('ID de categoría padre requerido');
+  return getCategories({ parent_id: parentId });
 };
 
 // ============================================
 // === CARRUSELES ===
 // ============================================
 
-/**
- * Obtener todos los carruseles activos
- */
 export const getCarousels = async () => {
   return fetchAPI('/carousels');
 };
 
-/**
- * Obtener carrusel por ID
- * @param {number} id - ID del carrusel
- */
 export const getCarouselById = async (id) => {
+  if (!id) throw new Error('ID de carrusel requerido');
   return fetchAPI(`/carousels/${id}`);
 };
 
 // ============================================
-// === AUTENTICACIÓN ===
+// === AUTENTICACIÓN (FETCH) ===
 // ============================================
 
-/**
- * Iniciar sesión
- * @param {string} email - Email del usuario
- * @param {string} password - Contraseña
- */
 export const login = async (email, password) => {
+  if (!email || !password) {
+    throw new Error('Email y contraseña requeridos');
+  }
+  
   return fetchAPI('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password })
   });
 };
 
-/**
- * Registrar nuevo usuario
- * @param {Object} userData - Datos del usuario
- */
 export const register = async (userData) => {
+  const required = ['email', 'password', 'nombre_completo'];
+  const missing = required.filter(field => !userData[field]);
+  
+  if (missing.length > 0) {
+    throw new Error(`Campos requeridos faltantes: ${missing.join(', ')}`);
+  }
+  
   return fetchAPI('/auth/register', {
     method: 'POST',
     body: JSON.stringify(userData)
   });
 };
 
-/**
- * Obtener perfil del usuario actual
- */
 export const getProfile = async () => {
   return fetchAPI('/auth/profile');
 };
 
-/**
- * Cerrar sesión
- */
 export const logout = async () => {
-  return fetchAPI('/auth/logout', {
-    method: 'POST'
-  });
+  try {
+    await fetchAPI('/auth/logout', { method: 'POST' });
+  } finally {
+    localStorage.removeItem('qhatu_token');
+    localStorage.removeItem('qhatu_user');
+  }
 };
 
-/**
- * Solicitar restablecimiento de contraseña
- * @param {string} email - Email del usuario
- */
 export const requestPasswordReset = async (email) => {
+  if (!email) throw new Error('Email requerido');
+  
   return fetchAPI('/auth/forgot-password', {
     method: 'POST',
     body: JSON.stringify({ email })
   });
 };
 
-/**
- * Restablecer contraseña con token
- * @param {string} token - Token de restablecimiento
- * @param {string} newPassword - Nueva contraseña
- */
 export const resetPassword = async (token, newPassword) => {
+  if (!token || !newPassword) {
+    throw new Error('Token y nueva contraseña requeridos');
+  }
+  
   return fetchAPI('/auth/reset-password', {
     method: 'POST',
     body: JSON.stringify({ token, newPassword })
@@ -252,30 +333,23 @@ export const resetPassword = async (token, newPassword) => {
 // === USUARIOS (Admin) ===
 // ============================================
 
-/**
- * Obtener todos los usuarios (requiere admin)
- */
-export const getUsers = async () => {
-  return fetchAPI('/users');
+export const getUsers = async (options = {}) => {
+  const queryString = buildQueryString(options);
+  return fetchAPI(`/users${queryString}`);
 };
 
-/**
- * Actualizar usuario (requiere admin)
- * @param {number} id - ID del usuario
- * @param {Object} userData - Datos a actualizar
- */
 export const updateUser = async (id, userData) => {
+  if (!id) throw new Error('ID de usuario requerido');
+  
   return fetchAPI(`/users/${id}`, {
     method: 'PUT',
     body: JSON.stringify(userData)
   });
 };
 
-/**
- * Eliminar usuario (requiere admin)
- * @param {number} id - ID del usuario
- */
 export const deleteUser = async (id) => {
+  if (!id) throw new Error('ID de usuario requerido');
+  
   return fetchAPI(`/users/${id}`, {
     method: 'DELETE'
   });
@@ -285,53 +359,42 @@ export const deleteUser = async (id) => {
 // === ANALYTICS (Admin) ===
 // ============================================
 
-/**
- * Obtener estadísticas del dashboard
- */
 export const getAnalytics = async () => {
   return fetchAPI('/analytics');
 };
 
-/**
- * Obtener productos con stock bajo
- */
 export const getLowStockProducts = async () => {
   return fetchAPI('/analytics/low-stock');
 };
 
-/**
- * Obtener productos más vendidos en período específico
- * @param {string} period - Período (day, week, month, year)
- */
 export const getTopSelling = async (period = 'month') => {
-  return fetchAPI(`/analytics/top-selling?period=${period}`);
+  const validPeriods = ['day', 'week', 'month', 'year'];
+  if (!validPeriods.includes(period)) {
+    throw new Error(`Período inválido. Usa: ${validPeriods.join(', ')}`);
+  }
+  
+  return fetchAPI(`/analytics/top-selling${buildQueryString({ period })}`);
 };
 
 // ============================================
 // === BANNERS DE DESCUENTO ===
 // ============================================
 
-/**
- * Obtener banners de descuento activos
- */
 export const getActiveDiscountBanners = async () => {
   return fetchAPI('/banners-descuento/activos');
 };
 
-/**
- * Obtener un banner específico por ID
- * @param {number} id - ID del banner
- */
 export const getDiscountBannerById = async (id) => {
+  if (!id) throw new Error('ID de banner requerido');
   return fetchAPI(`/banners-descuento/${id}`);
 };
 
-/**
- * Registrar interacción con banner (vista o click)
- * @param {number} bannerId - ID del banner
- * @param {string} tipo - 'vista' o 'click'
- */
 export const registerBannerInteraction = async (bannerId, tipo) => {
+  if (!bannerId) throw new Error('ID de banner requerido');
+  if (!['vista', 'click'].includes(tipo)) {
+    throw new Error('Tipo debe ser "vista" o "click"');
+  }
+  
   return fetchAPI('/banners-descuento/interaccion', {
     method: 'POST',
     body: JSON.stringify({ banner_id: bannerId, tipo })
@@ -339,46 +402,15 @@ export const registerBannerInteraction = async (bannerId, tipo) => {
 };
 
 // ============================================
-// === EXPORTACIÓN DEFAULT ===
+// === HEALTH CHECK ===
 // ============================================
 
-export default {
-  // Productos
-  getProducts,
-  getProductById,
-  getFeaturedProducts,
-  getBestSellers,
-  getRecentProducts,
-  getProductsByCategory,
-  getPriceRange,
-  searchProducts,
-  getCategoryStats,
-  
-  // Categorías
-  getCategories,
-  getCategoryById,
-  getMainCategories,
-  getSubCategories,
-  
-  // Carruseles
-  getCarousels,
-  getCarouselById,
-  
-  // Autenticación
-  login,
-  register,
-  getProfile,
-  logout,
-  requestPasswordReset,
-  resetPassword,
-  
-  // Usuarios
-  getUsers,
-  updateUser,
-  deleteUser,
-  
-  // Analytics
-  getAnalytics,
-  getLowStockProducts,
-  getTopSelling
+export const healthCheck = async () => {
+  try {
+    const response = await fetch(`${API_URL.replace('/api', '')}/health`);
+    return await response.json();
+  } catch (error) {
+    log.error('Health check falló:', error);
+    return { status: 'unhealthy', error: error.message };
+  }
 };
