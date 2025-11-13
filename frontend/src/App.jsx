@@ -1,23 +1,9 @@
 // C:\qhatu\frontend\src\App.jsx
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React from 'react';
 import Header from './components/layout/Header/Header';
 import Footer from './components/layout/Footer/Footer';
-import Home from './pages/Home/Home';
-import Products from './pages/Products/Products';
-import ProductDetail from './pages/ProductDetail/ProductDetail';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import VendedorDashboard from './pages/Vendedor/VendedorDashboard';
-import AlmaceneroDashboard from './pages/Almacenero/AlmaceneroDashboard';
-import Nosotros from './pages/Nosotros/Nosotros';
-import Contact from './pages/Contact/Contact';
-import Login from './components/layout/Auth/Login';
-import Register from './components/layout/Auth/Register';
-import ForgotPassword from './components/layout/Auth/ForgotPassword';
-import ResetPassword from './components/layout/Auth/ResetPassword';
-import ProtectedRoute from './components/ProtectedRoute';
+import AppRoutes from './AppRoutes';
 import { CartProvider } from './contexts/CartContext';
-import authService from './services/authService';
 import './styles/global.css';
 
 class ErrorBoundary extends React.Component {
@@ -66,103 +52,18 @@ class ErrorBoundary extends React.Component {
 }
 
 function App() {
-    // Inicializar autenticación al cargar la app
-    useEffect(() => {
-        authService.initializeAuth();
-    }, []);
-
     return (
-        <Router>
-            <CartProvider>
-                <ErrorBoundary>
-                    <div className="app-container">
-                        <Header />
-                        <main style={{ minHeight: 'calc(100vh - 200px)' }}>
-                            <Routes>
-                                {/* ========== RUTAS PÚBLICAS ========== */}
-                                <Route path="/" element={<Home />} />
-                                <Route path="/products" element={<Products />} />
-                                <Route path="/product/:id" element={<ProductDetail />} />
-                                <Route path="/nosotros" element={<Nosotros />} />
-                                <Route path="/contact" element={<Contact />} />
-                                
-                                {/* ========== AUTENTICACIÓN ========== */}
-                                <Route path="/login" element={<Login />} />
-                                <Route path="/register" element={<Register />} />
-                                <Route path="/forgot-password" element={<ForgotPassword />} />
-                                <Route path="/reset-password/:token" element={<ResetPassword />} />
-                                
-                                {/* ========== RUTAS PROTEGIDAS - ADMIN ========== */}
-                                <Route 
-                                    path="/admin/*" 
-                                    element={
-                                        <ProtectedRoute allowedRoles={['super_admin']}>
-                                            <AdminDashboard />
-                                        </ProtectedRoute>
-                                    } 
-                                />
-                                
-                                {/* ========== RUTAS PROTEGIDAS - VENDEDOR ========== */}
-                                <Route 
-                                    path="/vendedor/*" 
-                                    element={
-                                        <ProtectedRoute allowedRoles={['vendedor']}>
-                                            <VendedorDashboard />
-                                        </ProtectedRoute>
-                                    } 
-                                />
-                                
-                                {/* ========== RUTAS PROTEGIDAS - ALMACENERO ========== */}
-                                <Route 
-                                    path="/almacenero/*" 
-                                    element={
-                                        <ProtectedRoute allowedRoles={['almacenero']}>
-                                            <AlmaceneroDashboard />
-                                        </ProtectedRoute>
-                                    } 
-                                />
-                                
-                                {/* ========== 404 ========== */}
-                                <Route 
-                                    path="*" 
-                                    element={
-                                        <div style={{ 
-                                            textAlign: 'center', 
-                                            padding: '60px 20px',
-                                            minHeight: '400px',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-                                                404 - Página no encontrada
-                                            </h2>
-                                            <p style={{ color: '#666', marginBottom: '2rem' }}>
-                                                La página que buscas no existe
-                                            </p>
-                                            <a 
-                                                href="/" 
-                                                style={{
-                                                    padding: '10px 24px',
-                                                    background: '#007bff',
-                                                    color: '#fff',
-                                                    textDecoration: 'none',
-                                                    borderRadius: '4px'
-                                                }}
-                                            >
-                                                Volver al inicio
-                                            </a>
-                                        </div>
-                                    } 
-                                />
-                            </Routes>
-                        </main>
-                        <Footer />
-                    </div>
-                </ErrorBoundary>
-            </CartProvider>
-        </Router>
+        <CartProvider>
+            <ErrorBoundary>
+                <div className="app-container">
+                    <Header />
+                    <main style={{ minHeight: 'calc(100vh - 200px)' }}>
+                        <AppRoutes />
+                    </main>
+                    <Footer />
+                </div>
+            </ErrorBoundary>
+        </CartProvider>
     );
 }
 

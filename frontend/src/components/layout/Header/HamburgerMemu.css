@@ -1,0 +1,475 @@
+/* C:\qhatu\frontend\src\components\layout\Header\HamburgerMenu.css */
+
+/* ====================================
+   🍔 BOTÓN HAMBURGUESA - BASE
+   ==================================== */
+.hamburger-menu {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 44px;
+  height: 44px;
+  background: var(--bg-primary);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--duration-base) var(--ease-out);
+  box-shadow: var(--shadow-sm);
+  z-index: var(--z-fixed);
+}
+
+.hamburger-menu:hover {
+  background: var(--bg-secondary);
+  border-color: var(--red-primary);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.hamburger-menu:active {
+  transform: scale(0.95);
+}
+
+.hamburger-menu:focus-visible {
+  outline: 2px solid var(--red-primary);
+  outline-offset: 2px;
+}
+
+/* ====================================
+   📏 LÍNEAS DEL BOTÓN HAMBURGUESA
+   ==================================== */
+.hamburger-menu__line {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 1px;
+  transition: all var(--duration-base) var(--ease-out);
+  transform-origin: center;
+  position: relative;
+}
+
+.hamburger-menu__line--top {
+  transform: translateY(-4px);
+}
+
+.hamburger-menu__line--middle {
+  margin: 4px 0;
+}
+
+.hamburger-menu__line--bottom {
+  transform: translateY(4px);
+}
+
+/* ====================================
+   ✨ ANIMACIONES DE TRANSFORMACIÓN (ABIERTO)
+   ==================================== */
+.hamburger-menu--open {
+  background: var(--red-light);
+  border-color: var(--red-primary);
+}
+
+.hamburger-menu--open:hover {
+  background: var(--red-primary);
+}
+
+.hamburger-menu--open .hamburger-menu__line {
+  background: var(--red-primary);
+}
+
+.hamburger-menu--open:hover .hamburger-menu__line {
+  background: var(--white);
+}
+
+/* Línea superior - Rota 45 grados */
+.hamburger-menu--open .hamburger-menu__line--top {
+  transform: rotate(45deg) translate(5px, 5px);
+  animation: lineTopOpen 0.4s var(--ease-bounce);
+}
+
+@keyframes lineTopOpen {
+  0% {
+    transform: translateY(-4px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(0) rotate(20deg);
+  }
+  100% {
+    transform: rotate(45deg) translate(5px, 5px);
+  }
+}
+
+/* Línea media - Se desvanece */
+.hamburger-menu--open .hamburger-menu__line--middle {
+  opacity: 0;
+  transform: scaleX(0);
+  animation: lineMiddleOpen 0.3s var(--ease-out);
+}
+
+@keyframes lineMiddleOpen {
+  0% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+/* Línea inferior - Rota -45 grados */
+.hamburger-menu--open .hamburger-menu__line--bottom {
+  transform: rotate(-45deg) translate(5px, -5px);
+  animation: lineBottomOpen 0.4s var(--ease-bounce);
+}
+
+@keyframes lineBottomOpen {
+  0% {
+    transform: translateY(4px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(0) rotate(-20deg);
+  }
+  100% {
+    transform: rotate(-45deg) translate(5px, -5px);
+  }
+}
+
+/* ====================================
+   🔄 ANIMACIONES DE CIERRE
+   ==================================== */
+.hamburger-menu:not(.hamburger-menu--open) .hamburger-menu__line--top {
+  animation: lineTopClose 0.4s var(--ease-bounce);
+}
+
+@keyframes lineTopClose {
+  0% {
+    transform: rotate(45deg) translate(5px, 5px);
+  }
+  50% {
+    transform: rotate(20deg) translate(2px, 2px);
+  }
+  100% {
+    transform: translateY(-4px) rotate(0deg);
+  }
+}
+
+.hamburger-menu:not(.hamburger-menu--open) .hamburger-menu__line--middle {
+  animation: lineMiddleClose 0.3s var(--ease-out) 0.1s both;
+}
+
+@keyframes lineMiddleClose {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.hamburger-menu:not(.hamburger-menu--open) .hamburger-menu__line--bottom {
+  animation: lineBottomClose 0.4s var(--ease-bounce);
+}
+
+@keyframes lineBottomClose {
+  0% {
+    transform: rotate(-45deg) translate(5px, -5px);
+  }
+  50% {
+    transform: rotate(-20deg) translate(2px, -2px);
+  }
+  100% {
+    transform: translateY(4px) rotate(0deg);
+  }
+}
+
+/* ====================================
+   🎪 EFECTOS ESPECIALES
+   ==================================== */
+
+/* Efecto de pulso cuando está activo */
+.hamburger-menu--open::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--red-primary);
+  border-radius: var(--radius-lg);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(1);
+  animation: pulseEffect 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes pulseEffect {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(1.3);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.3);
+    opacity: 0;
+  }
+}
+
+/* Efecto de brillo en hover */
+.hamburger-menu:hover .hamburger-menu__line {
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.4);
+}
+
+/* ====================================
+   📱 RESPONSIVE DESIGN
+   ==================================== */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .hamburger-menu {
+    width: 40px;
+    height: 40px;
+  }
+
+  .hamburger-menu__line {
+    width: 18px;
+    height: 1.5px;
+  }
+
+  .hamburger-menu__line--top {
+    transform: translateY(-3px);
+  }
+
+  .hamburger-menu__line--bottom {
+    transform: translateY(3px);
+  }
+
+  .hamburger-menu--open .hamburger-menu__line--top {
+    transform: rotate(45deg) translate(4px, 4px);
+  }
+
+  .hamburger-menu--open .hamburger-menu__line--bottom {
+    transform: rotate(-45deg) translate(4px, -4px);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .hamburger-menu {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+  }
+
+  .hamburger-menu__line {
+    width: 16px;
+    height: 1.5px;
+  }
+
+  .hamburger-menu__line--top {
+    transform: translateY(-2.5px);
+  }
+
+  .hamburger-menu__line--middle {
+    margin: 3px 0;
+  }
+
+  .hamburger-menu__line--bottom {
+    transform: translateY(2.5px);
+  }
+
+  .hamburger-menu--open .hamburger-menu__line--top {
+    transform: rotate(45deg) translate(3px, 3px);
+  }
+
+  .hamburger-menu--open .hamburger-menu__line--bottom {
+    transform: rotate(-45deg) translate(3px, -3px);
+  }
+}
+
+/* Pantallas muy pequeñas */
+@media (max-width: 360px) {
+  .hamburger-menu {
+    width: 32px;
+    height: 32px;
+  }
+
+  .hamburger-menu__line {
+    width: 14px;
+  }
+}
+
+/* ====================================
+   🎯 ESTADOS ESPECIALES
+   ==================================== */
+
+/* Estado de carga */
+.hamburger-menu--loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.hamburger-menu--loading .hamburger-menu__line {
+  animation: loadingPulse 1.5s infinite;
+}
+
+@keyframes loadingPulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Estado deshabilitado */
+.hamburger-menu:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.hamburger-menu:disabled:hover {
+  background: var(--bg-primary);
+  border-color: var(--border-light);
+}
+
+.hamburger-menu:disabled .hamburger-menu__line {
+  background: var(--text-muted);
+}
+
+/* ====================================
+   ⚡ OPTIMIZACIONES DE PERFORMANCE
+   ==================================== */
+@media (prefers-reduced-motion: reduce) {
+  .hamburger-menu,
+  .hamburger-menu__line {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .hamburger-menu--open .hamburger-menu__line--top {
+    transform: rotate(45deg) translate(5px, 5px);
+  }
+
+  .hamburger-menu--open .hamburger-menu__line--middle {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .hamburger-menu--open .hamburger-menu__line--bottom {
+    transform: rotate(-45deg) translate(5px, -5px);
+  }
+
+  .hamburger-menu:not(.hamburger-menu--open) .hamburger-menu__line--top {
+    transform: translateY(-4px) rotate(0deg);
+  }
+
+  .hamburger-menu:not(.hamburger-menu--open) .hamburger-menu__line--middle {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  .hamburger-menu:not(.hamburger-menu--open) .hamburger-menu__line--bottom {
+    transform: translateY(4px) rotate(0deg);
+  }
+
+  .hamburger-menu::before {
+    display: none;
+  }
+}
+
+/* ====================================
+   🔧 UTILIDADES DE ACCESIBILIDAD
+   ==================================== */
+
+/* Mejora el contraste para baja visión */
+@media (prefers-contrast: high) {
+  .hamburger-menu {
+    border-width: 2px;
+  }
+
+  .hamburger-menu__line {
+    height: 2.5px;
+  }
+
+  .hamburger-menu--open {
+    border-width: 3px;
+  }
+}
+
+/* Soporte para modo alto contraste en Windows */
+@media (forced-colors: active) {
+  .hamburger-menu {
+    border: 1px solid ButtonText;
+    forced-color-adjust: none;
+  }
+
+  .hamburger-menu__line {
+    background: ButtonText;
+  }
+
+  .hamburger-menu--open {
+    background: ButtonText;
+  }
+
+  .hamburger-menu--open .hamburger-menu__line {
+    background: ButtonFace;
+  }
+}
+
+/* ====================================
+   🎨 VARIANTES DE ESTILO (OPCIONAL)
+   ==================================== */
+
+/* Variante minimalista */
+.hamburger-menu--minimal {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  width: 32px;
+  height: 32px;
+}
+
+.hamburger-menu--minimal:hover {
+  background: var(--bg-secondary);
+}
+
+/* Variante destacada */
+.hamburger-menu--highlight {
+  background: var(--red-light);
+  border-color: var(--red-primary);
+}
+
+.hamburger-menu--highlight .hamburger-menu__line {
+  background: var(--red-primary);
+}
+
+/* ====================================
+   🛠️ COMPATIBILIDAD Y FALLBACKS
+   ==================================== */
+
+/* Mejora para Safari */
+.hamburger-menu {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Optimización para dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+  .hamburger-menu:hover {
+    transform: none;
+    background: var(--bg-primary);
+  }
+
+  .hamburger-menu:active {
+    background: var(--bg-secondary);
+    transform: scale(0.95);
+  }
+}

@@ -1,430 +1,411 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Carousel from '../../components/Carousel/Carousel';
-import ProductCard from '../../components/products/ProductCard/ProductCard';
-import { getCarousels, getFeaturedProducts, getBestSellers, getRecentProducts, getProductsByCategory } from '../../services/api';
 import './Home.css';
 
-// SVG Icons Component
-const SVGIcon = ({ name, className = "" }) => {
-const icons = {
-    premium: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+// ====================================
+// 🎨 ICONOS SVG PROFESIONALES
+// ====================================
+const Icons = {
+  star: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M10 2l2.5 6.5L19 10l-6.5 2.5L10 19l-2.5-6.5L1 10l6.5-2.5L10 2z" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    truck: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+  ),
+  fire: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M10 2s1.5 3 1.5 5.5c0 2-1.5 3.5-3 3.5s-3-1.5-3-3.5c0 0 0-1 .5-2M5 9c-1 1.5-2 3.5-2 5.5 0 3.5 2.5 6 6 6s6-2.5 6-6c0-3-2-6-4-8" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    star: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+  ),
+  candy: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="10" cy="10" r="7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M10 3v14M3 10h14" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    gift: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+  ),
+  eye: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M1 10s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6z" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="10" cy="10" r="3"/>
     </svg>
-    ),
-    warning: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+  ),
+  tag: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 10l-8 8-8-8V2h8l8 8z" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="6" cy="6" r="1" fill="currentColor"/>
     </svg>
-    ),
-    location: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+  ),
+  truck: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M1 3h11v9H1zM12 6h4l3 3v3h-3M5 16a2 2 0 100-4 2 2 0 000 4zM15 16a2 2 0 100-4 2 2 0 000 4z" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    phone: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57-.35-.11-.74-.03-1.02.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.59l2.2-2.21c.28-.26.36-.65.25-1C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1zM12 3v10l3-3h6V3h-9z"/>
+  ),
+  shield: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M10 2L3 5v5c0 4 2.5 7 7 9 4.5-2 7-5 7-9V5l-7-3z" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    clock: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+  ),
+  box: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M10 1L2 5v10l8 4 8-4V5l-8-4zM10 11V1M2 5l8 4M18 5l-8 4" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    shipping: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+  ),
+  mapPin: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M16 8c0 4-6 10-6 10S4 12 4 8a6 6 0 1112 0z" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="10" cy="8" r="2"/>
     </svg>
-    ),
-    target: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
-        <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+  ),
+  clock: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="10" cy="10" r="8"/>
+      <path d="M10 5v5l3 3" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    package: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M21 6h-4c0-2.21-1.79-4-4-4S9 3.79 9 6H3v16h18V6zm-10 0h4c0-1.1-.9-2-2-2s-2 .9-2 2zm10 14H3V8h18v12z"/>
+  ),
+  phone: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 14v3a2 2 0 01-2 2h-1a15 15 0 01-13-13V5a2 2 0 012-2h3l2 5-2 2a11 11 0 006 6l2-2 5 2z" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    happy: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+  ),
+  arrowRight: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    rating: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+  ),
+  checkCircle: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="10" cy="10" r="8"/>
+      <path d="M6 10l2 2 5-5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    fire: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
+  ),
+  users: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M14 17v-2a4 4 0 00-8 0v2M10 9a3 3 0 100-6 3 3 0 000 6zM18 17v-2a4 4 0 00-3-3.87M15 1.13A4 4 0 0118 5a4 4 0 01-3 3.87" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
-    ),
-    eye: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+  ),
+  star2: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M10 1l2.5 6.5L19 10l-6.5 2.5L10 19l-2.5-6.5L1 10l6.5-2.5L10 1z"/>
     </svg>
-    ),
-    candy: (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.51-3.49L17.5 6.5 9.99 9.99 6.5 17.5zm5.5-6.6c.61 0 1.1.49 1.1 1.1s-.49 1.1-1.1 1.1-1.1-.49-1.1-1.1.49-1.1 1.1-1.1z"/>
-    </svg>
-    )
-};
-
-return icons[name] || null;
+  )
 };
 
 const Home = () => {
-const [carousels, setCarousels] = useState([]);
-const [featuredProducts, setFeaturedProducts] = useState([]);
-const [bestSellers, setBestSellers] = useState([]);
-const [recentProducts, setRecentProducts] = useState([]);
-const [recentlyViewed, setRecentlyViewed] = useState([]);
-const [dulcesProducts, setDulcesProducts] = useState([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState(null);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
+  const [dulcesProducts, setDulcesProducts] = useState([]);
+  const [banners, setBanners] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-    loadHomeData();
-    loadRecentlyViewed();
-}, []);
+  // Manejo de scroll mejorado para transición suave
+  useEffect(() => {
+    let ticking = false;
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollPosition = window.scrollY;
+          const contextualHeight = window.innerHeight * 0.5; // 50vh
+          
+          if (scrollPosition > contextualHeight * 0.3) {
+            document.body.classList.add('scrolled');
+          } else {
+            document.body.classList.remove('scrolled');
+          }
+          
+          ticking = false;
+        });
+        
+        ticking = true;
+      }
+    };
 
-const loadRecentlyViewed = () => {
-    try {
-    const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
-    setRecentlyViewed(viewed.slice(0, 8)); // Últimos 8 productos vistos
-    } catch (err) {
-    console.error('Error al cargar productos vistos:', err);
-    }
-};
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-const loadHomeData = async () => {
-    try {
-    setLoading(true);
-    setError(null);
+  // Datos simulados para demostración
+  useEffect(() => {
+    // Simular carga de datos
+    setTimeout(() => {
+      setFeaturedProducts([
+        { producto_id: 1, nombre: 'Snickers Original', precio: 5.50, url_imagen: '/awaiting-image.jpeg', stock: 50 },
+        { producto_id: 2, nombre: 'M&M\'s Chocolate', precio: 4.90, url_imagen: '/awaiting-image.jpeg', stock: 35 },
+        { producto_id: 3, nombre: 'KitKat Chunky', precio: 6.20, url_imagen: '/awaiting-image.jpeg', stock: 28 },
+        { producto_id: 4, nombre: 'Twix Caramelo', precio: 5.80, url_imagen: '/awaiting-image.jpeg', stock: 42 },
+        { producto_id: 5, nombre: 'Milky Way', precio: 5.30, url_imagen: '/awaiting-image.jpeg', stock: 31 },
+        { producto_id: 6, nombre: 'Ferrero Rocher', precio: 12.50, url_imagen: '/awaiting-image.jpeg', stock: 15 },
+        { producto_id: 7, nombre: 'Toblerone', precio: 8.90, url_imagen: '/awaiting-image.jpeg', stock: 22 }
+      ]);
+      setBestSellers([
+        { producto_id: 8, nombre: 'Hershey\'s Classic', precio: 7.20, url_imagen: '/awaiting-image.jpeg', ventas: 120 },
+        { producto_id: 9, nombre: 'Reese\'s Peanut', precio: 6.80, url_imagen: '/awaiting-image.jpeg', ventas: 98 },
+        { producto_id: 10, nombre: 'Lindt Excellence', precio: 14.90, url_imagen: '/awaiting-image.jpeg', ventas: 85 },
+        { producto_id: 11, nombre: 'Cadbury Dairy Milk', precio: 8.50, url_imagen: '/awaiting-image.jpeg', ventas: 76 },
+        { producto_id: 12, nombre: 'Nutella B-ready', precio: 9.20, url_imagen: '/awaiting-image.jpeg', ventas: 65 },
+        { producto_id: 13, nombre: 'Kinder Bueno', precio: 7.90, url_imagen: '/awaiting-image.jpeg', ventas: 58 },
+        { producto_id: 14, nombre: 'Bounty Coconut', precio: 5.60, url_imagen: '/awaiting-image.jpeg', ventas: 47 }
+      ]);
+      setDulcesProducts([
+        { producto_id: 15, nombre: 'Haribo Goldbears', precio: 4.50, url_imagen: '/awaiting-image.jpeg' },
+        { producto_id: 16, nombre: 'Skittles Original', precio: 4.20, url_imagen: '/awaiting-image.jpeg' },
+        { producto_id: 17, nombre: 'Nerds Rainbow', precio: 5.80, url_imagen: '/awaiting-image.jpeg' },
+        { producto_id: 18, nombre: 'Sour Patch Kids', precio: 6.50, url_imagen: '/awaiting-image.jpeg' },
+        { producto_id: 19, nombre: 'Mentos Rainbow', precio: 3.90, url_imagen: '/awaiting-image.jpeg' },
+        { producto_id: 20, nombre: 'Trolli Gummy', precio: 5.20, url_imagen: '/awaiting-image.jpeg' },
+        { producto_id: 21, nombre: 'Warheads Extreme', precio: 4.80, url_imagen: '/awaiting-image.jpeg' }
+      ]);
+      setBanners([
+        { banner_id: 1, titulo: 'Black Friday', descripcion: 'Hasta 40% en dulces premium', porcentaje_descuento: 40, categoria_nombre: 'Chocolates', dias_restantes: 5 },
+        { banner_id: 2, titulo: 'Cyber Monday', descripcion: 'Ofertas exclusivas online', porcentaje_descuento: 35, categoria_nombre: 'Gomitas', dias_restantes: 7 }
+      ]);
+      setLoading(false);
+    }, 800);
+  }, []);
 
-    const [carouselsRes, featuredRes, bestSellersRes, recentRes, dulcesRes] = await Promise.all([
-        getCarousels().catch(() => ({ data: [] })),
-        getFeaturedProducts(8).catch(() => ({ data: [] })),
-        getBestSellers(8).catch(() => ({ data: [] })),
-        getRecentProducts(8).catch(() => ({ data: [] })),
-        getProductsByCategory(1, 12).catch(() => ({ data: [] })) // Categoría Dulces ID=1
-    ]);
-
-    setCarousels(carouselsRes.data || carouselsRes || []);
-    setFeaturedProducts(featuredRes.data || featuredRes || []);
-    setBestSellers(bestSellersRes.data || bestSellersRes || []);
-    setRecentProducts(recentRes.data || recentRes || []);
-    setDulcesProducts(dulcesRes.data || dulcesRes || []);
-
-    } catch (err) {
-    console.error('Error al cargar datos:', err);
-    setError('Error al cargar los datos de la tienda');
-    } finally {
-    setLoading(false);
-    }
-};
-
-if (loading) {
+  if (loading) {
     return (
-    <div className="home-loading">
-        <div className="loading-content">
+      <div className="home-loading">
         <div className="spinner"></div>
-        <h3>Cargando productos premium</h3>
-        <p>Preparando la mejor experiencia de compra...</p>
-        </div>
-    </div>
+        <p className="loading-text">Cargando productos premium...</p>
+      </div>
     );
-}
+  }
 
-return (
-    <div className="home">
-    {/* Ofertas del Día - Carousel Section */}
-    {carousels.length > 0 && (
-        <section className="carousel-section">
-        <div className="carousel-section-container">
-            <div className="carousel-header">
-            <div className="carousel-badge">
-                <SVGIcon name="fire" className="badge-icon-fire" />
-                <span>¡Ofertas Calientes!</span>
+  return (
+    <div className="home-pro">
+      {/* HERO SECTION */}
+      <section className="hero-pro">
+        <div className="hero-container">
+          <div className="hero-badge-pro">
+            {Icons.star2}
+            <span>Dulces Premium Importados</span>
+          </div>
+          <h1 className="hero-title-pro">Endulza Tus Momentos Especiales</h1>
+          <p className="hero-desc-pro">
+            Descubre la mejor selección de dulces importados con calidad garantizada y entrega inmediata en Huánuco
+          </p>
+          <div className="hero-features-pro">
+            <div className="hero-item-pro">
+              {Icons.truck}
+              <span>Envío gratis +S/50</span>
             </div>
-            <h2 className="carousel-title">Ofertas del Día</h2>
-            <p className="carousel-subtitle">
-                Descuentos especiales que no puedes dejar pasar
-            </p>
+            <div className="hero-item-pro">
+              {Icons.shield}
+              <span>100% originales</span>
             </div>
-            <div className="carousel-wrapper">
-            <Carousel items={carousels} />
+            <div className="hero-item-pro">
+              {Icons.box}
+              <span>Empaque premium</span>
             </div>
+          </div>
         </div>
+      </section>
+
+      {/* BANNERS PROMOCIONALES */}
+      {banners.length > 0 && (
+        <section className="section-pro promo-bg">
+          <div className="container-pro">
+            <div className="section-header-pro">
+              <div className="header-content-pro">
+                <div className="icon-badge-pro gold">{Icons.tag}</div>
+                <div>
+                  <h2 className="section-title-pro">Ofertas Especiales</h2>
+                  <p className="section-subtitle-pro">Aprovecha estos descuentos por tiempo limitado</p>
+                </div>
+              </div>
+              <Link to="/products" className="link-view-pro">
+                Ver todas {Icons.arrowRight}
+              </Link>
+            </div>
+            <div className="banners-grid-pro">
+              {banners.map((banner) => (
+                <div key={banner.banner_id} className="banner-card-pro">
+                  <div className="banner-discount-pro">{banner.porcentaje_descuento}%</div>
+                  <h3 className="banner-title-pro">{banner.titulo}</h3>
+                  <p className="banner-desc-pro">{banner.descripcion}</p>
+                  <div className="banner-footer-pro">
+                    <span className="banner-cat-pro">{banner.categoria_nombre}</span>
+                    <span className="banner-time-pro">
+                      {Icons.clock}
+                      {banner.dias_restantes} días
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
-    )}
+      )}
 
-    {/* === SECCIÓN AGREGADA: Vistos Recientemente (debajo del carrusel) === */}
-    {recentlyViewed.length > 0 && (
-    <section className="recently-viewed-section">
-        <div className="section-container">
-        <div className="section-header">
-            <div className="section-badge">
-            <SVGIcon name="eye" className="badge-icon" />
+      {/* PRODUCTOS DESTACADOS */}
+      {featuredProducts.length > 0 && (
+        <section className="section-pro">
+          <div className="container-pro">
+            <div className="section-header-pro">
+              <div className="header-content-pro">
+                <div className="icon-badge-pro primary">{Icons.star}</div>
+                <div>
+                  <h2 className="section-title-pro">Productos Destacados</h2>
+                  <p className="section-subtitle-pro">Los más populares de esta semana</p>
+                </div>
+              </div>
+              <Link to="/products?featured=true" className="link-view-pro">
+                Ver todos {Icons.arrowRight}
+              </Link>
             </div>
-            <h2 className="section-title">Vistos Recientemente</h2>
-            <p className="section-subtitle">Productos que has explorado</p>
-        </div>
-        <div className="products-grid">
-            {recentlyViewed.map((product) => (
-            <ProductCard key={product.producto_id} product={product} />
-            ))}
-        </div>
-        </div>
-    </section>
-    )}
-
-    {/* === SECCIÓN AGREGADA: Más Vendidos (debajo de Vistos Recientemente) === */}
-    {bestSellers.length > 0 && (
-    <section className="best-sellers-section">
-        <div className="section-container">
-        <div className="section-header">
-            <div className="section-badge fire-badge">
-            <SVGIcon name="fire" className="badge-icon" />
+            <div className="products-grid-pro">
+              {featuredProducts.map((product) => (
+                <div key={product.producto_id} className="product-card-pro">
+                  <div className="product-image-pro">
+                    <img src={product.url_imagen} alt={product.nombre} />
+                    {product.stock < 20 && (
+                      <span className="product-badge-pro low">Stock bajo</span>
+                    )}
+                  </div>
+                  <div className="product-info-pro">
+                    <h3 className="product-name-pro">{product.nombre}</h3>
+                    <div className="product-footer-pro">
+                      <span className="product-price-pro">S/ {product.precio.toFixed(2)}</span>
+                      <button className="btn-add-pro">Agregar</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <h2 className="section-title">Más Vendidos</h2>
-            <p className="section-subtitle">Los favoritos de nuestros clientes</p>
-        </div>
-        <div className="products-grid">
-            {bestSellers.slice(0, 5).map((product) => (
-            <ProductCard key={product.producto_id} product={product} />
-            ))}
-        </div>
-        <div className="section-footer">
-            <Link to="/products?orderBy=ventas&order=DESC" className="btn btn-red btn-lg">
-            Ver Todos los Más Vendidos
-            <span className="btn-arrow">→</span>
-            </Link>
-        </div>
-        </div>
-    </section>
-    )}
-
-    {/* Productos Vistos Recientemente */}
-    {recentlyViewed.length > 0 && (
-        <section className="recently-viewed-section">
-        <div className="section-container">
-            <div className="section-header">
-            <div className="section-badge">
-                <SVGIcon name="eye" className="badge-icon" />
-            </div>
-            <h2 className="section-title">Vistos Recientemente</h2>
-            <p className="section-subtitle">
-                Productos que has explorado antes
-            </p>
-            </div>
-            <div className="products-grid">
-            {recentlyViewed.map((product) => (
-                <ProductCard key={product.producto_id} product={product} />
-            ))}
-            </div>
-        </div>
+          </div>
         </section>
-    )}
+      )}
 
-    {/* Productos de Dulces */}
-    {dulcesProducts.length > 0 && (
-    <section className="dulces-section">
-        <div className="section-container">
-        <div className="section-header">
-            <div className="section-badge candy-badge">
-            <SVGIcon name="candy" className="badge-icon" />
+      {/* MÁS VENDIDOS */}
+      {bestSellers.length > 0 && (
+        <section className="section-pro bestseller-bg">
+          <div className="container-pro">
+            <div className="section-header-pro">
+              <div className="header-content-pro">
+                <div className="icon-badge-pro red">{Icons.fire}</div>
+                <div>
+                  <h2 className="section-title-pro">Más Vendidos</h2>
+                  <p className="section-subtitle-pro">Los favoritos de nuestros clientes</p>
+                </div>
+              </div>
+              <Link to="/products?orderBy=ventas" className="link-view-pro">
+                Ver todos {Icons.arrowRight}
+              </Link>
             </div>
-            <h2 className="section-title">Dulces Importados</h2>
-            <p className="section-subtitle">
-            Los mejores dulces del mundo directo a tu puerta
-            </p>
-        </div>
-        <div className="products-grid">
-            {dulcesProducts.slice(0, 5).map((product) => (
-            <ProductCard key={product.producto_id} product={product} />
-            ))}
-        </div>
-        <div className="section-footer">
-            <Link to="/products?category=1" className="btn btn-gold btn-lg">
-            Ver Todos los Dulces
-            <span className="btn-arrow">→</span>
-            </Link>
-        </div>
-        </div>
-    </section>
-    )}
+            <div className="products-grid-pro">
+              {bestSellers.map((product) => (
+                <div key={product.producto_id} className="product-card-pro">
+                  <div className="product-image-pro">
+                    <img src={product.url_imagen} alt={product.nombre} />
+                    <span className="product-badge-pro hot">Hot</span>
+                  </div>
+                  <div className="product-info-pro">
+                    <h3 className="product-name-pro">{product.nombre}</h3>
+                    <div className="product-footer-pro">
+                      <span className="product-price-pro">S/ {product.precio.toFixed(2)}</span>
+                      <button className="btn-add-pro">Agregar</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
-    {/* Error Handling */}
-    {error && (
-        <div className="home-error">
-        <div className="error-content">
-            <SVGIcon name="warning" className="error-icon" />
-            <h3>Oops, algo salió mal</h3>
-            <p>{error}</p>
-            <button onClick={loadHomeData} className="btn btn-red">
-            Reintentar Carga
-            </button>
-        </div>
-        </div>
-    )}
+      {/* DULCES IMPORTADOS */}
+      {dulcesProducts.length > 0 && (
+        <section className="section-pro">
+          <div className="container-pro">
+            <div className="section-header-pro">
+              <div className="header-content-pro">
+                <div className="icon-badge-pro secondary">{Icons.candy}</div>
+                <div>
+                  <h2 className="section-title-pro">Dulces Importados</h2>
+                  <p className="section-subtitle-pro">Sabores auténticos de todo el mundo</p>
+                </div>
+              </div>
+              <Link to="/products?category=1" className="link-view-pro">
+                Ver todos {Icons.arrowRight}
+              </Link>
+            </div>
+            <div className="products-grid-pro">
+              {dulcesProducts.map((product) => (
+                <div key={product.producto_id} className="product-card-pro">
+                  <div className="product-image-pro">
+                    <img src={product.url_imagen} alt={product.nombre} />
+                  </div>
+                  <div className="product-info-pro">
+                    <h3 className="product-name-pro">{product.nombre}</h3>
+                    <div className="product-footer-pro">
+                      <span className="product-price-pro">S/ {product.precio.toFixed(2)}</span>
+                      <button className="btn-add-pro">Agregar</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
-    {/* Stats Section */}
-    <section className="stats-section">
-        <div className="stats-grid">
-        <div className="stat-card">
-            <SVGIcon name="package" className="stat-icon" />
-            <div className="stat-content">
-            <h3 className="stat-number">500+</h3>
-            <p className="stat-label">Productos Únicos</p>
+      {/* INFO SECTION */}
+      <section className="info-section-pro">
+        <div className="container-pro">
+          <div className="info-grid-pro">
+            <div className="info-card-pro">
+              <div className="info-icon-pro">{Icons.mapPin}</div>
+              <h3 className="info-title-pro">Nuestra Ubicación</h3>
+              <p className="info-text-pro">Jr. 28 de Julio 1234, Huánuco</p>
+              <p className="info-text-pro secondary">Lunes a Sábado: 9:00 AM - 8:00 PM</p>
             </div>
-        </div>
-        <div className="stat-card">
-            <SVGIcon name="happy" className="stat-icon" />
-            <div className="stat-content">
-            <h3 className="stat-number">2,000+</h3>
-            <p className="stat-label">Clientes Felices</p>
+            <div className="info-card-pro">
+              <div className="info-icon-pro">{Icons.phone}</div>
+              <h3 className="info-title-pro">Contacto Directo</h3>
+              <p className="info-text-pro">+51 962 123 456</p>
+              <p className="info-text-pro secondary">ventas@qhatu.com</p>
             </div>
-        </div>
-        <div className="stat-card">
-            <SVGIcon name="shipping" className="stat-icon" />
-            <div className="stat-content">
-            <h3 className="stat-number">1,500+</h3>
-            <p className="stat-label">Envíos Exitosos</p>
+            <div className="info-card-pro">
+              <div className="info-icon-pro">{Icons.truck}</div>
+              <h3 className="info-title-pro">Delivery Express</h3>
+              <p className="info-text-pro">Entrega en 24-48 horas</p>
+              <p className="info-text-pro secondary">Cobertura en todo Huánuco</p>
             </div>
-        </div>
-        <div className="stat-card">
-            <SVGIcon name="rating" className="stat-icon" />
-            <div className="stat-content">
-            <h3 className="stat-number">4.9/5</h3>
-            <p className="stat-label">Rating Promedio</p>
+            <div className="info-card-pro">
+              <div className="info-icon-pro">{Icons.checkCircle}</div>
+              <h3 className="info-title-pro">Garantía de Calidad</h3>
+              <p className="info-text-pro">Productos 100% originales</p>
+              <p className="info-text-pro secondary">Satisfacción garantizada</p>
             </div>
+          </div>
         </div>
-        </div>
-    </section>
+      </section>
 
-    {/* Contact & Location Section */}
-    <section className="contact-section">
-        <div className="section-header centered">
-        <div className="section-badge gold-badge">
-            <SVGIcon name="location" className="badge-icon" />
-        </div>
-        <h2>Encuéntranos</h2>
-        <p className="section-description">
-            Visítanos en nuestra tienda física o contáctanos para delivery
-        </p>
-        </div>
-        
-        <div className="contact-content">
-        <div className="map-container">
-            <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d62421.03!2d-76.24239958!3d-9.930567792!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x91a7c3e8f1e8e1e1%3A0x1e1e1e1e1e1e1e1e!2sHu%C3%A1nuco!5e0!3m2!1sen!2spe!4v1234567890"
-            width="100%"
-            height="400"
-            style={{ border: 0 }}
-            allowFullScreen=""
-            loading="lazy"
-            title="Ubicación Qhatu - Huánuco, Perú"
-            />
-        </div>
-        
-        <div className="contact-info">
-            <div className="info-grid">
-            <div className="info-card">
-                <div className="info-icon gold-bg">
-                <SVGIcon name="location" />
-                </div>
-                <div className="info-content">
-                <h4>Nuestra Ubicación</h4>
-                <p>Huánuco, Perú</p>
-                <small>Centro de la ciudad</small>
-                </div>
+      {/* STATS SECTION */}
+      <section className="stats-section-pro">
+        <div className="container-pro">
+          <div className="stats-grid-pro">
+            <div className="stat-item-pro">
+              <div className="stat-number-pro">500+</div>
+              <div className="stat-label-pro">Productos disponibles</div>
             </div>
-            
-            <div className="info-card">
-                <div className="info-icon red-bg">
-                <SVGIcon name="phone" />
-                </div>
-                <div className="info-content">
-                <h4>WhatsApp</h4>
-                <a href="https://wa.me/51123456789" target="_blank" rel="noopener noreferrer" className="contact-link">
-                    +51 952682285
-                </a>
-                <br></br>
-                <small>Atendemos 24/7</small>
-                </div>
+            <div className="stat-item-pro">
+              <div className="stat-number-pro">2,000+</div>
+              <div className="stat-label-pro">Clientes satisfechos</div>
             </div>
-            
-            <div className="info-card">
-                <div className="info-icon gold-bg">
-                <SVGIcon name="clock" />
-                </div>
-                <div className="info-content">
-                <h4>Horario de Atención</h4>
-                <p>Lunes - Sábado</p>
-                <small>9:00 AM - 6:00 PM</small>
-                </div>
+            <div className="stat-item-pro">
+              <div className="stat-number-pro">1,500+</div>
+              <div className="stat-label-pro">Entregas realizadas</div>
             </div>
-            
-            <div className="info-card">
-                <div className="info-icon red-bg">
-                <SVGIcon name="shipping" />
-                </div>
-                <div className="info-content">
-                <h4>Envío Rápido</h4>
-                <p>Entrega en 24-48h</p>
-                <small>Todo Huánuco</small>
-                </div>
+            <div className="stat-item-pro">
+              <div className="stat-number-pro">4.9/5</div>
+              <div className="stat-label-pro">Calificación promedio</div>
             </div>
-            </div>
+          </div>
         </div>
-        </div>
-    </section>
-
-    {/* CTA Section */}
-    <section className="cta-section">
-        <div className="cta-content">
-        <div className="cta-badge">
-            <SVGIcon name="target" />
-        </div>
-        <h2>¿Listo para endulzar tu día?</h2>
-        <p>
-            Únete a nuestra comunidad de amantes de los dulces y descubre por qué 
-            somos la tienda preferida en Huánuco
-        </p>
-        <div className="cta-buttons">
-            <Link to="/products" className="btn btn-gold btn-lg">
-            Comprar Ahora
-            </Link>
-            <Link to="/contact" className="btn btn-outline btn-lg">
-            Contactar
-            </Link>
-        </div>
-        </div>
-    </section>
+      </section>
     </div>
-);
+  );
 };
 
 export default Home;

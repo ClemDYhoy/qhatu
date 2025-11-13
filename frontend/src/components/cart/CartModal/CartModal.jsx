@@ -1,12 +1,13 @@
 // src/components/cart/CartModal/CartModal.jsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
 import authService from '../../../services/authService';
 import whatsappService from '../../../services/whatsappService';
+import Login from '../../layout/Auth/Login'; // Usamos el Login mejorado
 import './CartModal.css';
 
-// === ICONOS SVG (reutilizables) ===
+// === ICONOS SVG ===
 const CloseIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <line x1="18" y1="6" x2="6" y2="18" />
@@ -65,7 +66,8 @@ const LockIcon = () => (
 // === COMPONENTE PRINCIPAL ===
 const CartModal = ({ isOpen, onClose }) => {
   const { cart, updateQuantity, removeFromCart, clearCart, getTotalItems } = useCart();
-  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [pendingCheckout, setPendingCheckout] = useState(false);
   const navigate = useNavigate();
 
   const isAuthenticated = authService.isAuthenticated();
@@ -96,6 +98,7 @@ const CartModal = ({ isOpen, onClose }) => {
 
   const formatPrice = (price) => `S/. ${(parseFloat(price) || 0).toFixed(2)}`;
 
+  // === MANEJADORES ===
   const handleQuantityChange = (id, qty) => {
     if (qty < 1) removeFromCart(id);
     else updateQuantity(id, qty);
@@ -111,15 +114,25 @@ const CartModal = ({ isOpen, onClose }) => {
     whatsappService.downloadPDF(cartData);
   };
 
-  const handleWhatsApp = () => {
-    if (!cartData.items.length) return alert('Carrito vacío');
-    if (!isAuthenticated) {
-      setShowAuthPrompt(true);
+  // === CHECKOUT CON VALIDACIÓN DE LOGIN ===
+  const handleCheckout = () => {
+    if (!cartData.items.length) {
+      alert('Tu carrito está vacío');
       return;
     }
 
+    if (!isAuthenticated) {
+      setPendingCheckout(true);
+      setShowLogin(true);
+      return;
+    }
+
+    proceedWithWhatsApp();
+  };
+
+  const proceedWithWhatsApp = () => {
     const confirm = window.confirm(
-      `Enviar orden por WhatsApp?\nTotal: ${formatPrice(cartData.total)}\nProductos: ${getTotalItems()}`
+      `¿Enviar pedido por WhatsApp?\nTotal: ${formatPrice(cartData.total)}\nProductos: ${getTotalItems()}`
     );
 
     if (confirm) {
@@ -128,181 +141,184 @@ const CartModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const goToLogin = () => {
-    navigate('/login', {
-      state: { from: '/cart', message: 'Inicia sesión para completar tu compra' }
-    });
-  };
+  // === ESCUCHAR LOGIN EXITOSO ===
+  useEffect(() => {
+    const handleUserLogin = () => {
+      if (pendingCheckout && authService.isAuthenticated()) {
+        setShowLogin(false);
+        setPendingCheckout(false);
+        setTimeout(proceedWithWhatsApp, 300);
+      }
+    };
 
-  const goToRegister = () => {
-    navigate('/register', {
-      state: { from: '/cart', message: 'Regístrate para completar tu compra' }
-    });
+    window.addEventListener('userDataChanged', handleUserLogin);
+    return () => window.removeEventListener('userDataChanged', handleUserLogin);
+  }, [pendingCheckout, cartData, user]);
+
+  // === CIERRE DE MODALES ===
+  const handleLoginClose = () => {
+    setShowLogin(false);
+    setPendingCheckout(false);
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="cart-modal-overlay" onClick={onClose}>
-      <div className="cart-modal" onClick={e => e.stopPropagation()}>
+    <>
+      {/* MODAL PRINCIPAL */}
+      <div className="cart-modal-overlay" onClick={onClose}>
+        <div className="cart-modal" onClick={e => e.stopPropagation()}>
 
-        {/* HEADER */}
-        <div className="cart-modal__header">
-          <h2>Mi Carrito ({getTotalItems()})</h2>
-          <button className="cart-modal__close" onClick={onClose} aria-label="Cerrar">
-            <CloseIcon />
-          </button>
-        </div>
+          {/* HEADER */}
+          <div className="cart-modal__header">
+            <h2>Mi Carrito ({getTotalItems()})</h2>
+            <button className="cart-modal__close" onClick={onClose}>
+              <CloseIcon />
+            </button>
+          </div>
 
-        {/* BODY */}
-        <div className="cart-modal__body">
-          {cartData.items.length === 0 ? (
-            <div className="cart-empty">
-              <p>Tu carrito está vacío</p>
-              <p className="subtitle">¡Explora nuestros productos importados!</p>
-            </div>
-          ) : (
-            <>
-              {/* ITEMS */}
-              <div className="cart-items">
-                {cartData.items.map(item => (
-                  <div key={item.producto_id} className="cart-item">
-                    <img
-                      src={item.url_imagen || '/awaiting-image.jpeg'}
-                      alt={item.nombre}
-                      onError={e => e.target.src = '/awaiting-image.jpeg'}
-                    />
-                    <div className="cart-item__info">
-                      <h4>{item.nombre}</h4>
-                      <div className="prices">
-                        {item.precio_descuento ? (
-                          <>
-                            <span className="old">{formatPrice(item.precio)}</span>
-                            <span className="current">{formatPrice(item.precio_descuento)}</span>
-                          </>
-                        ) : (
-                          <span className="current">{formatPrice(item.precio)}</span>
+          {/* BODY */}
+          <div className="cart-modal__body">
+            {cartData.items.length === 0 ? (
+              <div className="cart-empty">
+                <p>Tu carrito está vacío</p>
+                <p className="subtitle">¡Explora nuestros productos importados!</p>
+              </div>
+            ) : (
+              <>
+                {/* ITEMS */}
+                <div className="cart-items">
+                  {cartData.items.map(item => (
+                    <div key={item.producto_id} className="cart-item">
+                      <img
+                        src={item.url_imagen || '/awaiting-image.jpeg'}
+                        alt={item.nombre}
+                        onError={e => e.target.src = '/awaiting-image.jpeg'}
+                      />
+                      <div className="cart-item__info">
+                        <h4>{item.nombre}</h4>
+                        <div className="prices">
+                          {item.precio_descuento ? (
+                            <>
+                              <span className="old">{formatPrice(item.precio)}</span>
+                              <span className="current">{formatPrice(item.precio_descuento)}</span>
+                            </>
+                          ) : (
+                            <span className="current">{formatPrice(item.precio)}</span>
+                          )}
+                        </div>
+                        <div className="controls">
+                          <button onClick={() => handleQuantityChange(item.producto_id, item.quantity - 1)}>
+                            <MinusIcon />
+                          </button>
+                          <span>{item.quantity}</span>
+                          <button
+                            onClick={() => handleQuantityChange(item.producto_id, item.quantity + 1)}
+                            disabled={item.quantity >= item.stock}
+                          >
+                            <PlusIcon />
+                          </button>
+                        </div>
+                        {item.quantity >= item.stock && (
+                          <p className="stock-warning">Stock máximo</p>
                         )}
                       </div>
-                      <div className="controls">
-                        <button onClick={() => handleQuantityChange(item.producto_id, item.quantity - 1)}>
-                          <MinusIcon />
-                        </button>
-                        <span>{item.quantity}</span>
-                        <button
-                          onClick={() => handleQuantityChange(item.producto_id, item.quantity + 1)}
-                          disabled={item.quantity >= item.stock}
-                        >
-                          <PlusIcon />
+                      <div className="actions">
+                        <p className="subtotal">{formatPrice(item.subtotalItem)}</p>
+                        <button onClick={() => removeFromCart(item.producto_id)}>
+                          <TrashIcon />
                         </button>
                       </div>
-                      {item.quantity >= item.stock && (
-                        <p className="stock-warning">Stock máximo</p>
-                      )}
                     </div>
-                    <div className="actions">
-                      <p className="subtotal">{formatPrice(item.subtotalItem)}</p>
-                      <button onClick={() => removeFromCart(item.producto_id)} aria-label="Eliminar">
-                        <TrashIcon />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* RESUMEN */}
-              <div className="cart-summary">
-                {cartData.descuento > 0 && (
-                  <>
-                    <div className="row">
-                      <span>Subtotal:</span>
-                      <span>{formatPrice(cartData.subtotal)}</span>
-                    </div>
-                    <div className="row discount">
-                      <span>Descuento:</span>
-                      <span>-{formatPrice(cartData.descuento)}</span>
-                    </div>
-                    <div className="divider"></div>
-                  </>
-                )}
-                <div className="row total">
-                  <span>Total:</span>
-                  <span>{formatPrice(cartData.total)}</span>
-                </div>
-              </div>
-
-              {/* ACCIONES */}
-              <div className="cart-actions">
-                <div className="pdf-actions">
-                  <button className="btn-outline" onClick={handlePreviewPDF}>
-                    <EyeIcon /> Vista
-                  </button>
-                  <button className="btn-outline" onClick={handleDownloadPDF}>
-                    <DownloadIcon /> PDF
-                  </button>
+                  ))}
                 </div>
 
-                <button
-                  className={`btn-whatsapp ${!isAuthenticated ? 'locked' : ''}`}
-                  onClick={handleWhatsApp}
-                >
-                  {isAuthenticated ? (
+                {/* RESUMEN */}
+                <div className="cart-summary">
+                  {cartData.descuento > 0 && (
                     <>
-                      <WhatsAppIcon /> Comprar por WhatsApp
-                    </>
-                  ) : (
-                    <>
-                      <LockIcon /> Inicia sesión para comprar
+                      <div className="row">
+                        <span>Subtotal:</span>
+                        <span>{formatPrice(cartData.subtotal)}</span>
+                      </div>
+                      <div className="row discount">
+                        <span>Descuento:</span>
+                        <span>-{formatPrice(cartData.descuento)}</span>
+                      </div>
+                      <div className="divider"></div>
                     </>
                   )}
-                </button>
+                  <div className="row total">
+                    <span>Total:</span>
+                    <span>{formatPrice(cartData.total)}</span>
+                  </div>
+                </div>
 
-                <button
-                  className="btn-danger-outline"
-                  onClick={() => window.confirm('¿Vaciar carrito?') && clearCart()}
-                >
-                  <TrashIcon /> Vaciar
-                </button>
-              </div>
-            </>
+                {/* ACCIONES */}
+                <div className="cart-actions">
+                  <div className="pdf-actions">
+                    <button className="btn-outline" onClick={handlePreviewPDF}>
+                      <EyeIcon /> Vista
+                    </button>
+                    <button className="btn-outline" onClick={handleDownloadPDF}>
+                      <DownloadIcon /> PDF
+                    </button>
+                  </div>
+
+                  <button
+                    className={`btn-whatsapp ${!isAuthenticated ? 'locked' : ''}`}
+                    onClick={handleCheckout}
+                  >
+                    {isAuthenticated ? (
+                      <>
+                        <WhatsAppIcon /> Comprar por WhatsApp
+                      </>
+                    ) : (
+                      <>
+                        <LockIcon /> Inicia sesión para comprar
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    className="btn-danger-outline"
+                    onClick={() => window.confirm('¿Vaciar carrito?') && clearCart()}
+                  >
+                    <TrashIcon /> Vaciar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* FOOTER */}
+          {cartData.items.length > 0 && (
+            <div className="cart-footer">
+              <p>
+                <strong>Nota:</strong>{' '}
+                {isAuthenticated
+                  ? 'Se abrirá WhatsApp con tu orden lista.'
+                  : 'Debes iniciar sesión para continuar con tu pedido.'}
+              </p>
+            </div>
           )}
         </div>
-
-        {/* PROMPT DE AUTENTICACIÓN */}
-        {showAuthPrompt && (
-          <div className="auth-prompt-overlay" onClick={() => setShowAuthPrompt(false)}>
-            <div className="auth-prompt" onClick={e => e.stopPropagation()}>
-              <LockIcon />
-              <h3>Completa tu compra</h3>
-              <p>Necesitas una cuenta para enviar tu orden por WhatsApp</p>
-              <div className="auth-buttons">
-                <button className="btn-primary" onClick={goToLogin}>
-                  Iniciar Sesión
-                </button>
-                <button className="btn-outline" onClick={goToRegister}>
-                  Crear Cuenta
-                </button>
-              </div>
-              <button className="close-prompt" onClick={() => setShowAuthPrompt(false)}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* FOOTER */}
-        {cartData.items.length > 0 && (
-          <div className="cart-footer">
-            <p>
-              <strong>Nota:</strong> {isAuthenticated
-                ? 'Se abrirá WhatsApp con tu orden lista.'
-                : 'Debes iniciar sesión para continuar.'
-              }
-            </p>
-          </div>
-        )}
       </div>
-    </div>
+
+      {/* MODAL DE LOGIN (solo si se necesita checkout) */}
+      {showLogin && (
+        <Login
+          isModal
+          onClose={handleLoginClose}
+          onSwitchToRegister={() => {
+            setShowLogin(false);
+            navigate('/register', {
+              state: { returnTo: '/cart', message: 'Regístrate para completar tu compra' }
+            });
+          }}
+        />
+      )}
+    </>
   );
 };
 

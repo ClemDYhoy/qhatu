@@ -1,193 +1,630 @@
-/* Botón de menú móvil */
-.mobile-menu-toggle {
-display: none;
-flex-direction: column;
-justify-content: center;
-align-items: center;
-width: 40px;
-height: 40px;
-background: var(--amarillo-principal);
-border: 2px solid var(--amarillo-oscuro);
-border-radius: var(--radio-md);
-cursor: pointer;
-padding: 0;
-z-index: 1001;
+/* C:\qhatu\frontend\src\components\layout\Navigation\Navigation.css */
+
+/* ====================================
+   🌐 OVERLAY PARA MÓVIL
+   ==================================== */
+.navigation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: var(--z-modal-backdrop);
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-out);
 }
 
-.hamburger-line {
-width: 24px;
-height: 2px;
-background: var(--texto-primario);
-margin: 3px 0;
-transition: var(--transicion-normal);
-transform-origin: center;
+.navigation-overlay.active {
+  display: block;
+  opacity: 1;
+  animation: overlayFadeIn 0.3s var(--ease-out);
 }
 
-/* Overlay para móvil */
-.mobile-menu-overlay {
-position: fixed;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background: rgba(0, 0, 0, 0.5);
-z-index: 998;
-display: none;
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
 }
 
-/* Navegación principal */
+/* ====================================
+   🧭 NAVEGACIÓN PRINCIPAL - DESKTOP CON ICONOS
+   ==================================== */
 .navigation {
-display: flex;
-align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .navigation-list {
-display: flex;
-list-style: none;
-margin: 0;
-padding: 0;
-gap: 2rem;
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: var(--space-4);
 }
 
 .navigation-item {
-position: relative;
+  position: relative;
 }
 
 .navigation-link {
-color: var(--texto-primario);
-text-decoration: none;
-font-weight: 500;
-padding: 0.5rem 0;
-position: relative;
-transition: var(--transicion-normal);
-display: block;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: var(--font-medium);
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  position: relative;
+  transition: all var(--duration-base) var(--ease-out);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-lg);
+  white-space: nowrap;
+  background: transparent;
 }
 
 .navigation-link:hover {
-color: var(--fucsia-texto);
+  color: var(--red-primary);
+  background: var(--bg-secondary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .navigation-link--active {
-color: var(--fucsia-texto);
-font-weight: 600;
+  color: var(--red-primary);
+  font-weight: var(--font-semibold);
+  background: var(--red-light);
+  box-shadow: var(--shadow-sm);
 }
 
 .navigation-link--active::after {
-content: '';
-position: absolute;
-bottom: 0;
-left: 0;
-width: 100%;
-height: 2px;
-background: var(--fucsia-texto);
-border-radius: 1px;
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: var(--red-gradient);
+  border-radius: var(--radius-full);
+  animation: activePulse 2s infinite;
 }
 
-/* Información de contacto en móvil */
+@keyframes activePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateX(-50%) scaleX(0.8);
+  }
+}
+
+/* ====================================
+   🎨 ICONOS DE NAVEGACIÓN - DESKTOP Y MOBILE
+   ==================================== */
+.navigation-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.nav-icon {
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+/* Animaciones de iconos en hover */
+.navigation-link:hover .nav-icon {
+  transform: scale(1.2) translateY(-1px);
+  color: var(--red-primary);
+}
+
+.navigation-link--active .nav-icon {
+  color: var(--red-primary);
+  animation: iconBounce 3s infinite;
+}
+
+@keyframes iconBounce {
+  0%, 20%, 60%, 100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.15);
+  }
+  80% {
+    transform: scale(1.05);
+  }
+}
+
+/* Animaciones específicas por icono */
+.navigation-link:hover .nav-icon:nth-child(1) {
+  animation: iconWiggle 0.6s ease;
+}
+
+@keyframes iconWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+/* ====================================
+   📝 LABELS DE NAVEGACIÓN
+   ==================================== */
+.navigation-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-snug);
+  transition: color var(--duration-fast) var(--ease-out);
+  position: relative;
+}
+
+.navigation-link:hover .navigation-label {
+  color: var(--red-primary);
+}
+
+.navigation-link--active .navigation-label {
+  color: var(--red-primary);
+  font-weight: var(--font-semibold);
+}
+
+/* ====================================
+   ✖️ BOTÓN CERRAR (SOLO MÓVIL)
+   ==================================== */
+.navigation-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  width: 44px;
+  height: 44px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-out);
+  z-index: 10;
+}
+
+.navigation-close:hover {
+  background: var(--red-primary);
+  border-color: var(--red-primary);
+  color: var(--white);
+  transform: scale(1.05) rotate(90deg);
+}
+
+.navigation-close:active {
+  transform: scale(0.95) rotate(90deg);
+}
+
+.close-icon {
+  transition: transform 0.3s var(--ease-out);
+}
+
+.navigation-close:hover .close-icon {
+  transform: rotate(180deg);
+}
+
+/* ====================================
+   📍 INDICADOR ACTIVO (SOLO MÓVIL)
+   ==================================== */
+.navigation-indicator {
+  display: none;
+  position: absolute;
+  right: var(--space-4);
+  width: 6px;
+  height: 6px;
+  background: var(--red-primary);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-red);
+  animation: pulseIndicator 2s infinite;
+}
+
+@keyframes pulseIndicator {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* ====================================
+   📞 SECCIÓN DE CONTACTO - SOLO MÓVIL
+   ==================================== */
 .navigation-contact-mobile {
-display: none;
-flex-direction: column;
-gap: 1rem;
-padding: 1.5rem;
-border-top: 1px solid var(--borde-claro);
-margin-top: 1rem;
+  display: none;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border-top: 1px solid var(--border-light);
+  margin-top: auto;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  margin: var(--space-4);
+  animation: fadeInUp 0.6s var(--ease-out) 0.4s backwards;
 }
 
-.contact-info {
-display: flex;
-flex-direction: column;
-gap: 0.25rem;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.contact-title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.contact-item:hover {
+  transform: translateX(4px);
+}
+
+.contact-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.contact-item:hover .contact-icon-wrapper {
+  background: var(--gold-light);
+  transform: scale(1.05);
+}
+
+.contact-icon {
+  width: 20px;
+  height: 20px;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.whatsapp-icon {
+  color: #25D366;
+}
+
+.mail-icon {
+  color: var(--red-primary);
+}
+
+.contact-item:hover .contact-icon {
+  transform: scale(1.1);
+}
+
+.contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
 }
 
 .contact-label {
-font-size: 0.875rem;
-color: var(--texto-secundario);
-font-weight: 500;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .contact-link {
-color: var(--texto-primario);
-text-decoration: none;
-font-weight: 500;
-transition: var(--transicion-normal);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: var(--font-medium);
+  transition: color var(--duration-fast) var(--ease-out);
 }
 
 .contact-link:hover {
-color: var(--fucsia-texto);
+  color: var(--red-primary);
+  text-decoration: underline;
 }
 
-/* Responsive */
+/* ====================================
+   👣 FOOTER DEL MENÚ - SOLO MÓVIL
+   ==================================== */
+.navigation-footer {
+  display: none;
+  padding: var(--space-4);
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  text-align: center;
+  animation: fadeIn 0.6s var(--ease-out) 0.5s backwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.navigation-footer-text {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin: 0;
+  line-height: var(--leading-relaxed);
+}
+
+/* ====================================
+   📱 RESPONSIVE DESIGN - MÓVIL
+   ==================================== */
 @media (max-width: 768px) {
-.mobile-menu-toggle {
-    display: flex;
-}
-
-.mobile-menu-overlay {
-    display: block;
-}
-
-.navigation {
+  /* Navegación en móvil */
+  .navigation {
     position: fixed;
     top: 0;
     right: -100%;
-    width: 280px;
+    width: 320px;
     height: 100vh;
-    background: var(--blanco-puro);
-    box-shadow: var(--sombra-media);
-    z-index: 999;
+    background: var(--bg-card);
+    box-shadow: var(--shadow-2xl);
+    z-index: var(--z-modal);
     flex-direction: column;
     align-items: flex-start;
-    padding: 80px 0 0;
-    transition: right 0.3s ease;
+    padding: 0;
+    transition: right 0.4s var(--ease-out);
     overflow-y: auto;
-}
+    display: flex !important;
+  }
 
-.navigation--open {
+  .navigation--open {
     right: 0;
-}
+    animation: slideInRight 0.4s var(--ease-bounce);
+  }
 
-.navigation-list {
+  @keyframes slideInRight {
+    from {
+      right: -100%;
+      opacity: 0.8;
+    }
+    to {
+      right: 0;
+      opacity: 1;
+    }
+  }
+
+  /* Lista de navegación en móvil */
+  .navigation-list {
     flex-direction: column;
     gap: 0;
     width: 100%;
-    padding: 0 1.5rem;
-}
+    padding: var(--space-16) var(--space-4) var(--space-4);
+    margin: 0;
+  }
 
-.navigation-item {
+  .navigation-item {
     width: 100%;
-    border-bottom: 1px solid var(--borde-claro);
-}
+    border-bottom: 1px solid var(--border-light);
+    animation: slideInItem 0.6s var(--ease-out) backwards;
+  }
 
-.navigation-link {
-    padding: 1rem 0;
-    display: block;
-    width: 100%;
-}
+  /* Animación escalonada para los items */
+  .navigation-item:nth-child(1) { animation-delay: 0.1s; }
+  .navigation-item:nth-child(2) { animation-delay: 0.15s; }
+  .navigation-item:nth-child(3) { animation-delay: 0.2s; }
+  .navigation-item:nth-child(4) { animation-delay: 0.25s; }
 
-.navigation-link--active::after {
-    display: none;
-}
+  @keyframes slideInItem {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
 
-.navigation-link--active {
-    background: var(--amarillo-claro);
-    padding-left: 1rem;
-    margin-left: -1rem;
-    padding-right: 1rem;
-    margin-right: -1rem;
-}
-
-.navigation-contact-mobile {
+  /* Enlaces en móvil */
+  .navigation-link {
+    padding: var(--space-4) var(--space-3);
     display: flex;
-}
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    border-radius: var(--radius-lg);
+    margin: var(--space-1) 0;
+    font-size: var(--text-base);
+    transition: all var(--duration-base) var(--ease-out);
+  }
+
+  .navigation-link:hover {
+    transform: translateX(4px);
+    background: var(--bg-secondary);
+  }
+
+  .navigation-link--active {
+    background: var(--red-light);
+    color: var(--red-primary);
+    font-weight: var(--font-semibold);
+  }
+
+  .navigation-link--active::after {
+    display: none;
+  }
+
+  /* Iconos en móvil */
+  .navigation-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .navigation-link:hover .nav-icon {
+    transform: scale(1.2) translateX(2px);
+  }
+
+  .navigation-link--active .nav-icon {
+    animation: iconGlow 2s infinite;
+  }
+
+  @keyframes iconGlow {
+    0%, 100% {
+      filter: drop-shadow(0 0 2px rgba(220, 38, 38, 0.3));
+    }
+    50% {
+      filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.6));
+    }
+  }
+
+  /* Mostrar botón cerrar en móvil */
+  .navigation-close {
+    display: flex;
+  }
+
+  /* Mostrar indicador activo en móvil */
+  .navigation-indicator {
+    display: block;
+  }
+
+  /* Mostrar contacto en móvil */
+  .navigation-contact-mobile {
+    display: flex;
+  }
+
+  /* Mostrar footer en móvil */
+  .navigation-footer {
+    display: block;
+    margin-top: auto;
+  }
 }
 
 @media (max-width: 480px) {
-.navigation {
+  .navigation {
     width: 100%;
     right: -100%;
+  }
+
+  .navigation--open {
+    right: 0;
+  }
+
+  .navigation-list {
+    padding: var(--space-12) var(--space-4) var(--space-4);
+  }
+
+  .navigation-link {
+    padding: var(--space-3) var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  .navigation-contact-mobile {
+    margin: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .navigation-close {
+    top: var(--space-3);
+    right: var(--space-3);
+    width: 40px;
+    height: 40px;
+  }
+
+  .contact-icon-wrapper {
+    width: 36px;
+    height: 36px;
+  }
+
+  .navigation-icon {
+    width: 20px;
+    height: 20px;
+  }
 }
 
-.navigation--open {
+/* ====================================
+   ⚡ OPTIMIZACIONES
+   ==================================== */
+@media (prefers-reduced-motion: reduce) {
+  .navigation,
+  .navigation-link,
+  .navigation-item,
+  .navigation-overlay,
+  .navigation-close,
+  .contact-item,
+  .contact-icon,
+  .nav-icon {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .navigation--open {
     right: 0;
+    animation: none;
+  }
 }
+
+/* Mejoras de accesibilidad */
+.navigation-link:focus-visible,
+.navigation-close:focus-visible,
+.contact-link:focus-visible {
+  outline: 2px solid var(--red-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Efecto de brillo en iconos activos desktop */
+.navigation-link--active .nav-icon {
+  position: relative;
+}
+
+.navigation-link--active .nav-icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.2) 0%, transparent 70%);
+  transform: translate(-50%, -50%) scale(1.5);
+  border-radius: 50%;
+  animation: iconRadial 3s infinite;
+}
+
+@keyframes iconRadial {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.8);
+  }
 }
