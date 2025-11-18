@@ -961,7 +961,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
   animation: slideInUp 0.5s ease-out;
 }
 

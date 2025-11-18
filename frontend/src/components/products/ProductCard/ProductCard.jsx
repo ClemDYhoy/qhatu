@@ -395,12 +395,6 @@ const ProductCard = memo(({ product }) => {
                     <StarIcon /> Destacado
                   </div>
                 )}
-                {stockInfo.inCart && (
-                  <div className="modal__image-in-cart">
-                    <CartCheckIcon />
-                    <span>{stockInfo.cartQuantity} en tu carrito</span>
-                  </div>
-                )}
               </div>
 
               {/* Información */}
