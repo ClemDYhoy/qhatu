@@ -1,13 +1,20 @@
 // C:\qhatu\frontend\src\components\layout\Header\UserMenu\UserMenu.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import authService from '../../../../services/authService';
+import UserProfile from '../../UserProfile/UserProfile';
 import './UserMenu.css';
 
-const UserMenu = ({ user, onLogout }) => {
+const UserMenu = ({ user, onLogout, onUserUpdate }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
+
+  // Debug: Log cuando cambia isProfileOpen
+  useEffect(() => {
+    console.log('🔄 isProfileOpen cambió a:', isProfileOpen);
+  }, [isProfileOpen]);
 
   // ====================================
   // 🎨 ICONOS SVG
@@ -17,12 +24,6 @@ const UserMenu = ({ user, onLogout }) => {
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
         <circle cx="12" cy="7" r="4"/>
-      </svg>
-    ),
-    Settings: () => (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"/>
       </svg>
     ),
     ShoppingBag: () => (
@@ -47,6 +48,12 @@ const UserMenu = ({ user, onLogout }) => {
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
         <line x1="1" y1="10" x2="23" y2="10"/>
+      </svg>
+    ),
+    Settings: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"/>
       </svg>
     ),
     HelpCircle: () => (
@@ -79,47 +86,69 @@ const UserMenu = ({ user, onLogout }) => {
   };
 
   // ====================================
-  // 🔒 VERIFICAR SI ES STAFF
+  // 🔒 VERIFICAR ROL
   // ====================================
   const isStaff = ['super_admin', 'vendedor', 'almacenero'].includes(user?.rol_nombre);
   const isCliente = user?.rol_nombre === 'cliente';
 
   // ====================================
-  // 🖱️ CERRAR MENÚ AL HACER CLICK FUERA
+  // 🖱️ CERRAR MENÚ AL PRESIONAR ESC
   // ====================================
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setIsOpen(false);
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape') {
+        if (isOpen) setIsOpen(false);
+        if (isProfileOpen) setIsProfileOpen(false);
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+    document.addEventListener('keydown', handleEscKey);
+    return () => document.removeEventListener('keydown', handleEscKey);
+  }, [isOpen, isProfileOpen]);
 
   // ====================================
   // 🚀 ACCIONES
   // ====================================
-  const handleMenuItemClick = (path) => {
+  const closeMenu = () => {
+    console.log('🔒 Cerrando menú dropdown');
     setIsOpen(false);
+  };
+
+  const handleMenuItemClick = (path) => {
+    console.log('🔗 Navegando a:', path);
+    closeMenu();
     if (path) {
       navigate(path);
     }
   };
 
+  const handleProfileClick = () => {
+    console.log('👤 Abriendo panel de perfil...');
+    closeMenu();
+    setIsProfileOpen(true);
+    
+    // Agregar clase al body
+    document.body.classList.add('profile-panel-open');
+  };
+
+  const handleCloseProfile = () => {
+    console.log('❌ Cerrando panel de perfil...');
+    setIsProfileOpen(false);
+    document.body.classList.remove('profile-panel-open');
+  };
+
   const handleLogoutClick = async () => {
-    setIsOpen(false);
-    await onLogout();
+    console.log('🚪 Cerrando sesión...');
+    closeMenu();
+    try {
+      await onLogout();
+    } catch (error) {
+      console.error('❌ Error al cerrar sesión:', error);
+    }
   };
 
   // ====================================
-  // 🎨 OBTENER INICIALES
+  // 🎨 UTILIDADES
   // ====================================
   const getInitials = () => {
     if (user?.nombre_completo) {
@@ -133,153 +162,212 @@ const UserMenu = ({ user, onLogout }) => {
     return user?.email?.charAt(0).toUpperCase() || '?';
   };
 
+  const getFirstName = () => {
+    return user?.nombre_completo?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuario';
+  };
+
+  const getRoleBadgeConfig = () => {
+    const roleMap = {
+      super_admin: { icon: '👑', label: 'Administrador' },
+      vendedor: { icon: '💼', label: 'Vendedor' },
+      almacenero: { icon: '📦', label: 'Almacenero' },
+      cliente: { icon: '🛍️', label: 'Cliente' }
+    };
+    return roleMap[user?.rol_nombre] || { icon: '👤', label: 'Usuario' };
+  };
+
+  // ====================================
+  // 🎨 COMPONENTES INTERNOS
+  // ====================================
+  const UserAvatar = ({ size = 'small' }) => {
+    const isLarge = size === 'large';
+    const className = isLarge ? 'user-avatar-large' : 'user-avatar-circle';
+    const initialsClassName = isLarge ? 'user-initials-large' : 'user-initials';
+
+    return (
+      <div className={className}>
+        {user?.foto_perfil_url ? (
+          <img 
+            src={user.foto_perfil_url} 
+            alt={user.nombre_completo || 'Usuario'} 
+            loading="lazy"
+          />
+        ) : (
+          <span className={initialsClassName}>{getInitials()}</span>
+        )}
+      </div>
+    );
+  };
+
+  const MenuHeader = () => {
+    const roleBadge = getRoleBadgeConfig();
+    
+    return (
+      <div className="user-menu-header">
+        <UserAvatar size="large" />
+        <div className="user-details">
+          <h4 className="user-full-name">{user?.nombre_completo || 'Usuario'}</h4>
+          <p className="user-email">{user?.email}</p>
+          <span className={`user-role-badge role-${user?.rol_nombre}`}>
+            {roleBadge.icon} {roleBadge.label}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const MenuItem = ({ icon: IconComponent, label, onClick, className = '' }) => (
+    <button 
+      className={`user-menu-item ${className}`}
+      onClick={onClick}
+      type="button"
+    >
+      <IconComponent />
+      <span>{label}</span>
+    </button>
+  );
+
+  const MenuDivider = () => <div className="user-menu-divider" />;
+
+  // ====================================
+  // 🎯 OPCIONES DE MENÚ
+  // ====================================
+  const staffMenuItems = [
+    {
+      icon: Icon.Dashboard,
+      label: 'Mi Dashboard',
+      onClick: () => handleMenuItemClick(authService.getRedirectRoute(user.rol_nombre))
+    }
+  ];
+
+  const clientMenuItems = [
+    { icon: Icon.ShoppingBag, label: 'Mis Pedidos', path: '/mis-pedidos' },
+    { icon: Icon.Heart, label: 'Favoritos', path: '/favoritos' },
+    { icon: Icon.MapPin, label: 'Mis Direcciones', path: '/direcciones' },
+    { icon: Icon.CreditCard, label: 'Métodos de Pago', path: '/metodos-pago' }
+  ];
+
+  const commonMenuItems = [
+    { icon: Icon.Settings, label: 'Configuración', path: '/configuracion' },
+    { icon: Icon.HelpCircle, label: 'Ayuda y Soporte', path: '/ayuda' }
+  ];
+
   // ====================================
   // 🎨 RENDER
   // ====================================
   return (
-    <div className="user-menu-wrapper" ref={menuRef}>
-      {/* Botón del usuario */}
-      <button 
-        className={`user-menu-trigger ${isOpen ? 'active' : ''}`}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Menú de usuario"
-      >
-        <div className="user-avatar-circle">
-          {user?.foto_perfil_url ? (
-            <img src={user.foto_perfil_url} alt={user.nombre_completo} />
-          ) : (
-            <span className="user-initials">{getInitials()}</span>
-          )}
-        </div>
-        
-        <div className="user-info-compact">
-          <span className="user-greeting">¡Hola!</span>
-          <span className="user-name-short">
-            {user?.nombre_completo?.split(' ')[0] || user?.email}
-          </span>
-        </div>
-        
-        <Icon.ChevronDown />
-      </button>
-
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <div className="user-menu-dropdown">
-          {/* Header del menú */}
-          <div className="user-menu-header">
-            <div className="user-avatar-large">
-              {user?.foto_perfil_url ? (
-                <img src={user.foto_perfil_url} alt={user.nombre_completo} />
-              ) : (
-                <span className="user-initials-large">{getInitials()}</span>
-              )}
-            </div>
-            <div className="user-details">
-              <h4 className="user-full-name">{user?.nombre_completo || 'Usuario'}</h4>
-              <p className="user-email">{user?.email}</p>
-              <span className={`user-role-badge role-${user?.rol_nombre}`}>
-                {user?.rol_nombre === 'super_admin' && '👑 Administrador'}
-                {user?.rol_nombre === 'vendedor' && '💼 Vendedor'}
-                {user?.rol_nombre === 'almacenero' && '📦 Almacenero'}
-                {user?.rol_nombre === 'cliente' && '🛍️ Cliente'}
-              </span>
-            </div>
+    <>
+      <div className="user-menu-wrapper" ref={menuRef}>
+        {/* Botón del usuario */}
+        <button 
+          className={`user-menu-trigger ${isOpen ? 'active' : ''}`}
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="Menú de usuario"
+          aria-expanded={isOpen}
+          aria-haspopup="true"
+          type="button"
+        >
+          <UserAvatar size="small" />
+          
+          <div className="user-info-compact">
+            <span className="user-greeting">¡Hola!</span>
+            <span className="user-name-short">{getFirstName()}</span>
           </div>
+          
+          <Icon.ChevronDown />
+        </button>
 
-          <div className="user-menu-divider"></div>
+        {/* Overlay + Dropdown Menu */}
+        {isOpen && (
+          <>
+            <div 
+              className="user-menu-overlay" 
+              onClick={closeMenu}
+              aria-hidden="true"
+            />
+            
+            <div 
+              className="user-menu-dropdown"
+              role="menu"
+              aria-label="Opciones de usuario"
+            >
+              <MenuHeader />
+              <MenuDivider />
 
-          {/* Opciones para STAFF */}
-          {isStaff && (
-            <>
-              <Link 
-                to={authService.getRedirectRoute(user.rol_nombre)}
-                className="user-menu-item"
-                onClick={() => handleMenuItemClick()}
-              >
-                <Icon.Dashboard />
-                <span>Mi Dashboard</span>
-              </Link>
-              <div className="user-menu-divider"></div>
-            </>
-          )}
+              {/* Mi Perfil - CON DEBUG */}
+              <MenuItem
+                icon={Icon.User}
+                label="Mi Perfil"
+                onClick={() => {
+                  console.log('🖱️ Click en Mi Perfil');
+                  handleProfileClick();
+                }}
+              />
 
-          {/* Opciones para CLIENTES */}
-          {isCliente && (
-            <>
-              <button 
-                className="user-menu-item"
-                onClick={() => handleMenuItemClick('/perfil')}
-              >
-                <Icon.User />
-                <span>Mi Perfil</span>
-              </button>
+              <MenuDivider />
 
-              <button 
-                className="user-menu-item"
-                onClick={() => handleMenuItemClick('/mis-pedidos')}
-              >
-                <Icon.ShoppingBag />
-                <span>Mis Pedidos</span>
-              </button>
+              {/* Opciones para STAFF */}
+              {isStaff && (
+                <>
+                  {staffMenuItems.map((item, index) => (
+                    <MenuItem
+                      key={`staff-${index}`}
+                      icon={item.icon}
+                      label={item.label}
+                      onClick={item.onClick}
+                    />
+                  ))}
+                  <MenuDivider />
+                </>
+              )}
 
-              <button 
-                className="user-menu-item"
-                onClick={() => handleMenuItemClick('/favoritos')}
-              >
-                <Icon.Heart />
-                <span>Favoritos</span>
-              </button>
+              {/* Opciones para CLIENTES */}
+              {isCliente && (
+                <>
+                  {clientMenuItems.map((item, index) => (
+                    <MenuItem
+                      key={`client-${index}`}
+                      icon={item.icon}
+                      label={item.label}
+                      onClick={() => handleMenuItemClick(item.path)}
+                    />
+                  ))}
+                  <MenuDivider />
+                </>
+              )}
 
-              <button 
-                className="user-menu-item"
-                onClick={() => handleMenuItemClick('/direcciones')}
-              >
-                <Icon.MapPin />
-                <span>Mis Direcciones</span>
-              </button>
+              {/* Opciones comunes */}
+              {commonMenuItems.map((item, index) => (
+                <MenuItem
+                  key={`common-${index}`}
+                  icon={item.icon}
+                  label={item.label}
+                  onClick={() => handleMenuItemClick(item.path)}
+                />
+              ))}
 
-              <button 
-                className="user-menu-item"
-                onClick={() => handleMenuItemClick('/metodos-pago')}
-              >
-                <Icon.CreditCard />
-                <span>Métodos de Pago</span>
-              </button>
+              <MenuDivider />
 
-              <div className="user-menu-divider"></div>
-            </>
-          )}
+              {/* Logout */}
+              <MenuItem
+                icon={Icon.LogOut}
+                label="Cerrar Sesión"
+                onClick={handleLogoutClick}
+                className="logout-item"
+              />
+            </div>
+          </>
+        )}
+      </div>
 
-          {/* Opciones comunes */}
-          <button 
-            className="user-menu-item"
-            onClick={() => handleMenuItemClick('/configuracion')}
-          >
-            <Icon.Settings />
-            <span>Configuración</span>
-          </button>
-
-          <button 
-            className="user-menu-item"
-            onClick={() => handleMenuItemClick('/ayuda')}
-          >
-            <Icon.HelpCircle />
-            <span>Ayuda y Soporte</span>
-          </button>
-
-          <div className="user-menu-divider"></div>
-
-          {/* Logout */}
-          <button 
-            className="user-menu-item logout-item"
-            onClick={handleLogoutClick}
-          >
-            <Icon.LogOut />
-            <span>Cerrar Sesión</span>
-          </button>
-        </div>
-      )}
-    </div>
+      {/* Panel lateral de perfil */}
+      <UserProfile
+        isOpen={isProfileOpen}
+        onClose={handleCloseProfile}
+        user={user}
+        onUserUpdate={onUserUpdate}
+      />
+    </>
   );
 };
 

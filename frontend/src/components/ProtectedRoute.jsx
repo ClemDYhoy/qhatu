@@ -1,110 +1,85 @@
 // C:\qhatu\frontend\src\components\ProtectedRoute.jsx
-import React from "react";
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import authService from '../services/authService';
+import { useApp } from '../contexts/AppContext';
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+  const { isAuthenticated, authChecked, user, isLoading } = useApp();
   const location = useLocation();
-  const [isVerifying, setIsVerifying] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const verifyAuth = async () => {
-      // Verificar si hay token
-      if (!authService.isAuthenticated()) {
-        console.log('❌ No hay token, redirigiendo a login');
-        setIsVerifying(false);
-        setIsAuthenticated(false);
-        return;
-      }
-
-      // Obtener usuario de localStorage
-      const currentUser = authService.getCurrentUser();
-      
-      if (!currentUser) {
-        console.log('❌ No hay usuario en localStorage');
-        setIsVerifying(false);
-        setIsAuthenticated(false);
-        return;
-      }
-
-      console.log('✅ Usuario encontrado:', currentUser.email);
-      console.log('👤 Rol:', currentUser.rol_nombre);
-      console.log('🔒 Roles permitidos:', allowedRoles);
-      
-      setUser(currentUser);
-      setIsAuthenticated(true);
-      setIsVerifying(false);
-    };
-
-    verifyAuth();
-  }, [location.pathname]);
-
-  // Mostrar loading mientras verifica
-  if (isVerifying) {
+  // Mostrar loading mientras se verifica la sesión
+  if (!authChecked || isLoading) {
     return (
       <div style={{
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: '400px',
+        minHeight: '60vh',
         flexDirection: 'column',
         gap: '1rem'
       }}>
-        <div className="spinner" style={{
-          border: '4px solid #f3f3f3',
-          borderTop: '4px solid #667eea',
-          borderRadius: '50%',
+        <div style={{
           width: '40px',
           height: '40px',
-          animation: 'spin 1s linear infinite'
-        }}></div>
-        <p>Verificando permisos...</p>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
+          border: '3px solid #f3f3f3',
+          borderTop: '3px solid #007bff',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+        <p style={{ color: '#666', fontSize: '14px' }}>Verificando acceso...</p>
       </div>
     );
   }
 
-  // Si no está autenticado, redirigir a login
-  if (!isAuthenticated || !user) {
-    console.log('🔐 No autenticado, redirigiendo a /login');
+  // Si no está autenticado, redirigir al login
+  if (!isAuthenticated) {
+    console.warn('⚠️ Usuario no autenticado, redirigiendo a login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Si hay roles específicos requeridos, verificar
-  if (allowedRoles && allowedRoles.length > 0) {
-    const hasPermission = allowedRoles.includes(user.rol_nombre);
+  if (allowedRoles.length > 0) {
+    const userRole = user?.rol_nombre;
     
-    if (!hasPermission) {
-      console.log(`❌ Acceso denegado`);
-      console.log(`   Rol actual: ${user.rol_nombre}`);
-      console.log(`   Roles permitidos:`, allowedRoles);
-      
-      // Redirigir al dashboard correspondiente según su rol
-      const redirectTo = authService.getRedirectRoute(user.rol_nombre);
-      console.log(`↩️  Redirigiendo a: ${redirectTo}`);
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      console.warn(`⚠️ Acceso denegado. Rol requerido: ${allowedRoles.join(', ')}, Rol actual: ${userRole}`);
       
       return (
-        <Navigate 
-          to={redirectTo} 
-          replace 
-          state={{ 
-            message: 'No tienes permisos para acceder a esa página',
-            deniedFrom: location.pathname 
-          }} 
-        />
+        <div style={{
+          textAlign: 'center',
+          padding: '60px 20px',
+          minHeight: '60vh'
+        }}>
+          <h2 style={{ color: '#dc3545', marginBottom: '1rem' }}>
+            ⛔ Acceso Denegado
+          </h2>
+          <p style={{ color: '#666', marginBottom: '2rem' }}>
+            No tienes permisos para acceder a esta sección.
+          </p>
+          <p style={{ fontSize: '14px', color: '#999' }}>
+            Rol actual: <strong>{userRole || 'Desconocido'}</strong><br />
+            Roles permitidos: <strong>{allowedRoles.join(', ')}</strong>
+          </p>
+          <a
+            href="/"
+            style={{
+              display: 'inline-block',
+              marginTop: '2rem',
+              padding: '10px 24px',
+              background: '#007bff',
+              color: '#fff',
+              textDecoration: 'none',
+              borderRadius: '4px'
+            }}
+          >
+            Volver al inicio
+          </a>
+        </div>
       );
     }
   }
 
-  console.log('✅ Acceso permitido a:', location.pathname);
+  // Usuario autenticado y con rol permitido
   return children;
 };
 

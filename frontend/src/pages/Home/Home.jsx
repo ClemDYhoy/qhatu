@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../services/api';
+import ProductCard from '../../components/products/ProductCard/ProductCard';
 import './Home.css';
 
 // ====================================
-// 🎨 ICONOS SVG PROFESIONALES
+// ICONOS SVG PROFESIONALES
 // ====================================
 const Icons = {
   star: (
@@ -20,12 +22,6 @@ const Icons = {
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="10" cy="10" r="7" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M10 3v14M3 10h14" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-  eye: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M1 10s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6z" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="10" cy="10" r="3"/>
     </svg>
   ),
   tag: (
@@ -55,12 +51,6 @@ const Icons = {
       <circle cx="10" cy="8" r="2"/>
     </svg>
   ),
-  clock: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="10" cy="10" r="8"/>
-      <path d="M10 5v5l3 3" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
   phone: (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M18 14v3a2 2 0 01-2 2h-1a15 15 0 01-13-13V5a2 2 0 012-2h3l2 5-2 2a11 11 0 006 6l2-2 5 2z" strokeLinecap="round" strokeLinejoin="round"/>
@@ -77,11 +67,6 @@ const Icons = {
       <path d="M6 10l2 2 5-5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  users: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M14 17v-2a4 4 0 00-8 0v2M10 9a3 3 0 100-6 3 3 0 000 6zM18 17v-2a4 4 0 00-3-3.87M15 1.13A4 4 0 0118 5a4 4 0 01-3 3.87" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
   star2: (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
       <path d="M10 1l2.5 6.5L19 10l-6.5 2.5L10 19l-2.5-6.5L1 10l6.5-2.5L10 1z"/>
@@ -93,73 +78,132 @@ const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
   const [dulcesProducts, setDulcesProducts] = useState([]);
-  const [banners, setBanners] = useState([]);
+  const [carruseles, setCarruseles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [carruselError, setCarruselError] = useState(null);
 
-  // Manejo de scroll mejorado para transición suave
+  // Carrusel
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const intervalRef = useRef(null);
+
+  // Auto-play
+  useEffect(() => {
+    if (carruseles.length <= 1 || isPaused) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
+    }
+
+    intervalRef.current = setInterval(() => {
+      setActiveIndex(prev => (prev + 1) % carruseles.length);
+    }, 5000);
+
+    return () => clearInterval(intervalRef.current);
+  }, [carruseles.length, isPaused]);
+
+  const goToSlide = (index) => setActiveIndex(index);
+  const handlePrev = () => setActiveIndex(prev => (prev - 1 + carruseles.length) % carruseles.length);
+  const handleNext = () => setActiveIndex(prev => (prev + 1) % carruseles.length);
+
+  // Scroll header
   useEffect(() => {
     let ticking = false;
-    
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          const scrollPosition = window.scrollY;
-          const contextualHeight = window.innerHeight * 0.5; // 50vh
-          
-          if (scrollPosition > contextualHeight * 0.3) {
-            document.body.classList.add('scrolled');
-          } else {
-            document.body.classList.remove('scrolled');
-          }
-          
+          document.body.classList.toggle('scrolled', window.scrollY > window.innerHeight * 0.3);
           ticking = false;
         });
-        
         ticking = true;
       }
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Datos simulados para demostración
+  // Cargar carruseles
+  const fetchCarruseles = async () => {
+    try {
+      setCarruselError(null);
+      const response = await api.get('/carousels');
+      const data = response.data?.data || response.data || [];
+      const activos = data.filter(c => c.activo === true || c.activo === 1);
+      setCarruseles(activos);
+      setActiveIndex(0);
+    } catch (err) {
+      console.error('Error cargando carruseles:', err);
+      setCarruselError('No se pudieron cargar los destacados');
+      setCarruseles([]);
+    }
+  };
+
+  // Cargar productos destacados (destacado = 1)
+  const fetchFeaturedProducts = async () => {
+    try {
+      const response = await api.get('/products', {
+        params: {
+          destacado: 1,
+          limit: 7
+        }
+      });
+      const products = response.data?.data || response.data || [];
+      setFeaturedProducts(products);
+    } catch (err) {
+      console.error('Error cargando productos destacados:', err);
+      setFeaturedProducts([]);
+    }
+  };
+
+  // Cargar más vendidos (ordenados por ventas DESC)
+  const fetchBestSellers = async () => {
+    try {
+      const response = await api.get('/products', {
+        params: {
+          orderBy: 'ventas',
+          order: 'DESC',
+          limit: 7
+        }
+      });
+      const products = response.data?.data || response.data || [];
+      setBestSellers(products);
+    } catch (err) {
+      console.error('Error cargando más vendidos:', err);
+      setBestSellers([]);
+    }
+  };
+
+  // Cargar productos de la categoría Dulces (categoria_id = 1)
+  const fetchDulcesProducts = async () => {
+    try {
+      const response = await api.get('/products', {
+        params: {
+          categoria_id: 1,
+          limit: 7
+        }
+      });
+      const products = response.data?.data || response.data || [];
+      setDulcesProducts(products);
+    } catch (err) {
+      console.error('Error cargando dulces:', err);
+      setDulcesProducts([]);
+    }
+  };
+
+  // Cargar todos los datos
   useEffect(() => {
-    // Simular carga de datos
-    setTimeout(() => {
-      setFeaturedProducts([
-        { producto_id: 1, nombre: 'Snickers Original', precio: 5.50, url_imagen: '/awaiting-image.jpeg', stock: 50 },
-        { producto_id: 2, nombre: 'M&M\'s Chocolate', precio: 4.90, url_imagen: '/awaiting-image.jpeg', stock: 35 },
-        { producto_id: 3, nombre: 'KitKat Chunky', precio: 6.20, url_imagen: '/awaiting-image.jpeg', stock: 28 },
-        { producto_id: 4, nombre: 'Twix Caramelo', precio: 5.80, url_imagen: '/awaiting-image.jpeg', stock: 42 },
-        { producto_id: 5, nombre: 'Milky Way', precio: 5.30, url_imagen: '/awaiting-image.jpeg', stock: 31 },
-        { producto_id: 6, nombre: 'Ferrero Rocher', precio: 12.50, url_imagen: '/awaiting-image.jpeg', stock: 15 },
-        { producto_id: 7, nombre: 'Toblerone', precio: 8.90, url_imagen: '/awaiting-image.jpeg', stock: 22 }
+    const loadData = async () => {
+      setLoading(true);
+      
+      await Promise.all([
+        fetchCarruseles(),
+        fetchFeaturedProducts(),
+        fetchBestSellers(),
+        fetchDulcesProducts()
       ]);
-      setBestSellers([
-        { producto_id: 8, nombre: 'Hershey\'s Classic', precio: 7.20, url_imagen: '/awaiting-image.jpeg', ventas: 120 },
-        { producto_id: 9, nombre: 'Reese\'s Peanut', precio: 6.80, url_imagen: '/awaiting-image.jpeg', ventas: 98 },
-        { producto_id: 10, nombre: 'Lindt Excellence', precio: 14.90, url_imagen: '/awaiting-image.jpeg', ventas: 85 },
-        { producto_id: 11, nombre: 'Cadbury Dairy Milk', precio: 8.50, url_imagen: '/awaiting-image.jpeg', ventas: 76 },
-        { producto_id: 12, nombre: 'Nutella B-ready', precio: 9.20, url_imagen: '/awaiting-image.jpeg', ventas: 65 },
-        { producto_id: 13, nombre: 'Kinder Bueno', precio: 7.90, url_imagen: '/awaiting-image.jpeg', ventas: 58 },
-        { producto_id: 14, nombre: 'Bounty Coconut', precio: 5.60, url_imagen: '/awaiting-image.jpeg', ventas: 47 }
-      ]);
-      setDulcesProducts([
-        { producto_id: 15, nombre: 'Haribo Goldbears', precio: 4.50, url_imagen: '/awaiting-image.jpeg' },
-        { producto_id: 16, nombre: 'Skittles Original', precio: 4.20, url_imagen: '/awaiting-image.jpeg' },
-        { producto_id: 17, nombre: 'Nerds Rainbow', precio: 5.80, url_imagen: '/awaiting-image.jpeg' },
-        { producto_id: 18, nombre: 'Sour Patch Kids', precio: 6.50, url_imagen: '/awaiting-image.jpeg' },
-        { producto_id: 19, nombre: 'Mentos Rainbow', precio: 3.90, url_imagen: '/awaiting-image.jpeg' },
-        { producto_id: 20, nombre: 'Trolli Gummy', precio: 5.20, url_imagen: '/awaiting-image.jpeg' },
-        { producto_id: 21, nombre: 'Warheads Extreme', precio: 4.80, url_imagen: '/awaiting-image.jpeg' }
-      ]);
-      setBanners([
-        { banner_id: 1, titulo: 'Black Friday', descripcion: 'Hasta 40% en dulces premium', porcentaje_descuento: 40, categoria_nombre: 'Chocolates', dias_restantes: 5 },
-        { banner_id: 2, titulo: 'Cyber Monday', descripcion: 'Ofertas exclusivas online', porcentaje_descuento: 35, categoria_nombre: 'Gomitas', dias_restantes: 7 }
-      ]);
+
       setLoading(false);
-    }, 800);
+    };
+    loadData();
   }, []);
 
   if (loading) {
@@ -173,69 +217,123 @@ const Home = () => {
 
   return (
     <div className="home-pro">
+
       {/* HERO SECTION */}
       <section className="hero-pro">
         <div className="hero-container">
           <div className="hero-badge-pro">
             {Icons.star2}
-            <span>Dulces Premium Importados</span>
+            <span>Todo lo que Tu Antojo Pide</span>
           </div>
-          <h1 className="hero-title-pro">Endulza Tus Momentos Especiales</h1>
+          <h1 className="hero-title-pro">Disfruta Cada Momento con Sabor</h1>
           <p className="hero-desc-pro">
-            Descubre la mejor selección de dulces importados con calidad garantizada y entrega inmediata en Huánuco
+            Descubre una selección irresistible de dulces, snacks, bebidas y más, perfecta para tus antojos y momentos especiales en Huánuco
           </p>
           <div className="hero-features-pro">
-            <div className="hero-item-pro">
-              {Icons.truck}
-              <span>Envío gratis +S/50</span>
-            </div>
-            <div className="hero-item-pro">
-              {Icons.shield}
-              <span>100% originales</span>
-            </div>
-            <div className="hero-item-pro">
-              {Icons.box}
-              <span>Empaque premium</span>
-            </div>
+            <div className="hero-item-pro">{Icons.truck}<span>Envío gratis +S/50</span></div>
+            <div className="hero-item-pro">{Icons.shield}<span>100% originales</span></div>
+            <div className="hero-item-pro">{Icons.box}<span>Empaque cuidado y seguro</span></div>
           </div>
         </div>
       </section>
 
-      {/* BANNERS PROMOCIONALES */}
-      {banners.length > 0 && (
+      {/* CARRUSEL PREMIUM 2025 - ULTRA PROFESIONAL */}
+      {carruseles.length > 0 ? (
         <section className="section-pro promo-bg">
-          <div className="container-pro">
-            <div className="section-header-pro">
-              <div className="header-content-pro">
-                <div className="icon-badge-pro gold">{Icons.tag}</div>
-                <div>
-                  <h2 className="section-title-pro">Ofertas Especiales</h2>
-                  <p className="section-subtitle-pro">Aprovecha estos descuentos por tiempo limitado</p>
-                </div>
-              </div>
-              <Link to="/products" className="link-view-pro">
-                Ver todas {Icons.arrowRight}
-              </Link>
-            </div>
-            <div className="banners-grid-pro">
-              {banners.map((banner) => (
-                <div key={banner.banner_id} className="banner-card-pro">
-                  <div className="banner-discount-pro">{banner.porcentaje_descuento}%</div>
-                  <h3 className="banner-title-pro">{banner.titulo}</h3>
-                  <p className="banner-desc-pro">{banner.descripcion}</p>
-                  <div className="banner-footer-pro">
-                    <span className="banner-cat-pro">{banner.categoria_nombre}</span>
-                    <span className="banner-time-pro">
-                      {Icons.clock}
-                      {banner.dias_restantes} días
-                    </span>
+          <div 
+            className="premium-carousel"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+          >
+            {/* Botones de navegación */}
+            <button 
+              className="carousel-nav-btn carousel-nav-prev"
+              onClick={handlePrev}
+              aria-label="Oferta anterior"
+            >
+              <svg width="32" height="32" viewBox="0 0 26 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 18L9 12L15 6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
+            <button 
+              className="carousel-nav-btn carousel-nav-next"
+              onClick={handleNext}
+              aria-label="Siguiente oferta"
+            >
+              <svg width="32" height="32" viewBox="0 0 22 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 18L15 12L9 6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>  
+            </button>
+
+            {/* Slides */}
+            <div className="premium-carousel-track-container">
+              <div 
+                className="premium-carousel-track"
+                style={{
+                  transform: `translateX(-${activeIndex * 100}%)`,
+                  transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
+                {carruseles.map((carrusel) => (
+                  <div key={carrusel.carrusel_id} className="premium-carousel-slide">
+                    <div 
+                      className="premium-slide-bg"
+                      style={{
+                        backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 100%), url(${carrusel.url_imagen || '/awaiting-image.jpeg'})`,
+                      }}
+                    />
+                    <div className="premium-slide-content">
+                      <div className="premium-slide-text">
+                        <div className="premium-slide-cta">
+                          <Link to="/products" className="premium-cta-btn">
+                            Ver oferta {Icons.arrowRight}
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            {/* Contador + Indicadores Premium */}
+            <div className="premium-carousel-controls">
+              <div className="premium-slide-counter"></div>
+              <div className="premium-indicators">
+                {carruseles.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`premium-indicator ${index === activeIndex ? 'active' : ''}`}
+                    onClick={() => goToSlide(index)}
+                  >
+                    <div className="premium-indicator-bar">
+                      <div 
+                        className="premium-indicator-fill"
+                        style={{
+                          width: index === activeIndex ? '100%' : '0%',
+                          transition: index === activeIndex ? 'width 5s linear' : 'none'
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
-      )}
+      ) : carruselError ? (
+        <section className="section-pro promo-bg">
+          <div className="container-pro">
+            <div className="carousel-error-premium">
+              <p>No se pudieron cargar las ofertas del momento</p>
+              <button onClick={fetchCarruseles} className="retry-btn-premium">
+                Reintentar carga
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {/* PRODUCTOS DESTACADOS */}
       {featuredProducts.length > 0 && (
@@ -249,27 +347,11 @@ const Home = () => {
                   <p className="section-subtitle-pro">Los más populares de esta semana</p>
                 </div>
               </div>
-              <Link to="/products?featured=true" className="link-view-pro">
-                Ver todos {Icons.arrowRight}
-              </Link>
+              <Link to="/products?destacado=1" className="link-view-pro">Ver todos {Icons.arrowRight}</Link>
             </div>
             <div className="products-grid-pro">
-              {featuredProducts.map((product) => (
-                <div key={product.producto_id} className="product-card-pro">
-                  <div className="product-image-pro">
-                    <img src={product.url_imagen} alt={product.nombre} />
-                    {product.stock < 20 && (
-                      <span className="product-badge-pro low">Stock bajo</span>
-                    )}
-                  </div>
-                  <div className="product-info-pro">
-                    <h3 className="product-name-pro">{product.nombre}</h3>
-                    <div className="product-footer-pro">
-                      <span className="product-price-pro">S/ {product.precio.toFixed(2)}</span>
-                      <button className="btn-add-pro">Agregar</button>
-                    </div>
-                  </div>
-                </div>
+              {featuredProducts.map(product => (
+                <ProductCard key={product.producto_id} product={product} />
               ))}
             </div>
           </div>
@@ -288,25 +370,11 @@ const Home = () => {
                   <p className="section-subtitle-pro">Los favoritos de nuestros clientes</p>
                 </div>
               </div>
-              <Link to="/products?orderBy=ventas" className="link-view-pro">
-                Ver todos {Icons.arrowRight}
-              </Link>
+              <Link to="/products?orderBy=ventas" className="link-view-pro">Ver todos {Icons.arrowRight}</Link>
             </div>
             <div className="products-grid-pro">
-              {bestSellers.map((product) => (
-                <div key={product.producto_id} className="product-card-pro">
-                  <div className="product-image-pro">
-                    <img src={product.url_imagen} alt={product.nombre} />
-                    <span className="product-badge-pro hot">Hot</span>
-                  </div>
-                  <div className="product-info-pro">
-                    <h3 className="product-name-pro">{product.nombre}</h3>
-                    <div className="product-footer-pro">
-                      <span className="product-price-pro">S/ {product.precio.toFixed(2)}</span>
-                      <button className="btn-add-pro">Agregar</button>
-                    </div>
-                  </div>
-                </div>
+              {bestSellers.map(product => (
+                <ProductCard key={product.producto_id} product={product} />
               ))}
             </div>
           </div>
@@ -325,24 +393,11 @@ const Home = () => {
                   <p className="section-subtitle-pro">Sabores auténticos de todo el mundo</p>
                 </div>
               </div>
-              <Link to="/products?category=1" className="link-view-pro">
-                Ver todos {Icons.arrowRight}
-              </Link>
+              <Link to="/products?categoria_id=1" className="link-view-pro">Ver todos {Icons.arrowRight}</Link>
             </div>
             <div className="products-grid-pro">
-              {dulcesProducts.map((product) => (
-                <div key={product.producto_id} className="product-card-pro">
-                  <div className="product-image-pro">
-                    <img src={product.url_imagen} alt={product.nombre} />
-                  </div>
-                  <div className="product-info-pro">
-                    <h3 className="product-name-pro">{product.nombre}</h3>
-                    <div className="product-footer-pro">
-                      <span className="product-price-pro">S/ {product.precio.toFixed(2)}</span>
-                      <button className="btn-add-pro">Agregar</button>
-                    </div>
-                  </div>
-                </div>
+              {dulcesProducts.map(product => (
+                <ProductCard key={product.producto_id} product={product} />
               ))}
             </div>
           </div>

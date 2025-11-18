@@ -850,35 +850,59 @@
    BOTÓN DE AGREGAR - ESTADOS MEJORADOS
    ============================================ */
 
+/* Botón base */
 .btn--primary {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  border: none;
+  color: #fff;
 }
 
-/* Estado: En carrito (verde y disabled) */
+/* Estado: En carrito (disabled elegante) */
 .btn--primary.btn--in-cart {
-  background: linear-gradient(135deg, #704214 0%, #a67c52 100%);
+  background: linear-gradient(135deg, #6a3f15 0%, #a67851 100%);
+  color: #fff;
 
-  color: white;
+  opacity: 0.85;               /* se ve sutilmente desactivado */
   cursor: not-allowed;
-  box-shadow: 0 4px 12px rgba(112, 66, 20, 0.4);
-
   pointer-events: none;
+
+  box-shadow: 0 4px 10px rgba(112, 66, 20, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .btn--primary.btn--in-cart:hover {
-  background: linear-gradient(135deg, #704214 0%, #a67c52 100%);
-
   transform: none;
+  opacity: 0.85; /* no cambia */
 }
 
-/* Estado: Agregando (loading) */
+/* Estado: Agregando (loading mejorado) */
 .btn--primary.btn--adding {
-background: linear-gradient(135deg, #cc7722 0%, #a65e16 100%);
-
+  background: linear-gradient(135deg, #d98939 0%, #b3681d 100%);
   cursor: wait;
+
+  box-shadow: 0 4px 12px rgba(204, 119, 34, 0.35);
+  animation: pulse 1.3s infinite ease-in-out;
 }
+
+/* Animación suave para el loading */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 
 /* Animaciones de iconos */
 .icon-animated {

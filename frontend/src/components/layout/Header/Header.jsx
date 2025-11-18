@@ -1,5 +1,5 @@
 // C:\qhatu\frontend\src\components\layout\Header\Header.jsx
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CartContext } from '../../../contexts/CartContext';
 import Navigation from '../Navigation/Navigation';
@@ -10,54 +10,93 @@ import authService from '../../../services/authService';
 import './Header.css';
 
 const Header = () => {
+  // ====================================
+  // 📦 CONTEXTOS Y HOOKS
+  // ====================================
   const { cart } = useContext(CartContext);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const lastScrollY = useRef(0);
+  const rafId = useRef(null);
+
+  // ====================================
+  // 🎯 ESTADOS
+  // ====================================
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   // ====================================
-  // 🔐 VERIFICAR SI EL USUARIO ES STAFF
+  // 🔐 VERIFICACIÓN DE RUTAS Y ROLES
   // ====================================
-  const isStaffRoute = () => {
+  const isStaffRoute = useCallback(() => {
     return location.pathname.startsWith('/admin') || 
            location.pathname.startsWith('/vendedor') || 
            location.pathname.startsWith('/almacenero');
-  };
+  }, [location.pathname]);
 
-  const isStaffUser = (userRole) => {
+  const isStaffUser = useCallback((userRole) => {
     return ['super_admin', 'vendedor', 'almacenero'].includes(userRole);
-  };
+  }, []);
 
   // ====================================
   // 👤 CARGAR USUARIO
   // ====================================
-  const loadUser = async () => {
+  const loadUser = useCallback(async () => {
     setIsLoading(true);
-    const currentUser = authService.getCurrentUser();
-
-    if (currentUser) {
-      setUser(currentUser);
-      console.log('✅ Usuario cargado:', currentUser.email, '| Rol:', currentUser.rol_nombre);
-    } else {
+    try {
+      const currentUser = authService.getCurrentUser();
+      setUser(currentUser || null);
+    } catch (error) {
+      console.error('❌ Error al cargar usuario:', error);
       setUser(null);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-  };
+  }, []);
 
+  // ====================================
+  // 🔄 ACTUALIZAR USUARIO
+  // ====================================
+  const handleUserUpdate = useCallback((updatedUser) => {
+    console.log('✅ Usuario actualizado en Header:', updatedUser);
+    setUser(updatedUser);
+    authService.setUser(updatedUser);
+    window.dispatchEvent(new CustomEvent('userDataChanged', { 
+      detail: updatedUser 
+    }));
+  }, []);
+
+  // ====================================
+  // 🛒 HANDLER PARA ABRIR CARRITO
+  // ====================================
+  const handleOpenCart = useCallback(() => {
+    console.log('🛒 Abriendo carrito de compras');
+    setIsCartOpen(true);
+  }, []);
+
+  // ====================================
+  // 🛒 HANDLER PARA CERRAR CARRITO
+  // ====================================
+  const handleCloseCart = useCallback(() => {
+    console.log('🛒 Cerrando carrito de compras');
+    setIsCartOpen(false);
+  }, []);
+
+  // ====================================
+  // 🎬 EFECTOS DE INICIALIZACIÓN
+  // ====================================
   useEffect(() => {
     loadUser();
-  }, [location.pathname]);
+  }, [loadUser, location.pathname]);
 
-  
-
-  // Listener para cambios en localStorage
   useEffect(() => {
     const handleStorageChange = () => {
+      console.log('🔄 Detectado cambio en storage/usuario');
       loadUser();
     };
 
@@ -68,244 +107,267 @@ const Header = () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('userDataChanged', handleStorageChange);
     };
-  }, []);
+  }, [loadUser]);
 
   // ====================================
-  // 📜 MANEJO DE SCROLL
+  // 📜 MANEJO DE SCROLL OPTIMIZADO
   // ====================================
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
+
+      rafId.current = requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        const scrollDifference = currentScrollY - lastScrollY.current;
+        const documentHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = documentHeight > 0 ? (currentScrollY / documentHeight) * 100 : 0;
+
+        setIsScrolled(currentScrollY > 80);
+        setScrollProgress(Math.min(progress, 100));
+
+        if (currentScrollY > 300) {
+          if (scrollDifference > 0) {
+            setIsVisible(false);
+          } else if (scrollDifference < -5) {
+            setIsVisible(true);
+          }
+        } else {
+          setIsVisible(true);
+        }
+
+        lastScrollY.current = currentScrollY;
+      });
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
+    };
   }, []);
 
   // ====================================
   // 🚪 LOGOUT
   // ====================================
-  const handleLogout = async () => {
-    await authService.logout();
-    setUser(null);
-    setIsCartOpen(false);
-    setIsMobileMenuOpen(false);
-    navigate('/');
-  };
+  const handleLogout = useCallback(async () => {
+    try {
+      await authService.logout();
+      setUser(null);
+      setIsCartOpen(false);
+      setIsMobileMenuOpen(false);
+      document.body.style.overflow = '';
+      console.log('✅ Logout exitoso');
+      navigate('/');
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    } catch (error) {
+      console.error('❌ Error en logout:', error);
+    }
+  }, [navigate]);
 
   // ====================================
   // 🔐 NAVEGACIÓN A MODALES DE AUTH
   // ====================================
-  const handleOpenLogin = () => {
+  const handleOpenLogin = useCallback(() => {
     navigate('/login', { 
       state: { backgroundLocation: location } 
     });
-  };
+  }, [navigate, location]);
 
-  const handleOpenRegister = () => {
+  const handleOpenRegister = useCallback(() => {
     navigate('/register', { 
       state: { backgroundLocation: location } 
     });
-  };
+  }, [navigate, location]);
 
   // ====================================
-  // 🛒 CARRITO - Listener para el evento
+  // 📱 MENÚ MÓVIL
   // ====================================
+  const toggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(prev => {
+      const newState = !prev;
+      document.body.style.overflow = newState ? 'hidden' : '';
+      return newState;
+    });
+  }, []);
+
+  // ====================================
+  // 🛒 LISTENER LEGACY PARA EVENTO DE CARRITO
+  // ====================================
+  // Mantener compatibilidad con otras partes del código que usan el evento
   useEffect(() => {
-    const handleOpenCartEvent = () => {
-      setIsCartOpen(true);
+    const handleOpenCartEvent = (event) => {
+      console.log('📡 Evento openCartModal recibido', event.detail);
+      handleOpenCart();
     };
 
     window.addEventListener('openCartModal', handleOpenCartEvent);
-
+    
     return () => {
       window.removeEventListener('openCartModal', handleOpenCartEvent);
     };
-  }, []);
-
-  const handleOpenCart = () => {
-    setIsCartOpen(true);
-  };
+  }, [handleOpenCart]);
 
   // ====================================
-  // 🎨 CONTENIDO CONTEXTUAL
+  // 📱 CERRAR MENÚ MÓVIL AL CAMBIAR RUTA
   // ====================================
-  const getContextualContent = () => {
-    switch (location.pathname) {
-      case '/':
-        return {
-          title: 'Bienvenido a tu spot de sabores',
-          description: 'Ramen, bebidas, snacks y un mundo de delicias reunidos en un único spot.',
-          image: 'https://i.ibb.co/VcrTmX1F/upscalemedia-transformed-1.png',
-          alt: 'Qhatu',
-        };
-      case '/products':
-        return {
-          title: 'Nuestros Productos',
-          description: 'Descubre una amplia selección de productos cuidadosamente seleccionados.',
-          image: 'https://i.ibb.co/VcrTmX1F/upscalemedia-transformed-1.png',
-          alt: 'Catálogo de productos Qhatu',
-        };
-      case '/nosotros':
-        return {
-          title: 'Nuestra Historia',
-          description: 'Conoce más sobre nuestra misión de conectar comunidades con los mejores productos.',
-          image: 'https://i.ibb.co/VcrTmX1F/upscalemedia-transformed-1.png',
-          alt: 'Equipo de Qhatu',
-        };
-      case '/contact':
-        return {
-          title: 'Contáctanos',
-          description: 'Estamos aquí para ayudarte. Ponte en contacto con nuestro equipo.',
-          image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=871&q=80',
-          alt: 'Contacto Qhatu',
-        };
-      default:
-        return {
-          title: 'Bienvenido a Qhatu',
-          description: 'Tu plataforma de productos importados.',
-          image: 'https://images.unsplash.com/photo-1556155092-490a1ba16284?w=870&q=80',
-          alt: 'Qhatu',
-        };
-    }
-  };
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    document.body.style.overflow = '';
+  }, [location.pathname]);
 
-  const contextualContent = getContextualContent();
+  // ====================================
+  // 🎭 VARIABLES DERIVADAS
+  // ====================================
   const hideHeaderContent = isStaffRoute();
+  const showCart = !hideHeaderContent && !isStaffUser(user?.rol_nombre);
+  const cartItemsCount = cart?.reduce((sum, item) => sum + item.cantidad, 0) || 0;
 
   // ====================================
-  // 🎨 RENDER
+  // 🎨 RENDER PRINCIPAL
   // ====================================
   return (
     <>
-      <header className={`oe-header ${isScrolled ? 'oe-header-scrolled' : ''}`}>
-        <div className="container">
-          <div className="oe-header-content">
-            {/* ========== LOGO ========== */}
-            <div className="oe-header-logo">
-              <Link to="/" className="oe-logo-link">
-                <img src="/logo-oe.png" alt="Qhatu" className="oe-logo-img" />
+      <header 
+        className={`qh-header ${isScrolled ? 'qh-header--scrolled' : ''} ${isVisible ? 'qh-header--visible' : 'qh-header--hidden'}`}
+        role="banner"
+      >
+        <div className="qh-header__container">
+          <div className="qh-header__content">
+            
+            {/* ===== LOGO ===== */}
+            <div className="qh-header__logo">
+              <Link 
+                to="/" 
+                className="qh-logo"
+                aria-label="Qhatu - Ir al inicio"
+              >
+                <img
+                  src="/logo-oe.png"
+                  alt="Qhatu"
+                  className="qh-logo__image"
+                  loading="eager"
+                />
+                <span className="qh-logo__glow" aria-hidden="true"></span>
               </Link>
             </div>
 
-            {/* ========== NAVEGACIÓN (SOLO CLIENTES) ========== */}
+            {/* ===== NAVEGACIÓN (SOLO CLIENTES) ===== */}
             {!hideHeaderContent && (
-              <div className={`oe-header-nav ${isMobileMenuOpen ? 'oe-header-nav-open' : ''}`}>
+              <nav 
+                className={`qh-header__nav ${isMobileMenuOpen ? 'qh-header__nav--open' : ''}`}
+                aria-label="Navegación principal"
+                id="main-navigation"
+              >
                 <Navigation />
-              </div>
+              </nav>
             )}
 
-            {/* ========== ACCIONES ========== */}
-            <div className="oe-header-actions">
+            {/* ===== ACCIONES DEL USUARIO ===== */}
+            <div className="qh-header__actions">
+              
               {/* CARRITO (SOLO PARA CLIENTES) */}
-              {!hideHeaderContent && !isStaffUser(user?.rol_nombre) && (
-                <div className="cart-action">
-                  <CartWidget />
+              {showCart && (
+                <div className="qh-header__cart">
+                  <CartWidget 
+                    onClick={handleOpenCart}
+                    itemsCount={cartItemsCount}
+                  />
+                  {cartItemsCount > 0 && (
+                    <span className="qh-cart-button__pulse" aria-hidden="true"></span>
+                  )}
                 </div>
               )}
 
-              {/* USUARIO AUTENTICADO */}
-              <div className="oe-auth-buttons">
-                {!isLoading && user ? (
-                  <UserMenu user={user} onLogout={handleLogout} />
-                ) : !isLoading ? (
-                  <>
-                    <button 
-                      className="oe-login-btn" 
-                      onClick={handleOpenLogin}
-                    >
-                      Iniciar
-                    </button>
-                    <button 
-                      className="oe-register-btn" 
-                      onClick={handleOpenRegister}
-                    >
-                      Registrarse
-                    </button>
-                  </>
+              {/* AUTENTICACIÓN */}
+              <div className="qh-header__auth">
+                {isLoading ? (
+                  <div className="qh-auth-loading" aria-live="polite">
+                    <div className="qh-spinner">
+                      <div className="qh-spinner__circle"></div>
+                    </div>
+                    <span className="sr-only">Cargando usuario...</span>
+                  </div>
+                ) : user ? (
+                  <UserMenu 
+                    user={user} 
+                    onLogout={handleLogout}
+                    onUserUpdate={handleUserUpdate}
+                  />
                 ) : (
-                  <div className="loading-auth">Cargando...</div>
+                  <div className="qh-auth-buttons">
+                    <button 
+                      className="qh-btn qh-btn--ghost" 
+                      onClick={handleOpenLogin}
+                      aria-label="Iniciar sesión"
+                    >
+                      <span>Iniciar sesión</span>
+                    </button>
+                    <button 
+                      className="qh-btn qh-btn--primary" 
+                      onClick={handleOpenRegister}
+                      aria-label="Crear cuenta nueva"
+                    >
+                      <span>Registrarse</span>
+                      <span className="qh-btn__shine" aria-hidden="true"></span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* ========== MOBILE MENU (SOLO CLIENTES) ========== */}
+            {/* ===== MENÚ MÓVIL (SOLO CLIENTES) ===== */}
             {!hideHeaderContent && (
               <button
-                className={`oe-menu-toggle ${isMobileMenuOpen ? 'oe-menu-toggle-open' : ''}`}
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label="Abrir menú"
+                className={`qh-menu-toggle ${isMobileMenuOpen ? 'qh-menu-toggle--active' : ''}`}
+                onClick={toggleMobileMenu}
+                aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="main-navigation"
               >
-                <span></span>
-                <span></span>
-                <span></span>
+                <span className="qh-menu-toggle__line" aria-hidden="true"></span>
+                <span className="qh-menu-toggle__line" aria-hidden="true"></span>
+                <span className="qh-menu-toggle__line" aria-hidden="true"></span>
               </button>
             )}
           </div>
         </div>
+
+        {/* BARRA DE PROGRESO DE SCROLL */}
+        {isScrolled && (
+          <div className="qh-header__progress" aria-hidden="true">
+            <div 
+              className="qh-header__progress-bar"
+              style={{ width: `${scrollProgress}%` }}
+            ></div>
+          </div>
+        )}
       </header>
 
-      {/* ========== SECCIÓN CONTEXTUAL (SOLO RUTAS PÚBLICAS) ========== */}
-      {!hideHeaderContent && (
-        <section className={`oe-contextual ${isScrolled ? 'oe-contextual-hidden' : ''}`}>
-          <div className="container">
-            <div className={`oe-contextual-content oe-contextual-${location.pathname.slice(1) || 'home'}`}>
-              <div className="oe-contextual-image">
-                <img src={contextualContent.image} alt={contextualContent.alt} />
-              </div>
-              <div className="oe-contextual-text">
-                <h1>{contextualContent.title}</h1>
-                <p>{contextualContent.description}</p>
-
-                {location.pathname === '/products' && (
-                  <div className="oe-contextual-actions">
-                    <button className="oe-btn oe-btn-outline">Filtrar Productos</button>
-                  </div>
-                )}
-
-                {location.pathname === '/nosotros' && (
-                  <div className="oe-contextual-stats">
-                    <div className="oe-stat">
-                      <span className="oe-stat-number">20+</span>
-                      <span className="oe-stat-label">Productos</span>
-                    </div>
-                    <div className="oe-stat">
-                      <span className="oe-stat-number">1K+</span>
-                      <span className="oe-stat-label">Clientes</span>
-                    </div>
-                  </div>
-                )}
-
-                {location.pathname === '/contact' && (
-                  <div className="oe-contextual-contact">
-                    <div className="oe-contact-method">
-                      <span className="oe-contact-icon">📧</span>
-                      <a href="mailto:info@qhatu.com" className="oe-contact-link">
-                        info@qhatu.com
-                      </a>
-                    </div>
-                    <div className="oe-contact-method">
-                      <span className="oe-contact-icon">📱</span>
-                      <a href="https://wa.me/952682285" className="oe-contact-link" target="_blank" rel="noopener noreferrer">
-                        +51 952 682 285
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+      {/* OVERLAY MÓVIL */}
+      {isMobileMenuOpen && !hideHeaderContent && (
+        <div 
+          className="qh-mobile-overlay"
+          onClick={toggleMobileMenu}
+          aria-hidden="true"
+        ></div>
       )}
 
-      {/* ========== MODAL DE CARRITO ========== */}
+      {/* MODAL DEL CARRITO */}
       {isCartOpen && !hideHeaderContent && (
         <CartModal 
           isOpen={isCartOpen} 
-          onClose={() => setIsCartOpen(false)} 
+          onClose={handleCloseCart}
         />
       )}
     </>
   );
 };
 
-export default Header;
+export default React.memo(Header);

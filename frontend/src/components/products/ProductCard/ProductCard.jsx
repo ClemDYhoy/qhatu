@@ -267,12 +267,7 @@ const ProductCard = memo(({ product }) => {
             loading="lazy" 
             onError={() => setImageError(true)} 
           />
-          {stockInfo.inCart && (
-            <div className="product-card__in-cart-badge">
-              <span>{stockInfo.cartQuantity}</span>
-              <CartCheckIcon className="icon-check" />
-            </div>
-          )}
+          
         </div>
 
         {/* Contenido */}

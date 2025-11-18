@@ -10,8 +10,11 @@ class AuthService {
   // ====================================
 
   setToken(token) {
-    localStorage.setItem(TOKEN_KEY, token);
-    setAuthToken(token);
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+      setAuthToken(token);
+      console.log('✅ Token guardado');
+    }
   }
 
   getToken() {
@@ -19,9 +22,12 @@ class AuthService {
   }
 
   setUser(user) {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    // Disparar evento para notificar cambios
-    window.dispatchEvent(new Event('userDataChanged'));
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      // Disparar evento para notificar cambios
+      window.dispatchEvent(new Event('userDataChanged'));
+      console.log('✅ Usuario guardado:', user.email);
+    }
   }
 
   getUser() {
@@ -39,6 +45,7 @@ class AuthService {
     localStorage.removeItem(USER_KEY);
     setAuthToken(null);
     window.dispatchEvent(new Event('userDataChanged'));
+    console.log('🗑️ Sesión limpiada');
   }
 
   // ====================================
@@ -46,7 +53,9 @@ class AuthService {
   // ====================================
 
   isAuthenticated() {
-    return !!this.getToken();
+    const token = this.getToken();
+    const user = this.getUser();
+    return !!(token && user);
   }
 
   /**
@@ -72,6 +81,8 @@ class AuthService {
         throw new Error('Email y contraseña son requeridos');
       }
 
+      console.log('🔐 Intentando login:', email);
+
       const response = await api.post('/auth/login', {
         email: email.toLowerCase().trim(),
         password
@@ -89,7 +100,7 @@ class AuthService {
         return { 
           success: true, 
           user, 
-          message,
+          message: message || 'Login exitoso',
           redirectTo: this.getRedirectRoute(user.rol_nombre)
         };
       }
@@ -120,6 +131,8 @@ class AuthService {
         throw new Error('La contraseña debe tener al menos 6 caracteres');
       }
 
+      console.log('📝 Registrando usuario:', userData.email);
+
       const response = await api.post('/auth/register', {
         email: userData.email?.toLowerCase().trim(),
         password: userData.password,
@@ -138,7 +151,7 @@ class AuthService {
         return { 
           success: true, 
           user, 
-          message,
+          message: message || 'Registro exitoso',
           redirectTo: this.getRedirectRoute(user.rol_nombre)
         };
       }
@@ -165,6 +178,8 @@ class AuthService {
         throw new Error('Credencial de Google inválida');
       }
 
+      console.log('🔐 Autenticando con Google...');
+
       const response = await api.post('/auth/google', { credential });
 
       const { success, token, user, message, isNewUser } = response.data;
@@ -181,7 +196,7 @@ class AuthService {
         return { 
           success: true, 
           user, 
-          message, 
+          message: message || (isNewUser ? 'Cuenta creada' : 'Login exitoso'), 
           isNewUser,
           redirectTo: this.getRedirectRoute(user.rol_nombre)
         };
@@ -208,28 +223,32 @@ class AuthService {
       const token = this.getToken();
 
       if (!token) {
+        console.log('ℹ️ No hay token guardado');
         return { success: false, message: 'No hay token' };
       }
+
+      console.log('🔍 Verificando token...');
 
       const response = await api.get('/auth/me');
 
       if (response.data?.success && response.data?.user) {
         this.setUser(response.data.user);
-        console.log('✅ Token válido');
+        console.log('✅ Token válido:', response.data.user.email);
         return { success: true, user: response.data.user };
       }
 
+      console.warn('⚠️ Token inválido');
       this.clearAuth();
       return { success: false, message: 'Token inválido' };
     } catch (error) {
-      console.error('❌ Token inválido o expirado:', error);
+      console.error('❌ Error verificando token:', error);
       this.clearAuth();
       return { success: false, message: 'Error verificando sesión' };
     }
   }
 
   /**
-   * Obtener usuario actual (desde localStorage o API)
+   * Obtener usuario actual (desde localStorage)
    */
   getCurrentUser() {
     return this.getUser();
@@ -360,7 +379,7 @@ class AuthService {
       await api.post('/auth/logout').catch(() => {
         // Ignorar errores del logout en backend
       });
-      console.log('✅ Sesión cerrada');
+      console.log('✅ Sesión cerrada en el servidor');
     } finally {
       this.clearAuth();
     }
@@ -409,11 +428,14 @@ class AuthService {
    */
   initializeAuth() {
     const token = this.getToken();
-    if (token) {
+    const user = this.getUser();
+    
+    if (token && user) {
       setAuthToken(token);
-      console.log('🔐 Token encontrado en localStorage');
+      console.log('🔐 Sesión encontrada:', user.email);
+      console.log('👤 Rol:', user.rol_nombre);
       
-      // Verificar token en background
+      // Verificar token en background (no bloquear la carga)
       this.verifyToken().catch(() => {
         console.warn('⚠️ Token inválido o expirado');
       });

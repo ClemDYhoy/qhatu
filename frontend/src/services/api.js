@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // ============================================
-// === CONFIGURACIÓN BASE ===
+// 🔧 CONFIGURACIÓN BASE
 // ============================================
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -18,7 +18,7 @@ if (isDevelopment) {
 }
 
 // ============================================
-// === AXIOS INSTANCE ===
+// 🌐 AXIOS INSTANCE
 // ============================================
 
 const apiClient = axios.create({
@@ -30,16 +30,23 @@ const apiClient = axios.create({
   withCredentials: false
 });
 
-// Request Interceptor
+// ============================================
+// 📤 REQUEST INTERCEPTOR
+// ============================================
+
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('qhatu_token');
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
     if (isDevelopment) {
-      console.log(`🌐 ${config.method.toUpperCase()} ${config.url}`);
+      console.log(`📤 ${config.method?.toUpperCase()} ${config.url}`, {
+        hasToken: !!token,
+        data: config.data
+      });
     }
 
     return config;
@@ -50,23 +57,37 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response Interceptor
+// ============================================
+// 📥 RESPONSE INTERCEPTOR
+// ============================================
+
 apiClient.interceptors.response.use(
   (response) => {
     if (isDevelopment) {
-      console.log(`✅ ${response.config.method.toUpperCase()} ${response.config.url}`, response.data);
+      console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
     }
     return response;
   },
   (error) => {
+    const originalRequest = error.config;
+
     if (error.response) {
       const { status, data } = error.response;
 
-      // Token expirado
-      if (status === 401 && !window.location.pathname.includes('/login')) {
+      // Token expirado o inválido
+      if (status === 401 && !originalRequest._retry) {
+        console.warn('⚠️ Token expirado o inválido - Limpiando sesión');
+        
         localStorage.removeItem('qhatu_token');
         localStorage.removeItem('qhatu_user');
-        window.location.href = '/login?expired=true';
+        
+        // Disparar evento para que AppContext limpie el estado
+        window.dispatchEvent(new Event('userDataChanged'));
+        
+        // Redirigir al login si no estamos ya ahí
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login?expired=true';
+        }
       }
 
       console.error(`❌ Error ${status}:`, data.message || error.message);
@@ -81,13 +102,29 @@ apiClient.interceptors.response.use(
 );
 
 // ============================================
-// === UTILIDADES ===
+// 🔑 UTILIDAD PARA CONFIGURAR TOKEN
+// ============================================
+
+export const setAuthToken = (token) => {
+  if (token) {
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    localStorage.setItem('qhatu_token', token);
+    console.log('✅ Token configurado en API');
+  } else {
+    delete apiClient.defaults.headers.common['Authorization'];
+    localStorage.removeItem('qhatu_token');
+    console.log('🗑️ Token eliminado de API');
+  }
+};
+
+// ============================================
+// 📋 UTILIDADES
 // ============================================
 
 const log = {
   info: (...args) => isDevelopment && console.log('ℹ️', ...args),
-  error: (...args) => isDevelopment && console.error('❌', ...args),
-  warn: (...args) => isDevelopment && console.warn('⚠️', ...args),
+  error: (...args) => console.error('❌', ...args),
+  warn: (...args) => console.warn('⚠️', ...args),
   success: (...args) => isDevelopment && console.log('✅', ...args)
 };
 
@@ -100,7 +137,7 @@ const buildQueryString = (params) => {
 };
 
 // ============================================
-// === CLIENTE HTTP FETCH (para compatibilidad) ===
+// 🔄 CLIENTE HTTP FETCH (para compatibilidad)
 // ============================================
 
 const fetchAPI = async (endpoint, options = {}) => {
@@ -144,13 +181,17 @@ const fetchAPI = async (endpoint, options = {}) => {
       if (response.status === 401) {
         localStorage.removeItem('qhatu_token');
         localStorage.removeItem('qhatu_user');
-        window.location.href = '/login';
+        window.dispatchEvent(new Event('userDataChanged'));
+        
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login?expired=true';
+        }
       }
       
       throw new Error(errorMessage);
     }
 
-    log.success(`${response.status} - Éxito`, data);
+    log.success(`${response.status} - Éxito`);
     return data;
     
   } catch (error) {
@@ -165,23 +206,13 @@ const fetchAPI = async (endpoint, options = {}) => {
 };
 
 // ============================================
-// === EXPORTAR AXIOS PARA AUTHSERVICE ===
+// 📦 EXPORTAR AXIOS COMO DEFAULT
 // ============================================
 
-export const setAuthToken = (token) => {
-  if (token) {
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    localStorage.setItem('qhatu_token', token);
-  } else {
-    delete apiClient.defaults.headers.common['Authorization'];
-    localStorage.removeItem('qhatu_token');
-  }
-};
-
-export { apiClient as default };
+export default apiClient;
 
 // ============================================
-// === PRODUCTOS ===
+// 🛍️ PRODUCTOS
 // ============================================
 
 export const getProducts = async (filters = {}) => {
@@ -232,7 +263,7 @@ export const getCategoryStats = async () => {
 };
 
 // ============================================
-// === CATEGORÍAS ===
+// 📂 CATEGORÍAS
 // ============================================
 
 export const getCategories = async (options = {}) => {
@@ -255,7 +286,7 @@ export const getSubCategories = async (parentId) => {
 };
 
 // ============================================
-// === CARRUSELES ===
+// 🎠 CARRUSELES
 // ============================================
 
 export const getCarousels = async () => {
@@ -268,7 +299,7 @@ export const getCarouselById = async (id) => {
 };
 
 // ============================================
-// === AUTENTICACIÓN (FETCH) ===
+// 🔐 AUTENTICACIÓN (FETCH)
 // ============================================
 
 export const login = async (email, password) => {
@@ -306,6 +337,7 @@ export const logout = async () => {
   } finally {
     localStorage.removeItem('qhatu_token');
     localStorage.removeItem('qhatu_user');
+    window.dispatchEvent(new Event('userDataChanged'));
   }
 };
 
@@ -330,7 +362,7 @@ export const resetPassword = async (token, newPassword) => {
 };
 
 // ============================================
-// === USUARIOS (Admin) ===
+// 👥 USUARIOS (Admin)
 // ============================================
 
 export const getUsers = async (options = {}) => {
@@ -356,7 +388,7 @@ export const deleteUser = async (id) => {
 };
 
 // ============================================
-// === ANALYTICS (Admin) ===
+// 📊 ANALYTICS (Admin)
 // ============================================
 
 export const getAnalytics = async () => {
@@ -377,7 +409,7 @@ export const getTopSelling = async (period = 'month') => {
 };
 
 // ============================================
-// === BANNERS DE DESCUENTO ===
+// 🎯 BANNERS DE DESCUENTO
 // ============================================
 
 export const getActiveDiscountBanners = async () => {
@@ -402,7 +434,7 @@ export const registerBannerInteraction = async (bannerId, tipo) => {
 };
 
 // ============================================
-// === HEALTH CHECK ===
+// 🏥 HEALTH CHECK
 // ============================================
 
 export const healthCheck = async () => {

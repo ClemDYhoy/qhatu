@@ -561,6 +561,7 @@
 .category-name {
   font-size: 14px !important;
   line-height: 0.8 !important;
+  color: #302f2f;
 }
 .category-chip::before {
   content: '';
@@ -1257,7 +1258,7 @@
 }
 
 /* RESPONSIVE */
-@media (max-width: 1024px) {
+@media (max-width: 1260px) {
   .products-layout {
     grid-template-columns: 260px 1fr;
   }
@@ -1266,7 +1267,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 800px) {
   .mobile-filters-header {
     display: flex;
   }

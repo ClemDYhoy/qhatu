@@ -1,6 +1,6 @@
-// src/config/middleware/auth.js
+// C:\qhatu\backend\src\config\middleware\auth.js
 import jwt from 'jsonwebtoken';
-import db from '../database.js';
+import { User, Role } from '../../models/index.js';
 
 // ============================================
 // 🔐 AUTENTICACIÓN BASE
@@ -12,66 +12,126 @@ import db from '../database.js';
  */
 export const requireAuth = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-
-    if (!token) {
+    // 1. Extraer y validar token
+    const authHeader = req.header('Authorization');
+    
+    if (!authHeader) {
       return res.status(401).json({
         success: false,
         message: 'Acceso denegado. Token no proporcionado.'
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const token = authHeader.replace('Bearer ', '').trim();
 
-    // Buscar usuario en la base de datos con rol
-    const [usuarios] = await db.query(
-      `SELECT 
-        u.usuario_id, 
-        u.email, 
-        u.nombre_completo,
-        u.telefono,
-        u.rol_id,
-        u.estado,
-        r.nombre as rol_nombre,
-        r.permisos
-      FROM usuarios u
-      LEFT JOIN roles r ON u.rol_id = r.rol_id
-      WHERE u.usuario_id = ? AND u.estado = 'activo'`,
-      [decoded.usuario_id]
-    );
-
-    if (usuarios.length === 0) {
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Usuario no encontrado o inactivo'
+        message: 'Token inválido o malformado.'
       });
     }
 
-    // Parsear permisos si están en JSON
-    const usuario = usuarios[0];
-    if (usuario.permisos && typeof usuario.permisos === 'string') {
+    // 2. Verificar token JWT
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      if (jwtError.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          message: 'Token expirado'
+        });
+      }
+      if (jwtError.name === 'JsonWebTokenError') {
+        return res.status(401).json({
+          success: false,
+          message: 'Token inválido'
+        });
+      }
+      throw jwtError;
+    }
+
+    // 3. Buscar usuario en la base de datos con Sequelize
+    const user = await User.findByPk(decoded.usuario_id, {
+      attributes: [
+        'usuario_id',
+        'email',
+        'nombre_completo',
+        'telefono',
+        'rol_id',
+        'estado',
+        'foto_perfil_url'
+      ],
+      include: [{
+        model: Role,
+        as: 'rol',
+        attributes: ['rol_id', 'nombre', 'permisos'],
+        required: false
+      }]
+    });
+
+    // 4. Validar usuario existe y está activo
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+
+    if (user.estado !== 'activo') {
+      return res.status(403).json({
+        success: false,
+        message: 'Tu cuenta está inactiva. Contacta al administrador.'
+      });
+    }
+
+    // 5. Preparar datos del usuario
+    const userData = user.toJSON();
+    
+    // Parsear permisos si están en JSON string
+    if (userData.rol?.permisos && typeof userData.rol.permisos === 'string') {
       try {
-        usuario.permisos = JSON.parse(usuario.permisos);
+        userData.rol.permisos = JSON.parse(userData.rol.permisos);
       } catch (e) {
-        // Si no es JSON, dejar como está
+        console.error('⚠️ Error parseando permisos:', e);
+        userData.rol.permisos = {};
       }
     }
 
-    req.user = usuario;
+    // 6. Agregar usuario a la request
+    req.user = {
+      usuario_id: userData.usuario_id,
+      email: userData.email,
+      nombre_completo: userData.nombre_completo,
+      telefono: userData.telefono,
+      rol_id: userData.rol_id,
+      estado: userData.estado,
+      foto_perfil_url: userData.foto_perfil_url,
+      rol_nombre: userData.rol?.nombre || null,
+      permisos: userData.rol?.permisos || {}
+    };
+
     next();
+
   } catch (error) {
+    console.error('❌ Error en requireAuth:', error);
+    
+    // Errores específicos de JWT ya manejados arriba
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({
         success: false,
         message: 'Token inválido'
       });
     }
+    
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
         message: 'Token expirado'
       });
     }
+
+    // Error genérico
     return res.status(500).json({
       success: false,
       message: 'Error en la autenticación',
@@ -87,45 +147,80 @@ export const requireAuth = async (req, res, next) => {
  */
 export const optionalAuth = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const authHeader = req.header('Authorization');
 
+    // Si no hay header, continuar sin usuario
+    if (!authHeader) {
+      return next();
+    }
+
+    const token = authHeader.replace('Bearer ', '').trim();
+
+    // Si no hay token, continuar sin usuario
     if (!token) {
       return next();
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Intentar verificar token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      // Token inválido o expirado, continuar sin usuario
+      console.warn('⚠️ Token inválido en optionalAuth:', jwtError.message);
+      return next();
+    }
 
-    const [usuarios] = await db.query(
-      `SELECT 
-        u.usuario_id, 
-        u.email, 
-        u.nombre_completo,
-        u.telefono,
-        u.rol_id,
-        u.estado,
-        r.nombre as rol_nombre,
-        r.permisos
-      FROM usuarios u
-      LEFT JOIN roles r ON u.rol_id = r.rol_id
-      WHERE u.usuario_id = ? AND u.estado = 'activo'`,
-      [decoded.usuario_id]
-    );
+    // Buscar usuario
+    const user = await User.findByPk(decoded.usuario_id, {
+      attributes: [
+        'usuario_id',
+        'email',
+        'nombre_completo',
+        'telefono',
+        'rol_id',
+        'estado',
+        'foto_perfil_url'
+      ],
+      include: [{
+        model: Role,
+        as: 'rol',
+        attributes: ['rol_id', 'nombre', 'permisos'],
+        required: false
+      }]
+    });
 
-    if (usuarios.length > 0) {
-      const usuario = usuarios[0];
-      if (usuario.permisos && typeof usuario.permisos === 'string') {
+    // Si existe y está activo, agregar a request
+    if (user && user.estado === 'activo') {
+      const userData = user.toJSON();
+      
+      // Parsear permisos
+      if (userData.rol?.permisos && typeof userData.rol.permisos === 'string') {
         try {
-          usuario.permisos = JSON.parse(usuario.permisos);
+          userData.rol.permisos = JSON.parse(userData.rol.permisos);
         } catch (e) {
-          // Ignorar error de parsing
+          userData.rol.permisos = {};
         }
       }
-      req.user = usuario;
+
+      req.user = {
+        usuario_id: userData.usuario_id,
+        email: userData.email,
+        nombre_completo: userData.nombre_completo,
+        telefono: userData.telefono,
+        rol_id: userData.rol_id,
+        estado: userData.estado,
+        foto_perfil_url: userData.foto_perfil_url,
+        rol_nombre: userData.rol?.nombre || null,
+        permisos: userData.rol?.permisos || {}
+      };
     }
 
     next();
+
   } catch (error) {
-    // Si hay error en el token, continuar sin usuario
+    // En caso de cualquier error, continuar sin usuario
+    console.error('❌ Error en optionalAuth:', error);
     next();
   }
 };
@@ -139,7 +234,6 @@ export const optionalAuth = async (req, res, next) => {
  * Uso: requireRole(['super_admin', 'vendedor'])
  */
 export const requireRole = (rolesPermitidos) => {
-  // Normalizar entrada: aceptar string o array
   const roles = Array.isArray(rolesPermitidos) ? rolesPermitidos : [rolesPermitidos];
   
   return async (req, res, next) => {
@@ -164,6 +258,7 @@ export const requireRole = (rolesPermitidos) => {
 
       next();
     } catch (error) {
+      console.error('❌ Error en requireRole:', error);
       return res.status(500).json({
         success: false,
         message: 'Error al verificar permisos'
@@ -174,7 +269,6 @@ export const requireRole = (rolesPermitidos) => {
 
 /**
  * Middleware para verificar si es admin (cualquier tipo)
- * Roles permitidos: super_admin, vendedor, almacenero
  */
 export const requireAdmin = requireRole(['super_admin', 'vendedor', 'almacenero']);
 
@@ -199,7 +293,6 @@ export const requireAlmacenero = requireRole(['super_admin', 'almacenero']);
 
 /**
  * Middleware para verificar permisos específicos
- * Uso: requirePermission('productos', 'crear')
  */
 export const requirePermission = (recurso, accion) => {
   return async (req, res, next) => {
@@ -218,25 +311,10 @@ export const requirePermission = (recurso, accion) => {
 
       const permisos = req.user.permisos;
       
-      // Si permisos es un objeto JSON (formato moderno)
+      // Verificar permisos en formato objeto
       if (permisos && typeof permisos === 'object') {
         if (permisos[recurso] && permisos[recurso].includes(accion)) {
           return next();
-        }
-      }
-      // Si permisos es string con formato antiguo "productos:crear,editar|ventas:ver"
-      else if (permisos && typeof permisos === 'string') {
-        const recursos = permisos.split('|');
-        
-        for (const recursoPermiso of recursos) {
-          const [nombre, acciones] = recursoPermiso.split(':');
-          
-          if (nombre === recurso) {
-            const accionesArray = acciones.split(',').map(a => a.trim());
-            if (accionesArray.includes(accion)) {
-              return next();
-            }
-          }
         }
       }
 
@@ -247,10 +325,10 @@ export const requirePermission = (recurso, accion) => {
         userRole: req.user.rol_nombre
       });
     } catch (error) {
+      console.error('❌ Error en requirePermission:', error);
       return res.status(500).json({
         success: false,
-        message: 'Error al verificar permisos',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: 'Error al verificar permisos'
       });
     }
   };
@@ -258,7 +336,6 @@ export const requirePermission = (recurso, accion) => {
 
 /**
  * Middleware para verificar múltiples permisos (OR logic)
- * Si el usuario tiene AL MENOS UNO de los permisos, permite el acceso
  */
 export const requireAnyPermission = (permisosArray) => {
   return async (req, res, next) => {
@@ -270,7 +347,6 @@ export const requireAnyPermission = (permisosArray) => {
         });
       }
 
-      // Super admin tiene todos los permisos
       if (req.user.rol_nombre === 'super_admin') {
         return next();
       }
@@ -292,6 +368,7 @@ export const requireAnyPermission = (permisosArray) => {
         userRole: req.user.rol_nombre
       });
     } catch (error) {
+      console.error('❌ Error en requireAnyPermission:', error);
       return res.status(500).json({
         success: false,
         message: 'Error al verificar permisos'
@@ -301,12 +378,11 @@ export const requireAnyPermission = (permisosArray) => {
 };
 
 // ============================================
-// 📋 HELPERS Y UTILIDADES
+// 📋 HELPERS
 // ============================================
 
 /**
- * Helper para verificar si un usuario tiene un permiso específico
- * Uso en controladores: if (hasPermission(req.user, 'productos', 'crear')) { ... }
+ * Helper para verificar permisos
  */
 export const hasPermission = (user, recurso, accion) => {
   if (!user) return false;
@@ -322,7 +398,7 @@ export const hasPermission = (user, recurso, accion) => {
 };
 
 /**
- * Helper para verificar si un usuario tiene un rol específico
+ * Helper para verificar roles
  */
 export const hasRole = (user, rol) => {
   if (!user) return false;
@@ -331,8 +407,7 @@ export const hasRole = (user, rol) => {
 };
 
 /**
- * Middleware para verificar que el usuario es dueño del recurso
- * o es admin
+ * Middleware para verificar ownership o admin
  */
 export const requireOwnerOrAdmin = (userIdField = 'usuario_id') => {
   return async (req, res, next) => {
@@ -344,12 +419,10 @@ export const requireOwnerOrAdmin = (userIdField = 'usuario_id') => {
         });
       }
 
-      // Admin puede acceder a todo
       if (hasRole(req.user, ['super_admin', 'vendedor', 'almacenero'])) {
         return next();
       }
 
-      // Verificar que sea el dueño
       const resourceUserId = req.params[userIdField] || req.body[userIdField];
       
       if (parseInt(resourceUserId) !== req.user.usuario_id) {
@@ -361,6 +434,7 @@ export const requireOwnerOrAdmin = (userIdField = 'usuario_id') => {
 
       next();
     } catch (error) {
+      console.error('❌ Error en requireOwnerOrAdmin:', error);
       return res.status(500).json({
         success: false,
         message: 'Error al verificar permisos'
@@ -370,10 +444,9 @@ export const requireOwnerOrAdmin = (userIdField = 'usuario_id') => {
 };
 
 // ============================================
-// 📤 ALIASES PARA COMPATIBILIDAD
+// 📤 ALIASES
 // ============================================
 
-// Aliases para nombres comunes
 export const authMiddleware = requireAuth;
 export const authenticate = requireAuth;
 export const isAuthenticated = requireAuth;
@@ -390,5 +463,4 @@ export const isVendedor = requireVendedor;
 export const almaceneroMiddleware = requireAlmacenero;
 export const isAlmacenero = requireAlmacenero;
 
-// Export por defecto para compatibilidad
 export default requireAuth;
