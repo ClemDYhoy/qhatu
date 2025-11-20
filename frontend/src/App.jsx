@@ -1,5 +1,6 @@
 // C:\qhatu\frontend\src\App.jsx
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import Header from './components/layout/Header/Header';
 import Footer from './components/layout/Footer/Footer';
 import AppRoutes from './AppRoutes';
@@ -55,6 +56,12 @@ class ErrorBoundary extends React.Component {
 // Componente interno que usa el contexto
 function AppContent() {
   const { isLoading, authChecked } = useApp();
+  const location = useLocation();
+
+  // Determinar si estamos en una ruta de dashboard (admin, vendedor, almacenero)
+  const isDashboardRoute = location.pathname.startsWith('/admin') || 
+                           location.pathname.startsWith('/vendedor') || 
+                           location.pathname.startsWith('/almacenero');
 
   // Mostrar loading mientras se verifica la sesión
   if (!authChecked || isLoading) {
@@ -86,6 +93,16 @@ function AppContent() {
     );
   }
 
+  // Si es una ruta de dashboard, no mostrar Header ni Footer
+  if (isDashboardRoute) {
+    return (
+      <div className="app-container">
+        <AppRoutes />
+      </div>
+    );
+  }
+
+  // Para rutas públicas, mostrar Header y Footer normalmente
   return (
     <div className="app-container">
       <Header />

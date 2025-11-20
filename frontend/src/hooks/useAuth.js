@@ -1,37 +1,43 @@
-import { useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode'; // Corrección aquí
-import api from '../utils/api';
+// C:\qhatu\frontend\src\hooks\useAuth.js
+import { useApp } from '../contexts/AppContext';
 
+/**
+ * 🔐 Hook de autenticación
+ * Retorna usuario y métodos de auth del AppContext
+ * 
+ * @returns {Object} Usuario, autenticación y métodos
+ * 
+ * @example
+ * const { user, isAuthenticated, login, logout } = useAuth();
+ */
 export const useAuth = () => {
-const [user, setUser] = useState(null);
+  const appContext = useApp();
+  
+  if (!appContext) {
+    throw new Error('useAuth debe usarse dentro de un AppProvider');
+  }
 
-useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-    try {
-        const decoded = jwtDecode(token); // Usa la función importada correctamente
-        setUser({ id: decoded.id, role: decoded.role });
-    } catch (err) {
-        localStorage.removeItem('token');
-    }
-    }
-}, []);
-
-const login = async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
-    localStorage.setItem('token', data.token);
-    setUser({ role: data.role });
-    return data.role;
+  return {
+    // Estado
+    user: appContext.user,
+    isAuthenticated: appContext.isAuthenticated,
+    authChecked: appContext.authChecked,
+    isLoading: appContext.isLoading,
+    
+    // Métodos de autenticación
+    login: appContext.login,
+    register: appContext.register,
+    googleLogin: appContext.googleLogin,
+    logout: appContext.logout,
+    updateUser: appContext.updateUser,
+    
+    // Utilidades de roles
+    hasRole: appContext.hasRole,
+    isAdmin: appContext.isAdmin,
+    isVendedor: appContext.isVendedor,
+    isAlmacenero: appContext.isAlmacenero,
+    isCliente: appContext.isCliente
+  };
 };
 
-const register = async (email, password) => {
-    await api.post('/auth/register', { email, password });
-};
-
-const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-};
-
-return { user, login, register, logout };
-};
+export default useAuth;

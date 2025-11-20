@@ -8,6 +8,8 @@ import Role from './Role.js';
 import Cart from './Cart.js';
 import CartItem from './CartItem.js';
 import SessionTracking from './SessionTracking.js';
+import Venta from './Venta.js'; // 🆕 NUEVO
+import VentaItem from './VentaItem.js'; // 🆕 NUEVO
 
 // ====================================
 // 📊 RELACIONES ENTRE MODELOS
@@ -70,7 +72,71 @@ Product.hasMany(CartItem, {
   as: 'items_carrito'
 });
 
-// --- 📊 Usuarios y Sesiones de Tracking ---
+// ====================================
+// 💰 RELACIONES DE VENTAS (NUEVO)
+// ====================================
+
+// --- Venta y Usuario (Cliente) ---
+Venta.belongsTo(User, {
+  foreignKey: 'usuario_id',
+  as: 'usuario'
+});
+
+User.hasMany(Venta, {
+  foreignKey: 'usuario_id',
+  as: 'ventas'
+});
+
+// --- Venta y Usuario (Vendedor) ---
+Venta.belongsTo(User, {
+  foreignKey: 'vendedor_id',
+  as: 'vendedor'
+});
+
+User.hasMany(Venta, {
+  foreignKey: 'vendedor_id',
+  as: 'ventas_gestionadas'
+});
+
+// --- Venta y Carrito ---
+Venta.belongsTo(Cart, {
+  foreignKey: 'carrito_id',
+  as: 'carrito'
+});
+
+Cart.hasOne(Venta, {
+  foreignKey: 'carrito_id',
+  as: 'venta'
+});
+
+// --- Venta y VentaItems ---
+Venta.hasMany(VentaItem, {
+  foreignKey: 'venta_id',
+  as: 'items',
+  onDelete: 'CASCADE'
+});
+
+VentaItem.belongsTo(Venta, {
+  foreignKey: 'venta_id',
+  as: 'venta'
+});
+
+// --- VentaItem y Producto ---
+VentaItem.belongsTo(Product, {
+  foreignKey: 'producto_id',
+  as: 'producto'
+});
+
+Product.hasMany(VentaItem, {
+  foreignKey: 'producto_id',
+  as: 'ventas_items'
+});
+
+// ====================================
+// 📊 TRACKING
+// ====================================
+
+// --- Usuarios y Sesiones de Tracking ---
 User.hasMany(SessionTracking, {
   foreignKey: 'usuario_id',
   as: 'sesiones'
@@ -127,7 +193,10 @@ export const verifyAssociations = () => {
     Category,
     Cart,
     CartItem,
-    SessionTracking
+    Venta, // 🆕 NUEVO
+    VentaItem, // 🆕 NUEVO
+    SessionTracking,
+    Carousel
   };
   
   Object.entries(models).forEach(([name, model]) => {
@@ -152,6 +221,8 @@ export {
   Role,
   Cart,
   CartItem,
+  Venta, // 🆕 NUEVO
+  VentaItem, // 🆕 NUEVO
   SessionTracking
 };
 
@@ -165,6 +236,8 @@ export default {
   Role,
   Cart,
   CartItem,
+  Venta, // 🆕 NUEVO
+  VentaItem, // 🆕 NUEVO
   SessionTracking,
   syncModels,
   verifyAssociations

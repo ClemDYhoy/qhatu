@@ -16,6 +16,19 @@
   will-change: transform, background, backdrop-filter;
 }
 
+
+
+/* Espacio bajo el header FIXED */
+.app-header {
+  margin-top: 90px; /* altura del header normal */
+  transition: margin-top .3s ease;
+}
+
+.qh-header--scrolled + .app-header {
+  margin-top: 70px; /* altura del header scrolleado */
+}
+
+
 /* ===== TRANSICIÓN SCROLL SUAVE ===== */
 .qh-header--scrolled {
   background: rgba(255, 255, 255, 0.98);

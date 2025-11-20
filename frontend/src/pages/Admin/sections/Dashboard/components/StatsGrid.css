@@ -1,0 +1,101 @@
+/* ===== STATS GRID PREMIUM ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-5);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    gap: var(--space-3);
+  }
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes staggerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stats-grid > * {
+  animation: staggerSlideIn 0.6s var(--ease-out) forwards;
+}
+
+.stats-grid > *:nth-child(1) { animation-delay: 0.1s; }
+.stats-grid > *:nth-child(2) { animation-delay: 0.2s; }
+.stats-grid > *:nth-child(3) { animation-delay: 0.3s; }
+.stats-grid > *:nth-child(4) { animation-delay: 0.4s; }
+
+/* ===== EFECTO DE ONDAS EN HOVER ===== */
+.stats-grid:hover > *:not(:hover) {
+  opacity: 0.8;
+  transform: scale(0.98);
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+/* ===== ACCESIBILIDAD ===== */
+@media (prefers-reduced-motion: reduce) {
+  .stats-grid > * {
+    animation: none;
+  }
+  
+  .stats-grid:hover > *:not(:hover) {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ===== MODO ALTO CONTRASTE ===== */
+@media (prefers-contrast: high) {
+  .stats-grid {
+    gap: var(--space-4);
+  }
+}
+
+/* ===== DARK MODE SUPPORT ===== */
+@media (prefers-color-scheme: dark) {
+  .stats-grid {
+    /* Los estilos específicos para dark mode se manejarán en StatCard */
+  }
+}
+
+/* ===== PRINT OPTIMIZATIONS ===== */
+@media print {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--space-4) !important;
+    margin-bottom: var(--space-6) !important;
+  }
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+.stats-grid {
+  contain: layout style;
+  will-change: transform;
+}
+

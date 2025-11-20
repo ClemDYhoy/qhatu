@@ -1,12 +1,12 @@
+// C:\qhatu\frontend\src\components\products\ProductCard\ProductCard.jsx
 import React, { useState, useCallback, memo, useMemo } from 'react';
 import { useCart } from '../../../contexts/CartContext';
 import whatsappService from '../../../services/whatsappService';
 import './ProductCard.css';
 
 // ============================================
-// ICONOS SVG MEJORADOS
+// ICONOS SVG
 // ============================================
-
 const CartIcon = ({ className = "" }) => (
   <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="9" cy="21" r="1"/>
@@ -17,13 +17,11 @@ const CartIcon = ({ className = "" }) => (
 
 const CartCheckIcon = ({ className = "" }) => (
   <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-    {/* Carrito (más delgado) */}
     <g strokeWidth="2" opacity="0.7">
       <circle cx="9" cy="21" r="1"/>
       <circle cx="20" cy="21" r="1"/>
       <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
     </g>
-    {/* Check EXTRA grande y prominente */}
     <polyline 
       points="10 10 13.5 13.5 20 7" 
       strokeWidth="3.5" 
@@ -117,26 +115,26 @@ const SavingsIcon = () => (
 );
 
 // ============================================
-// COMPONENTE PRINCIPAL MEJORADO
+// COMPONENTE PRINCIPAL
 // ============================================
-
 const ProductCard = memo(({ product }) => {
-  const { addToCart, isInCart, getProductQuantity, updateQuantity } = useCart();
+  const { addToCart, isInCart, getProductQuantity } = useCart();
+  
   const [showDetails, setShowDetails] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [error, setError] = useState(null);
 
   if (!product?.producto_id) return null;
 
-  // ✅ Cálculos memoizados para mejor performance
+  // Cálculos memoizados
   const prices = useMemo(() => {
     const precio = parseFloat(product.precio) || 0;
     const precioDescuento = product.precio_descuento ? parseFloat(product.precio_descuento) : null;
     const hasDiscount = precioDescuento && precioDescuento < precio;
     const discountPercent = hasDiscount ? Math.round(((precio - precioDescuento) / precio) * 100) : 0;
     const finalPrice = hasDiscount ? precioDescuento : precio;
-
     return { precio, precioDescuento, hasDiscount, discountPercent, finalPrice };
   }, [product.precio, product.precio_descuento]);
 
@@ -147,45 +145,70 @@ const ProductCard = memo(({ product }) => {
     const cartQuantity = getProductQuantity(product.producto_id);
     const inCart = isInCart(product.producto_id);
     const maxAvailable = Math.max(0, Math.min(stock - cartQuantity, 99));
-
     return { stock, isOutOfStock, isLowStock, cartQuantity, inCart, maxAvailable };
   }, [product.stock, product.producto_id, getProductQuantity, isInCart]);
 
-  // ✅ Handler mejorado con feedback visual
+  // ✅ Handler optimizado sin validación de autenticación
+  // Solo la parte del handleAddToCart (reemplazar en ProductCard.jsx línea ~170)
+
   const handleAddToCart = useCallback(async (e) => {
     e?.stopPropagation();
     
-    if (stockInfo.isOutOfStock || quantity < 1 || isAdding) return;
+    if (stockInfo.isOutOfStock || quantity < 1 || isAdding) {
+      return;
+    }
 
     const qtyToAdd = Math.min(quantity, stockInfo.maxAvailable);
-    if (qtyToAdd <= 0) return;
+    if (qtyToAdd <= 0) {
+      setError('Cantidad no disponible');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
 
     setIsAdding(true);
+    setError(null);
 
     try {
-      const success = addToCart(product, qtyToAdd);
-      if (success) {
-        // Feedback visual exitoso
+      console.log('🛒 Agregando producto:', {
+        producto_id: product.producto_id,
+        nombre: product.nombre,
+        cantidad: qtyToAdd
+      });
+
+      // ✅ Llamar directamente sin validar autenticación
+      const result = await addToCart(product.producto_id, qtyToAdd);
+      
+      if (result?.success) {
+        console.log('✅ Producto agregado exitosamente');
         setQuantity(1);
         
-        // Auto-cerrar modal si está abierto
         if (showDetails) {
           setTimeout(() => {
-            // El modal permanece abierto para seguir comprando
-          }, 300);
+            setShowDetails(false);
+          }, 1500);
         }
+      } else {
+        throw new Error(result?.message || 'Error al agregar producto');
       }
-    } catch (error) {
-      console.error('Error al agregar al carrito:', error);
+    } catch (err) {
+      console.error('❌ Error:', err);
+      setError(err.message || 'Error al agregar producto');
+      setTimeout(() => setError(null), 3000);
     } finally {
-      // Delay para mostrar animación
       setTimeout(() => {
         setIsAdding(false);
       }, 600);
     }
-  }, [product, quantity, stockInfo.isOutOfStock, stockInfo.maxAvailable, addToCart, isAdding, showDetails]);
-
-  // ✅ Control de cantidad con validación
+  }, [
+    product.producto_id,
+    product.nombre,
+    quantity,
+    stockInfo,
+    addToCart,
+    isAdding,
+    showDetails
+  ]);
+  
   const handleQuantityChange = useCallback((e) => {
     const val = parseInt(e.target.value) || 1;
     const newQty = Math.max(1, Math.min(val, stockInfo.maxAvailable));
@@ -203,7 +226,6 @@ const ProductCard = memo(({ product }) => {
     setQuantity(q => Math.max(1, q - 1));
   }, []);
 
-  // ✅ Modal handlers
   const openModal = useCallback(() => {
     setShowDetails(true);
     document.body.style.overflow = 'hidden';
@@ -228,17 +250,14 @@ const ProductCard = memo(({ product }) => {
   }, []);
 
   const imageUrl = imageError ? '/awaiting-image.jpeg' : (product.url_imagen || '/awaiting-image.jpeg');
-
-  // ✅ Clases dinámicas para el botón de agregar
+  
   const addButtonClasses = `btn btn--primary ${
     stockInfo.inCart ? 'btn--in-cart' : ''
   } ${isAdding ? 'btn--adding' : ''}`;
 
   return (
     <>
-      {/* ============================================ */}
       {/* TARJETA DE PRODUCTO */}
-      {/* ============================================ */}
       <article className="product-card">
         {/* Badges superiores */}
         {(prices.hasDiscount || stockInfo.isOutOfStock || product.destacado) && (
@@ -259,7 +278,7 @@ const ProductCard = memo(({ product }) => {
           </div>
         )}
 
-        {/* Imagen con overlay de carrito */}
+        {/* Imagen */}
         <div className="product-card__image" onClick={openModal}>
           <img 
             src={imageUrl} 
@@ -267,7 +286,6 @@ const ProductCard = memo(({ product }) => {
             loading="lazy" 
             onError={() => setImageError(true)} 
           />
-          
         </div>
 
         {/* Contenido */}
@@ -311,6 +329,14 @@ const ProductCard = memo(({ product }) => {
             )}
           </div>
 
+          {/* Error message */}
+          {error && (
+            <div className="product-card__error">
+              <AlertIcon />
+              <span>{error}</span>
+            </div>
+          )}
+
           {/* Selector de cantidad */}
           {!stockInfo.isOutOfStock && !stockInfo.inCart && (
             <div className="product-card__quantity">
@@ -351,17 +377,11 @@ const ProductCard = memo(({ product }) => {
               aria-label={stockInfo.inCart ? 'Producto en carrito' : 'Agregar al carrito'}
             >
               {stockInfo.inCart ? (
-                <>
-                  <CartCheckIcon className="icon-animated" />
-                </>
+                <CartCheckIcon className="icon-animated" />
               ) : isAdding ? (
-                <>
-                  <CartIcon className="icon-spin" />
-                </>
+                <CartIcon className="icon-spin" />
               ) : (
-                <>
-                  <CartIcon className="w-4 h-4 inline-block" />
-                </>
+                <CartIcon />
               )}
             </button>
             
@@ -376,9 +396,7 @@ const ProductCard = memo(({ product }) => {
         </div>
       </article>
 
-      {/* ============================================ */}
       {/* MODAL DE DETALLES */}
-      {/* ============================================ */}
       {showDetails && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -387,7 +405,6 @@ const ProductCard = memo(({ product }) => {
             </button>
 
             <div className="modal__content">
-              {/* Imagen grande */}
               <div className="modal__image">
                 <img src={imageUrl} alt={product.nombre} onError={() => setImageError(true)} />
                 {product.destacado && (
@@ -397,7 +414,6 @@ const ProductCard = memo(({ product }) => {
                 )}
               </div>
 
-              {/* Información */}
               <div className="modal__info">
                 {product.categoria?.nombre && (
                   <span className="modal__category">{product.categoria.nombre}</span>
@@ -409,7 +425,6 @@ const ProductCard = memo(({ product }) => {
                   <p className="modal__description">{product.descripcion}</p>
                 )}
 
-                {/* Precio detallado */}
                 <div className="modal__price-box">
                   {prices.hasDiscount ? (
                     <>
@@ -441,7 +456,6 @@ const ProductCard = memo(({ product }) => {
                   )}
                 </div>
 
-                {/* Stock */}
                 <div className="modal__stock">
                   {stockInfo.isOutOfStock ? (
                     <span className="stock-badge stock-badge--out">
@@ -458,7 +472,6 @@ const ProductCard = memo(({ product }) => {
                   )}
                 </div>
 
-                {/* Info extra */}
                 {(product.peso || product.unidad_medida) && (
                   <div className="modal__extra-info">
                     {product.peso && (
@@ -474,7 +487,13 @@ const ProductCard = memo(({ product }) => {
                   </div>
                 )}
 
-                {/* Selector de cantidad en modal */}
+                {error && (
+                  <div className="modal__error">
+                    <AlertIcon />
+                    <span>{error}</span>
+                  </div>
+                )}
+
                 {!stockInfo.isOutOfStock && !stockInfo.inCart && (
                   <div className="modal__quantity-selector">
                     <label htmlFor="modal-quantity">Cantidad:</label>
@@ -509,7 +528,6 @@ const ProductCard = memo(({ product }) => {
                   </div>
                 )}
 
-                {/* Acciones del modal */}
                 <div className="modal__actions">
                   <button
                     className={`btn btn--large ${addButtonClasses}`}
@@ -561,7 +579,6 @@ ProductCard.displayName = 'ProductCard';
 // ============================================
 // GRID DE PRODUCTOS
 // ============================================
-
 export const ProductsGrid = memo(({ products, title, subtitle }) => {
   if (!products || products.length === 0) {
     return (

@@ -1,0 +1,374 @@
+/* ===== DATA TABLE PREMIUM ===== */
+.data-table-container {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.data-table-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gold-gradient);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+/* ===== BARRA DE BÚSQUEDA ===== */
+.table-search {
+  margin-bottom: var(--space-6);
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 300px;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-10);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-family: var(--font-primary);
+  transition: all var(--duration-fast) var(--ease-out);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.3-4.3'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: var(--space-3) center;
+  background-size: 16px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 0 3px var(--gold-light);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.3-4.3'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ===== CONTENEDOR DE TABLA ===== */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===== TABLA PRINCIPAL ===== */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  min-width: 600px;
+}
+
+/* ===== ENCABEZADO DE TABLA ===== */
+.data-table thead {
+  background: linear-gradient(135deg, var(--gray-5) 0%, var(--gray-10) 100%);
+  border-bottom: 2px solid var(--border-medium);
+}
+
+.data-table th {
+  padding: var(--space-4) var(--space-4);
+  text-align: left;
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  position: relative;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  padding-right: var(--space-8);
+}
+
+.data-table th.sortable:hover {
+  background: var(--gold-light);
+  color: var(--gold-dark);
+}
+
+.data-table th.sortable::after {
+  content: '↕';
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* ===== ICONOS DE ORDENAMIENTO ===== */
+.sort-icon {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--text-xs);
+  color: var(--gold-primary);
+  font-weight: var(--font-bold);
+}
+
+.data-table th.sortable:hover::after {
+  opacity: 1;
+  color: var(--gold-primary);
+}
+
+/* ===== CUERPO DE TABLA ===== */
+.data-table td {
+  padding: var(--space-4) var(--space-4);
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  transition: all var(--duration-fast) var(--ease-out);
+  background: var(--bg-primary);
+}
+
+.data-table tbody tr {
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.data-table tbody tr:hover {
+  background: var(--gold-light);
+  transform: translateX(2px);
+}
+
+.data-table tbody tr:hover td {
+  color: var(--text-primary);
+  border-bottom-color: var(--border-gold);
+}
+
+/* ===== CELDA DE ACCIONES ===== */
+.actions-cell {
+  text-align: right;
+  white-space: nowrap;
+  background: var(--bg-primary);
+}
+
+.actions-cell > * {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* ===== MENSAJE VACÍO ===== */
+.empty-message {
+  text-align: center;
+  padding: var(--space-12) var(--space-4);
+  color: var(--text-muted);
+  font-style: italic;
+  background: var(--bg-primary);
+  font-size: var(--text-base);
+}
+
+.empty-message::before {
+  content: '📊';
+  display: block;
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-3);
+  opacity: 0.5;
+}
+
+/* ===== ESTADOS ESPECIALES ===== */
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background: var(--bg-secondary);
+}
+
+.data-table tbody tr:nth-child(even):hover {
+  background: var(--gold-light);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .data-table-container {
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    margin: 0 var(--space-2);
+  }
+  
+  .table-search {
+    margin-bottom: var(--space-4);
+  }
+  
+  .search-input {
+    max-width: none;
+    padding-left: var(--space-12);
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: var(--space-3) var(--space-3);
+    font-size: var(--text-xs);
+  }
+  
+  .empty-message {
+    padding: var(--space-8) var(--space-3);
+    font-size: var(--text-sm);
+  }
+  
+  .table-wrapper {
+    border-radius: var(--radius-md);
+    margin: 0 calc(-1 * var(--space-2));
+    width: calc(100% + var(--space-4));
+  }
+}
+
+@media (max-width: 480px) {
+  .data-table-container {
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: var(--space-2) var(--space-2);
+  }
+  
+  .search-input {
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-10);
+    font-size: var(--text-xs);
+  }
+}
+
+/* ===== SCROLLBAR PERSONALIZADO ===== */
+.table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-full);
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--gray-40);
+  border-radius: var(--radius-full);
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-50);
+}
+
+/* ===== ACCESIBILIDAD ===== */
+@media (prefers-reduced-motion: reduce) {
+  .data-table-container,
+  .data-table th,
+  .data-table td,
+  .data-table tr,
+  .search-input {
+    transition: none;
+    transform: none;
+  }
+}
+
+.data-table th.sortable:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+.search-input:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* ===== MODO ALTO CONTRASTE ===== */
+@media (prefers-contrast: high) {
+  .data-table-container {
+    background: var(--white);
+    border: 2px solid var(--text-primary);
+  }
+  
+  .data-table-container::before {
+    background: var(--text-primary);
+    height: 6px;
+  }
+  
+  .table-wrapper {
+    border: 2px solid var(--text-primary);
+  }
+  
+  .data-table thead {
+    background: var(--gray-10);
+    border-bottom: 2px solid var(--text-primary);
+  }
+  
+  .data-table th {
+    border-right: 1px solid var(--text-primary);
+  }
+  
+  .data-table th:last-child {
+    border-right: none;
+  }
+  
+  .data-table td {
+    border-bottom: 1px solid var(--text-primary);
+    border-right: 1px solid var(--text-primary);
+  }
+  
+  .data-table td:last-child {
+    border-right: none;
+  }
+  
+  .search-input {
+    border: 2px solid var(--text-primary);
+    background: var(--white);
+  }
+}
+
+/* ===== ESTADOS DE CARGA ===== */
+.data-table-container.loading {
+  position: relative;
+}
+
+.data-table-container.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.data-table-container.loading::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border: 3px solid transparent;
+  border-top: 3px solid var(--gold-primary);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+  z-index: 2;
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}

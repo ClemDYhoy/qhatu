@@ -411,13 +411,13 @@ const Home = () => {
             <div className="info-card-pro">
               <div className="info-icon-pro">{Icons.mapPin}</div>
               <h3 className="info-title-pro">Nuestra Ubicación</h3>
-              <p className="info-text-pro">Jr. 28 de Julio 1234, Huánuco</p>
-              <p className="info-text-pro secondary">Lunes a Sábado: 9:00 AM - 8:00 PM</p>
+              <p className="info-text-pro">Av. Juan Velasco Alvarado 748, Pillco Marca</p>
+              <p className="info-text-pro secondary">Lunes a Domingo: 8:00 AM - 10:00 PM</p>
             </div>
             <div className="info-card-pro">
               <div className="info-icon-pro">{Icons.phone}</div>
               <h3 className="info-title-pro">Contacto Directo</h3>
-              <p className="info-text-pro">+51 962 123 456</p>
+              <p className="info-text-pro">+51 952 682 285</p>
               <p className="info-text-pro secondary">ventas@qhatu.com</p>
             </div>
             <div className="info-card-pro">

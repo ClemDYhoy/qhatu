@@ -42,7 +42,7 @@
   justify-content: space-between;
   padding: var(--space-6);
   border-bottom: 1px solid var(--border-light);
-  background: var(--gold-gradient);
+  background: var(--gray-50);
   color: var(--white);
   flex-shrink: 0;
 }
@@ -87,7 +87,7 @@
 .profile-avatar-section {
   padding: var(--space-8) var(--space-6);
   text-align: center;
-  background: var(--gold-gradient);
+  background: var(--gray-40);
   color: var(--white);
   flex-shrink: 0;
 }

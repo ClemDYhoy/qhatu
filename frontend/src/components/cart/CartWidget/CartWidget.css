@@ -1,92 +1,157 @@
 /* C:\qhatu\frontend\src\components\cart\CartWidget\CartWidget.css */
 
-/* ====================================
-   🛒 CART WIDGET - ESTILOS PRINCIPALES
-   ==================================== */
+/* ==================== CONTENEDOR OPTIMIZADO ====================*/
 .cart-widget {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  background: var(--bg-primary);
-  border: 1.5px solid var(--border-light);
-  border-radius: var(--radius-lg);
+}
+
+/* ==================== ENLACE MEJORADO ====================*/
+.cart-widget__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
   color: var(--text-primary);
-  cursor: pointer;
+  text-decoration: none;
+  border-radius: var(--radius-lg);
   transition: all var(--duration-base) var(--ease-out);
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
   box-shadow: var(--shadow-sm);
-  padding: 0;
-  margin: 0;
 }
 
-.cart-widget:hover {
-  background: var(--bg-secondary);
-  border-color: var(--red-primary);
-  color: var(--red-primary);
-  transform: translateY(-1px);
+.cart-widget__link:hover {
+  background: var(--bg-primary);
   box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--border-gold);
 }
 
-.cart-widget:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
+.cart-widget__link:active {
+  transform: translateY(0) scale(0.98);
 }
 
-.cart-widget:focus-visible {
-  outline: 2px solid var(--red-primary);
-  outline-offset: 2px;
-}
-
-/* ====================================
-   🎨 ICONO DEL CARRITO
-   ==================================== */
-.cart-widget__icon {
+/* ==================== ICONO MEJORADO ====================*/
+.cart-widget__icon-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  transition: transform var(--duration-fast) var(--ease-out);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  transition: all var(--duration-base) var(--ease-out);
 }
 
-.cart-widget:hover .cart-widget__icon {
+.cart-widget__link:hover .cart-widget__icon-wrapper {
+  background: var(--gold-light);
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
+
+.cart-widget__icon {
+  width: 20px;
+  height: 20px;
+  transition: all var(--duration-base) var(--ease-out);
+  color: var(--text-primary);
+}
+
+.cart-widget__link:hover .cart-widget__icon {
+  color: var(--gold-primary);
   transform: scale(1.1);
 }
 
-/* ====================================
-   🔴 BADGE DE CONTADOR
-   ==================================== */
+/* Animación de sincronización mejorada */
+.cart-widget__icon--syncing {
+  animation: cartSyncSmooth 1s var(--ease-in-out) infinite;
+}
+
+@keyframes cartSyncSmooth {
+  0% { 
+    transform: rotate(0deg);
+    color: var(--gold-primary);
+  }
+  50% { 
+    transform: rotate(180deg);
+    color: var(--gold-dark);
+  }
+  100% { 
+    transform: rotate(360deg);
+    color: var(--gold-primary);
+  }
+}
+
+/* ==================== BADGE ROJO PROMINENTE ====================*/
 .cart-widget__badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 18px;
-  height: 18px;
+  top: -8px;
+  right: -8px;
+  min-width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--red-gradient);
   color: var(--white);
-  font-size: var(--text-xs);
-  font-weight: var(--font-bold);
-  line-height: 1;
+  font-size: 11px;
+  font-weight: var(--font-black);
   border-radius: var(--radius-full);
   border: 2px solid var(--bg-primary);
   box-shadow: var(--shadow-red);
-  padding: 0 var(--space-1);
-  animation: badgePop 0.3s var(--ease-bounce);
+  animation: badgeSmoothEntrance 0.5s var(--ease-out) forwards;
+  letter-spacing: -0.5px;
+  z-index: var(--z-tooltip);
 }
 
-/* Animación cuando se agregan productos */
-@keyframes badgePop {
+.cart-widget__badge--error {
+  background: var(--red-gradient);
+  animation: badgeSmoothError 0.6s var(--ease-out) forwards;
+}
+
+/* Efecto de pulso sutil para badge */
+.cart-widget__badge::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: var(--red-gradient);
+  border-radius: var(--radius-full);
+  animation: badgePulseSmooth 2s var(--ease-out) infinite;
+  z-index: -1;
+  opacity: 0.6;
+}
+
+/* Animaciones suaves del badge */
+@keyframes badgeSmoothEntrance {
   0% {
-    transform: scale(0.8);
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes badgeSmoothError {
+  0% {
+    transform: scale(0);
     opacity: 0;
   }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.2);
+  }
+  80% {
+    transform: scale(0.95);
   }
   100% {
     transform: scale(1);
@@ -94,52 +159,117 @@
   }
 }
 
-/* ====================================
-   ✨ EFECTO PULSO (OPCIONAL)
-   ==================================== */
-.cart-widget__pulse {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  border: 2px solid var(--red-primary);
-  border-radius: var(--radius-lg);
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(1);
-  animation: pulse 2s infinite;
-  pointer-events: none;
-}
-
-@keyframes pulse {
-  0% {
+@keyframes badgePulseSmooth {
+  0%, 100% {
     transform: translate(-50%, -50%) scale(1);
-    opacity: 0.8;
+    opacity: 0.6;
   }
-  70% {
-    transform: translate(-50%, -50%) scale(1.2);
-    opacity: 0;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.2);
+  50% {
+    transform: translate(-50%, -50%) scale(1.3);
     opacity: 0;
   }
 }
 
-/* Solo mostrar el pulso cuando hay productos */
-.cart-widget:not(:has(.cart-widget__badge)) .cart-widget__pulse {
-  display: none;
+/* ==================== INFO MEJORADA ====================*/
+.cart-widget__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 90px;
 }
 
-/* ====================================
-   📱 RESPONSIVE DESIGN
-   ==================================== */
+.cart-widget__count {
+  font-size: 12px;
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  line-height: 1.2;
+}
 
-/* Tablet */
+.cart-widget__total {
+  font-size: 11px;
+  color: var(--red-primary);
+  font-weight: var(--font-bold);
+  line-height: 1.2;
+  background: var(--red-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==================== TOOLTIP MEJORADO ====================*/
+.cart-widget__error-tooltip {
+  position: absolute;
+  bottom: -42px;
+  right: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-card);
+  border: 1px solid var(--border-red);
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  color: var(--red-primary);
+  white-space: nowrap;
+  z-index: var(--z-tooltip);
+  animation: tooltipSmoothSlide 0.3s var(--ease-out) forwards;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-shadow: var(--shadow-md);
+}
+
+.cart-widget__error-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 15px;
+  width: 10px;
+  height: 10px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-red);
+  border-left: 1px solid var(--border-red);
+  transform: rotate(45deg);
+}
+
+.cart-widget__error-icon {
+  font-size: 12px;
+  animation: errorSmoothPulse 1.5s var(--ease-out) infinite;
+}
+
+@keyframes tooltipSmoothSlide {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes errorSmoothPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+/* ==================== RESPONSIVE OPTIMIZADO ====================*/
+
+/* Tablets (768px y menos) */
 @media (max-width: 768px) {
-  .cart-widget {
-    width: 40px;
-    height: 40px;
+  .cart-widget__info {
+    display: none;
+  }
+
+  .cart-widget__link {
+    padding: var(--space-2) var(--space-3);
+    gap: 0;
+  }
+
+  .cart-widget__icon-wrapper {
+    width: 36px;
+    height: 36px;
   }
 
   .cart-widget__icon {
@@ -148,20 +278,24 @@
   }
 
   .cart-widget__badge {
-    min-width: 16px;
-    height: 16px;
-    font-size: 0.625rem; /* 10px */
-    top: -5px;
-    right: -5px;
+    min-width: 20px;
+    height: 20px;
+    font-size: 10px;
+    top: -6px;
+    right: -6px;
   }
 }
 
-/* Mobile */
+/* Móviles (480px y menos) */
 @media (max-width: 480px) {
-  .cart-widget {
-    width: 36px;
-    height: 36px;
+  .cart-widget__link {
+    padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-md);
+  }
+
+  .cart-widget__icon-wrapper {
+    width: 32px;
+    height: 32px;
   }
 
   .cart-widget__icon {
@@ -170,172 +304,85 @@
   }
 
   .cart-widget__badge {
-    min-width: 14px;
-    height: 14px;
-    font-size: 0.5625rem; /* 9px */
-    top: -4px;
-    right: -4px;
-    border-width: 1.5px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 9px;
+    top: -5px;
+    right: -5px;
   }
 
-  .cart-widget__pulse {
-    border-width: 1.5px;
+  .cart-widget__error-tooltip {
+    bottom: -36px;
+    font-size: 10px;
+    padding: var(--space-1) var(--space-2);
   }
 }
 
-/* Pantallas muy pequeñas */
+/* Móviles pequeños (360px y menos) */
 @media (max-width: 360px) {
-  .cart-widget {
-    width: 32px;
-    height: 32px;
+  .cart-widget__link {
+    padding: 6px;
+  }
+
+  .cart-widget__icon-wrapper {
+    width: 30px;
+    height: 30px;
   }
 
   .cart-widget__icon {
-    width: 14px;
-    height: 14px;
-  }
-}
-
-/* ====================================
-   🎯 ESTADOS ESPECIALES
-   ==================================== */
-
-/* Estado vacío (sin productos) */
-.cart-widget:not(:has(.cart-widget__badge)) {
-  color: var(--text-muted);
-  border-color: var(--border-light);
-}
-
-.cart-widget:not(:has(.cart-widget__badge)):hover {
-  color: var(--text-primary);
-  border-color: var(--border-medium);
-}
-
-/* Estado con muchos productos (más de 99) */
-.cart-widget__badge:contains("99+") {
-  font-size: 0.5rem; /* 8px para pantallas muy pequeñas */
-  padding: 0 2px;
-}
-
-/* ====================================
-   🌙 MODO OSCURO (POR SI ACASO)
-   ==================================== */
-@media (prefers-color-scheme: dark) {
-  .cart-widget {
-    background: var(--bg-card);
-    border-color: var(--border-medium);
-    color: var(--text-primary);
-  }
-
-  .cart-widget:hover {
-    background: var(--bg-secondary);
-    border-color: var(--red-primary);
+    width: 15px;
+    height: 15px;
   }
 
   .cart-widget__badge {
-    border-color: var(--bg-card);
+    min-width: 16px;
+    height: 16px;
+    font-size: 8px;
   }
 }
 
-/* ====================================
-   ⚡ OPTIMIZACIONES DE PERFORMANCE
-   ==================================== */
-@media (prefers-reduced-motion: reduce) {
-  .cart-widget,
-  .cart-widget__icon,
-  .cart-widget__badge,
-  .cart-widget__pulse {
-    transition: none;
-    animation: none;
+/* ==================== ESTADOS ESPECIALES MEJORADOS ====================*/
+
+/* Estado de carga mejorado */
+.cart-widget--loading .cart-widget__icon {
+  animation: loadingSmoothShimmer 1.5s var(--ease-in-out) infinite;
+}
+
+@keyframes loadingSmoothShimmer {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
   }
-
-  .cart-widget:hover {
-    transform: none;
-  }
-}
-
-/* ====================================
-   🎨 VARIANTES DE ESTILO (OPCIONALES)
-   ==================================== */
-
-/* Variante minimalista */
-.cart-widget--minimal {
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  width: 32px;
-  height: 32px;
-}
-
-.cart-widget--minimal:hover {
-  background: var(--bg-secondary);
-  box-shadow: var(--shadow-sm);
-}
-
-/* Variante destacada */
-.cart-widget--highlight {
-  background: var(--red-light);
-  border-color: var(--red-primary);
-  color: var(--red-primary);
-}
-
-.cart-widget--highlight .cart-widget__badge {
-  border-color: var(--red-light);
-}
-
-/* ====================================
-   🔧 UTILIDADES DE ACCESIBILIDAD
-   ==================================== */
-
-/* Mejora el contraste para baja visión */
-@media (prefers-contrast: high) {
-  .cart-widget {
-    border-width: 2px;
-  }
-
-  .cart-widget__badge {
-    border-width: 3px;
-    font-weight: var(--font-black);
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
   }
 }
 
-/* Soporte para modo alto contraste en Windows */
-@media (forced-colors: active) {
-  .cart-widget {
-    border: 1px solid ButtonText;
-    forced-color-adjust: none;
-  }
-
-  .cart-widget__badge {
-    background: ButtonText;
-    color: ButtonFace;
-    border: 2px solid ButtonFace;
-  }
+/* Estado vacío mejorado */
+.cart-widget--empty .cart-widget__icon {
+  opacity: 0.6;
 }
 
-/* ====================================
-   🚀 ANIMACIONES DE FEEDBACK
-   ==================================== */
-
-/* Feedback al hacer clic */
-.cart-widget:active .cart-widget__icon {
-  transform: scale(0.95);
+.cart-widget--empty .cart-widget__link:hover .cart-widget__icon {
+  opacity: 0.8;
+  transform: none;
 }
 
-/* Animación cuando se agrega un producto */
-.cart-widget__badge.added {
-  animation: productAdded 0.6s var(--ease-bounce);
+/* Efecto de nuevo item añadido mejorado */
+.cart-widget__badge--new {
+  animation: newItemSmooth 0.6s var(--ease-out) forwards;
 }
 
-@keyframes productAdded {
+@keyframes newItemSmooth {
   0% {
-    transform: scale(0.5);
+    transform: scale(0);
     opacity: 0;
   }
-  30% {
-    transform: scale(1.2);
+  50% {
+    transform: scale(1.3);
   }
-  60% {
+  70% {
     transform: scale(0.9);
   }
   100% {
@@ -344,71 +391,57 @@
   }
 }
 
-/* ====================================
-   📊 ESTADOS DE CARGA
-   ==================================== */
-
-/* Estado de carga (si fuera necesario) */
-.cart-widget--loading {
-  pointer-events: none;
-  opacity: 0.7;
-}
-
-.cart-widget--loading .cart-widget__icon {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* ====================================
-   🎪 EFECTOS ESPECIALES (OPCIONAL)
-   ==================================== */
-
-/* Efecto de "rebote" cuando el carrito tiene productos nuevos */
-.cart-widget.has-new-items {
-  animation: bounceGentle 0.5s var(--ease-bounce);
-}
-
-@keyframes bounceGentle {
-  0%, 20%, 60%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-3px);
-  }
-  80% {
-    transform: translateY(-1px);
+/* ==================== ACCESIBILIDAD ====================*/
+@media (prefers-reduced-motion: reduce) {
+  .cart-widget__link,
+  .cart-widget__icon-wrapper,
+  .cart-widget__icon,
+  .cart-widget__badge,
+  .cart-widget__error-tooltip {
+    animation: none !important;
+    transition: none !important;
   }
 }
 
-/* ====================================
-   🛠️ FALLBACKS Y COMPATIBILIDAD
-   ==================================== */
-
-/* Fallback para navegadores que no soportan :has() */
-@supports not (selector(:has(.cart-widget__badge))) {
-  .cart-widget__pulse {
-    display: none;
-  }
+.cart-widget__link:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
 }
 
-/* Mejora para Safari */
-.cart-widget {
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Optimización para dispositivos táctiles */
-@media (hover: none) and (pointer: coarse) {
-  .cart-widget:hover {
-    transform: none;
-    background: var(--bg-primary);
+/* ==================== DARK MODE MEJORADO ====================*/
+@media (prefers-color-scheme: dark) {
+  .cart-widget__link {
+    background: var(--gray-80);
+    border-color: var(--gray-70);
+    color: var(--text-inverse);
   }
-  
-  .cart-widget:active {
-    background: var(--bg-secondary);
-    transform: scale(0.95);
+
+  .cart-widget__link:hover {
+    background: var(--gray-75);
+    border-color: var(--gold-primary);
+  }
+
+  .cart-widget__icon-wrapper {
+    background: var(--gray-70);
+  }
+
+  .cart-widget__count {
+    color: var(--text-inverse);
+  }
+
+  .cart-widget__badge {
+    border-color: var(--gray-80);
+  }
+
+  .cart-widget__error-tooltip {
+    background: var(--gray-80);
+    color: var(--red-light);
+    border-color: var(--red-primary);
+  }
+
+  .cart-widget__error-tooltip::before {
+    background: var(--gray-80);
+    border-color: var(--red-primary);
   }
 }

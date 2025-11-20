@@ -72,18 +72,15 @@ const Header = () => {
   }, []);
 
   // ====================================
-  // 🛒 HANDLER PARA ABRIR CARRITO
+  // 🛒 HANDLERS DEL CARRITO
   // ====================================
   const handleOpenCart = useCallback(() => {
-    console.log('🛒 Abriendo carrito de compras');
+    console.log('🛒 Header: Abriendo carrito modal');
     setIsCartOpen(true);
   }, []);
 
-  // ====================================
-  // 🛒 HANDLER PARA CERRAR CARRITO
-  // ====================================
   const handleCloseCart = useCallback(() => {
-    console.log('🛒 Cerrando carrito de compras');
+    console.log('🛒 Header: Cerrando carrito modal');
     setIsCartOpen(false);
   }, []);
 
@@ -108,6 +105,22 @@ const Header = () => {
       window.removeEventListener('userDataChanged', handleStorageChange);
     };
   }, [loadUser]);
+
+  // ====================================
+  // 🛒 LISTENER PARA EVENTO DE CARRITO
+  // ====================================
+  useEffect(() => {
+    const handleOpenCartEvent = (event) => {
+      console.log('📡 Header: Evento openCartModal recibido', event.detail);
+      handleOpenCart();
+    };
+
+    window.addEventListener('openCartModal', handleOpenCartEvent);
+    
+    return () => {
+      window.removeEventListener('openCartModal', handleOpenCartEvent);
+    };
+  }, [handleOpenCart]);
 
   // ====================================
   // 📜 MANEJO DE SCROLL OPTIMIZADO
@@ -198,23 +211,6 @@ const Header = () => {
   }, []);
 
   // ====================================
-  // 🛒 LISTENER LEGACY PARA EVENTO DE CARRITO
-  // ====================================
-  // Mantener compatibilidad con otras partes del código que usan el evento
-  useEffect(() => {
-    const handleOpenCartEvent = (event) => {
-      console.log('📡 Evento openCartModal recibido', event.detail);
-      handleOpenCart();
-    };
-
-    window.addEventListener('openCartModal', handleOpenCartEvent);
-    
-    return () => {
-      window.removeEventListener('openCartModal', handleOpenCartEvent);
-    };
-  }, [handleOpenCart]);
-
-  // ====================================
   // 📱 CERRAR MENÚ MÓVIL AL CAMBIAR RUTA
   // ====================================
   useEffect(() => {
@@ -227,145 +223,150 @@ const Header = () => {
   // ====================================
   const hideHeaderContent = isStaffRoute();
   const showCart = !hideHeaderContent && !isStaffUser(user?.rol_nombre);
-  const cartItemsCount = cart?.reduce((sum, item) => sum + item.cantidad, 0) || 0;
+  
+  // ✅ FIX: Cálculo correcto del contador de items
+  // cart es un objeto { items: [], total: 0, ... }, NO un array
+  const cartItemsCount = cart?.items?.reduce((sum, item) => sum + item.cantidad, 0) || 0;
 
   // ====================================
   // 🎨 RENDER PRINCIPAL
   // ====================================
   return (
     <>
-      <header 
-        className={`qh-header ${isScrolled ? 'qh-header--scrolled' : ''} ${isVisible ? 'qh-header--visible' : 'qh-header--hidden'}`}
-        role="banner"
-      >
-        <div className="qh-header__container">
-          <div className="qh-header__content">
-            
-            {/* ===== LOGO ===== */}
-            <div className="qh-header__logo">
-              <Link 
-                to="/" 
-                className="qh-logo"
-                aria-label="Qhatu - Ir al inicio"
-              >
-                <img
-                  src="/logo-oe.png"
-                  alt="Qhatu"
-                  className="qh-logo__image"
-                  loading="eager"
-                />
-                <span className="qh-logo__glow" aria-hidden="true"></span>
-              </Link>
-            </div>
-
-            {/* ===== NAVEGACIÓN (SOLO CLIENTES) ===== */}
-            {!hideHeaderContent && (
-              <nav 
-                className={`qh-header__nav ${isMobileMenuOpen ? 'qh-header__nav--open' : ''}`}
-                aria-label="Navegación principal"
-                id="main-navigation"
-              >
-                <Navigation />
-              </nav>
-            )}
-
-            {/* ===== ACCIONES DEL USUARIO ===== */}
-            <div className="qh-header__actions">
+      <div className="app-header">
+        <header 
+          className={`qh-header ${isScrolled ? 'qh-header--scrolled' : ''} ${isVisible ? 'qh-header--visible' : 'qh-header--hidden'}`}
+          role="banner"
+        >
+          <div className="qh-header__container">
+            <div className="qh-header__content">
               
-              {/* CARRITO (SOLO PARA CLIENTES) */}
-              {showCart && (
-                <div className="qh-header__cart">
-                  <CartWidget 
-                    onClick={handleOpenCart}
-                    itemsCount={cartItemsCount}
+              {/* ===== LOGO ===== */}
+              <div className="qh-header__logo">
+                <Link 
+                  to="/" 
+                  className="qh-logo"
+                  aria-label="Qhatu - Ir al inicio"
+                >
+                  <img
+                    src="/logo-oe.png"
+                    alt="Qhatu"
+                    className="qh-logo__image"
+                    loading="eager"
                   />
-                  {cartItemsCount > 0 && (
-                    <span className="qh-cart-button__pulse" aria-hidden="true"></span>
-                  )}
-                </div>
+                  <span className="qh-logo__glow" aria-hidden="true"></span>
+                </Link>
+              </div>
+
+              {/* ===== NAVEGACIÓN (SOLO CLIENTES) ===== */}
+              {!hideHeaderContent && (
+                <nav 
+                  className={`qh-header__nav ${isMobileMenuOpen ? 'qh-header__nav--open' : ''}`}
+                  aria-label="Navegación principal"
+                  id="main-navigation"
+                >
+                  <Navigation />
+                </nav>
               )}
 
-              {/* AUTENTICACIÓN */}
-              <div className="qh-header__auth">
-                {isLoading ? (
-                  <div className="qh-auth-loading" aria-live="polite">
-                    <div className="qh-spinner">
-                      <div className="qh-spinner__circle"></div>
-                    </div>
-                    <span className="sr-only">Cargando usuario...</span>
-                  </div>
-                ) : user ? (
-                  <UserMenu 
-                    user={user} 
-                    onLogout={handleLogout}
-                    onUserUpdate={handleUserUpdate}
-                  />
-                ) : (
-                  <div className="qh-auth-buttons">
-                    <button 
-                      className="qh-btn qh-btn--ghost" 
-                      onClick={handleOpenLogin}
-                      aria-label="Iniciar sesión"
-                    >
-                      <span>Iniciar sesión</span>
-                    </button>
-                    <button 
-                      className="qh-btn qh-btn--primary" 
-                      onClick={handleOpenRegister}
-                      aria-label="Crear cuenta nueva"
-                    >
-                      <span>Registrarse</span>
-                      <span className="qh-btn__shine" aria-hidden="true"></span>
-                    </button>
+              {/* ===== ACCIONES DEL USUARIO ===== */}
+              <div className="qh-header__actions">
+                
+                {/* CARRITO (SOLO PARA CLIENTES) */}
+                {showCart && (
+                  <div className="qh-header__cart">
+                    {/* ✅ FIX: Pasar onClick directamente */}
+                    <CartWidget 
+                      onClick={handleOpenCart}
+                    />
+                    {cartItemsCount > 0 && (
+                      <span className="qh-cart-button__pulse" aria-hidden="true"></span>
+                    )}
                   </div>
                 )}
+
+                {/* AUTENTICACIÓN */}
+                <div className="qh-header__auth">
+                  {isLoading ? (
+                    <div className="qh-auth-loading" aria-live="polite">
+                      <div className="qh-spinner">
+                        <div className="qh-spinner__circle"></div>
+                      </div>
+                      <span className="sr-only">Cargando usuario...</span>
+                    </div>
+                  ) : user ? (
+                    <UserMenu 
+                      user={user} 
+                      onLogout={handleLogout}
+                      onUserUpdate={handleUserUpdate}
+                    />
+                  ) : (
+                    <div className="qh-auth-buttons">
+                      <button 
+                        className="qh-btn qh-btn--ghost" 
+                        onClick={handleOpenLogin}
+                        aria-label="Iniciar sesión"
+                      >
+                        <span>Iniciar sesión</span>
+                      </button>
+                      <button 
+                        className="qh-btn qh-btn--primary" 
+                        onClick={handleOpenRegister}
+                        aria-label="Crear cuenta nueva"
+                      >
+                        <span>Registrarse</span>
+                        <span className="qh-btn__shine" aria-hidden="true"></span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* ===== MENÚ MÓVIL (SOLO CLIENTES) ===== */}
+              {!hideHeaderContent && (
+                <button
+                  className={`qh-menu-toggle ${isMobileMenuOpen ? 'qh-menu-toggle--active' : ''}`}
+                  onClick={toggleMobileMenu}
+                  aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                  aria-expanded={isMobileMenuOpen}
+                  aria-controls="main-navigation"
+                >
+                  <span className="qh-menu-toggle__line" aria-hidden="true"></span>
+                  <span className="qh-menu-toggle__line" aria-hidden="true"></span>
+                  <span className="qh-menu-toggle__line" aria-hidden="true"></span>
+                </button>
+              )}
             </div>
-
-            {/* ===== MENÚ MÓVIL (SOLO CLIENTES) ===== */}
-            {!hideHeaderContent && (
-              <button
-                className={`qh-menu-toggle ${isMobileMenuOpen ? 'qh-menu-toggle--active' : ''}`}
-                onClick={toggleMobileMenu}
-                aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-                aria-expanded={isMobileMenuOpen}
-                aria-controls="main-navigation"
-              >
-                <span className="qh-menu-toggle__line" aria-hidden="true"></span>
-                <span className="qh-menu-toggle__line" aria-hidden="true"></span>
-                <span className="qh-menu-toggle__line" aria-hidden="true"></span>
-              </button>
-            )}
           </div>
-        </div>
 
-        {/* BARRA DE PROGRESO DE SCROLL */}
-        {isScrolled && (
-          <div className="qh-header__progress" aria-hidden="true">
-            <div 
-              className="qh-header__progress-bar"
-              style={{ width: `${scrollProgress}%` }}
-            ></div>
-          </div>
+          {/* BARRA DE PROGRESO DE SCROLL */}
+          {isScrolled && (
+            <div className="qh-header__progress" aria-hidden="true">
+              <div 
+                className="qh-header__progress-bar"
+                style={{ width: `${scrollProgress}%` }}
+              ></div>
+            </div>
+          )}
+        </header>
+
+        {/* OVERLAY MÓVIL */}
+        {isMobileMenuOpen && !hideHeaderContent && (
+          <div 
+            className="qh-mobile-overlay"
+            onClick={toggleMobileMenu}
+            aria-hidden="true"
+          ></div>
         )}
-      </header>
 
-      {/* OVERLAY MÓVIL */}
-      {isMobileMenuOpen && !hideHeaderContent && (
-        <div 
-          className="qh-mobile-overlay"
-          onClick={toggleMobileMenu}
-          aria-hidden="true"
-        ></div>
-      )}
-
-      {/* MODAL DEL CARRITO */}
-      {isCartOpen && !hideHeaderContent && (
-        <CartModal 
-          isOpen={isCartOpen} 
-          onClose={handleCloseCart}
-        />
-      )}
+        {/* MODAL DEL CARRITO */}
+        {isCartOpen && !hideHeaderContent && (
+          <CartModal 
+            isOpen={isCartOpen} 
+            onClose={handleCloseCart}
+          />
+        )}
+      </div>
     </>
   );
 };

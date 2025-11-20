@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 09-11-2025 a las 21:18:19
+-- Tiempo de generación: 19-11-2025 a las 00:24:27
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -20,44 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `qhatu_db`
 --
-
-DELIMITER $$
---
--- Procedimientos
---
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_banners_activos` ()   BEGIN
-  SELECT 
-    banner_id,
-    titulo,
-    descripcion,
-    categoria_id,
-    porcentaje_descuento,
-    url_imagen_fondo,
-    color_fondo,
-    color_texto,
-    fecha_inicio,
-    fecha_fin,
-    tipo_descuento,
-    monto_minimo,
-    DATEDIFF(fecha_fin, NOW()) AS dias_restantes
-  FROM 
-    v_banners_activos
-  LIMIT 5;
-END$$
-
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_interaccion_banner` (IN `p_banner_id` INT, IN `p_tipo` VARCHAR(10))   BEGIN
-  IF p_tipo = 'vista' THEN
-    UPDATE banners_descuento 
-    SET vistas = vistas + 1 
-    WHERE banner_id = p_banner_id;
-  ELSEIF p_tipo = 'click' THEN
-    UPDATE banners_descuento 
-    SET clicks = clicks + 1 
-    WHERE banner_id = p_banner_id;
-  END IF;
-END$$
-
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -92,10 +54,10 @@ CREATE TABLE `banners_descuento` (
 --
 
 INSERT INTO `banners_descuento` (`banner_id`, `titulo`, `descripcion`, `categoria_id`, `porcentaje_descuento`, `url_imagen_fondo`, `color_fondo`, `color_texto`, `fecha_inicio`, `fecha_fin`, `activo`, `prioridad`, `tipo_descuento`, `monto_minimo`, `clicks`, `vistas`, `creado_por`, `creado_en`, `actualizado_en`) VALUES
-(1, '¡Mega Descuento en Dulces! 🍬', 'Todos los chocolates, galletas y golosinas con 25% OFF', 1, 25.00, '/images/banners/banner-dulces.jpg', '#FF6B9D', '#FFFFFF', '2025-11-07 14:38:33', '2025-12-07 14:38:33', 1, 3, 'porcentaje', NULL, 2, 10, NULL, '2025-11-07 19:38:33', '2025-11-07 21:35:36'),
-(2, 'Refréscate con 15% de Descuento 🥤', 'Bebidas importadas y Bubble Tea en oferta', 14, 15.00, '/images/banners/banner-bebidas.jpg', '#4ECDC4', '#FFFFFF', '2025-11-07 14:38:33', '2025-11-22 14:38:33', 1, 2, 'porcentaje', NULL, 1, 10, NULL, '2025-11-07 19:38:33', '2025-11-07 21:20:37'),
-(3, 'Semana del Ramen 🍜', 'Aprovecha 20% OFF en todos los fideos instantáneos', 10, 20.00, '/images/banners/banner-ramen.jpg', '#FFD93D', '#2D3436', '2025-11-07 14:38:33', '2025-11-14 14:38:33', 1, 1, 'porcentaje', NULL, 2, 13, NULL, '2025-11-07 19:38:33', '2025-11-08 03:50:18'),
-(4, '¡Snacks al 30% OFF! 🍿', 'Las mejores papas y piqueos importados', 6, 30.00, '/images/banners/banner-snacks.jpg', '#FFA62B', '#FFFFFF', '2025-11-07 14:38:33', '2025-11-27 14:38:33', 1, 4, 'porcentaje', NULL, 2, 270, NULL, '2025-11-07 19:38:33', '2025-11-09 04:40:38');
+(1, '¡Mega Descuento en Dulces! 🍬', 'Todos los chocolates, galletas y golosinas con 25% OFF', 1, 25.00, '/images/banners/banner-dulces.jpg', '#FF6B9D', '#FFFFFF', '2025-11-07 14:38:33', '2025-12-07 14:38:33', 1, 3, 'porcentaje', NULL, 6, 41, NULL, '2025-11-07 19:38:33', '2025-11-18 03:37:21'),
+(2, 'Refréscate con 15% de Descuento 🥤', 'Bebidas importadas y Bubble Tea en oferta', 14, 15.00, '/images/banners/banner-bebidas.jpg', '#4ECDC4', '#FFFFFF', '2025-11-07 14:38:33', '2025-11-22 14:38:33', 1, 2, 'porcentaje', NULL, 3, 39, NULL, '2025-11-07 19:38:33', '2025-11-18 03:37:21'),
+(3, 'Semana del Ramen 🍜', 'Aprovecha 20% OFF en todos los fideos instantáneos', 10, 20.00, '/images/banners/banner-ramen.jpg', '#FFD93D', '#2D3436', '2025-11-07 14:38:33', '2025-11-14 14:38:33', 1, 1, 'porcentaje', NULL, 2, 22, NULL, '2025-11-07 19:38:33', '2025-11-13 17:27:45'),
+(4, '¡Snacks al 30% OFF! 🍿', 'Las mejores papas y piqueos importados', 6, 30.00, '/images/banners/banner-snacks.jpg', '#FFA62B', '#FFFFFF', '2025-11-07 14:38:33', '2025-11-27 14:38:33', 1, 4, 'porcentaje', NULL, 4, 547, NULL, '2025-11-07 19:38:33', '2025-11-18 22:08:06');
 
 --
 -- Disparadores `banners_descuento`
@@ -124,7 +86,7 @@ CREATE TABLE `carritos` (
   `carrito_id` int(11) NOT NULL,
   `usuario_id` int(11) DEFAULT NULL,
   `sesion_temporal` varchar(100) DEFAULT NULL COMMENT 'Para usuarios no logueados',
-  `estado` enum('activo','abandonado','procesando','completado','cancelado') DEFAULT 'activo',
+  `estado` enum('activo','abandonado','procesando','enviado','completado','cancelado') DEFAULT 'activo',
   `subtotal` decimal(10,2) DEFAULT 0.00,
   `descuento_total` decimal(10,2) DEFAULT 0.00,
   `total` decimal(10,2) DEFAULT 0.00,
@@ -272,8 +234,8 @@ CREATE TABLE `categorias` (
   `categoria_id` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
   `padre_id` int(11) DEFAULT NULL,
-  `creado_en` timestamp NOT NULL DEFAULT current_timestamp(),
-  `actualizado_en` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `creado_en` datetime DEFAULT NULL,
+  `actualizado_en` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -281,32 +243,68 @@ CREATE TABLE `categorias` (
 --
 
 INSERT INTO `categorias` (`categoria_id`, `nombre`, `padre_id`, `creado_en`, `actualizado_en`) VALUES
-(1, 'Dulces', NULL, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(2, 'Chocolates', 1, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(3, 'Galletas', 1, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(4, 'Caramelos', 1, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(5, 'Gomitas', 1, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(6, 'Snacks', NULL, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(7, 'Papas fritas', 6, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(8, 'Piqueos', 6, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(9, 'Salados', 6, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(10, 'Ramen y Fideos', NULL, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(11, 'Instantáneo', 10, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(12, 'Premium', 10, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(13, 'Picante', 10, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(14, 'Bebidas', NULL, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(15, 'Bubble Tea', 14, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(16, 'Refrescos importados', 14, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(17, 'Energizantes', 14, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(18, 'Licores', NULL, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(19, 'Sake', 18, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(20, 'Soju', 18, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(21, 'Whisky importado', 18, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(22, 'Vinos', 18, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(23, 'Otros importados', NULL, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(24, 'Salsas', 23, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(25, 'Condimentos', 23, '2025-10-22 23:00:41', '2025-10-22 23:00:41'),
-(26, 'Productos gourmet', 23, '2025-10-22 23:00:41', '2025-10-22 23:00:41');
+(1, 'Dulces', NULL, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(2, 'Chocolates', 1, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(3, 'Galletas', 1, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(4, 'Caramelos', 1, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(5, 'Gomitas', 1, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(6, 'Snacks', NULL, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(7, 'Papas fritas', 6, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(8, 'Piqueos', 6, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(9, 'Salados', 6, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(10, 'Ramen y Fideos', NULL, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(11, 'Instantáneo', 10, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(12, 'Premium', 10, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(13, 'Picante', 10, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(14, 'Bebidas', NULL, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(15, 'Bubble Tea', 14, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(16, 'Refrescos importados', 14, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(17, 'Energizantes', 14, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(18, 'Licores', NULL, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(19, 'Sake', 18, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(20, 'Soju', 18, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(21, 'Whisky importado', 18, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(22, 'Vinos', 18, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(23, 'Otros importados', NULL, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(24, 'Salsas', 23, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(25, 'Condimentos', 23, '2025-10-22 18:00:41', '2025-10-22 18:00:41'),
+(26, 'Productos gourmet', 23, '2025-10-22 18:00:41', '2025-10-22 18:00:41');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `eventos_navegacion`
+--
+
+CREATE TABLE `eventos_navegacion` (
+  `evento_id` int(11) NOT NULL,
+  `tracking_id` int(11) NOT NULL,
+  `usuario_id` int(11) DEFAULT NULL,
+  `tipo_evento` enum('view_product','add_to_cart','remove_from_cart','view_category','search','click_banner','checkout_start','checkout_complete') NOT NULL,
+  `producto_id` int(11) DEFAULT NULL,
+  `categoria_id` int(11) DEFAULT NULL,
+  `termino_busqueda` varchar(255) DEFAULT NULL,
+  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Datos adicionales del evento' CHECK (json_valid(`metadata`)),
+  `timestamp` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `perfil_preferencias`
+--
+
+CREATE TABLE `perfil_preferencias` (
+  `preferencia_id` int(11) NOT NULL,
+  `usuario_id` int(11) NOT NULL,
+  `como_nos_conocio` varchar(100) DEFAULT NULL,
+  `frecuencia_compra` enum('primera_vez','mensual','trimestral','ocasional') DEFAULT NULL,
+  `rango_presupuesto` enum('hasta_50','50_100','100_250','250_500','mas_500') DEFAULT NULL,
+  `acepta_marketing` tinyint(1) DEFAULT 1,
+  `acepta_whatsapp` tinyint(1) DEFAULT 1,
+  `creado_en` timestamp NOT NULL DEFAULT current_timestamp(),
+  `actualizado_en` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -340,15 +338,15 @@ CREATE TABLE `productos` (
 --
 
 INSERT INTO `productos` (`producto_id`, `nombre`, `descripcion`, `precio`, `precio_descuento`, `stock`, `umbral_bajo_stock`, `umbral_critico_stock`, `categoria_id`, `destacado`, `ventas`, `peso`, `unidad_medida`, `url_imagen`, `creado_en`, `actualizado_en`) VALUES
-(1, 'Chocolate Suizo Premium', 'Chocolate artesanal importado de Suiza', 15.50, 13.18, 50, 20, 10, 2, 1, 39, NULL, 'unidades', 'https://i.pinimg.com/1200x/76/a3/c8/76a3c806f18b72096ef2895d5d53fa21.jpg', '2025-10-22 23:00:41', '2025-10-23 14:39:54'),
-(2, 'Ramen Picante Coreano', 'Ramen instantáneo con sabor picante', 8.99, 7.64, 15, 20, 10, 13, 0, 14, NULL, 'unidades', '/awaiting-image.jpeg', '2025-10-22 23:00:41', '2025-10-23 04:48:05'),
+(1, 'Chocolate Suizo Premium', 'Chocolate artesanal importado de Suiza', 15.50, 5.00, 8, 20, 10, 2, 1, 39, NULL, 'unidades', 'https://i.pinimg.com/1200x/76/a3/c8/76a3c806f18b72096ef2895d5d53fa21.jpg', '2025-10-22 23:00:41', '2025-11-18 20:36:35'),
+(2, 'Ramen Picante Coreano', 'Ramen instantáneo con sabor picante', 8.99, 7.64, 5, 20, 10, 13, 0, 14, NULL, 'unidades', '/awaiting-image.jpeg', '2025-10-22 23:00:41', '2025-11-17 18:38:00'),
 (3, 'Bubble Tea de Mango', 'Bebida refrescante con perlas de tapioca', 5.75, NULL, 5, 20, 10, 15, 1, 46, NULL, 'unidades', '/awaiting-image.jpeg', '2025-10-22 23:00:41', '2025-10-23 04:48:05'),
 (4, 'Soju de Melocotón', 'Licor coreano de melocotón', 20.00, NULL, 0, 20, 10, 20, 0, 75, NULL, 'unidades', '/awaiting-image.jpeg', '2025-10-22 23:00:41', '2025-10-23 04:48:05'),
 (5, 'Papas Fritas BBQ', 'Papas fritas importadas con sabor BBQ', 4.50, 3.83, 12, 20, 10, 7, 0, 29, NULL, 'unidades', '/awaiting-image.jpeg', '2025-10-22 23:00:41', '2025-10-23 04:48:05'),
 (6, 'Salsa Sriracha', 'Salsa picante importada', 6.25, NULL, 30, 20, 10, 24, 1, 12, NULL, 'unidades', '/awaiting-image.jpeg', '2025-10-22 23:00:41', '2025-10-23 04:48:05'),
 (7, 'Galletas Oreo', 'Galletas de chocolate con crema', 3.50, NULL, 100, 20, 10, 3, 0, 45, NULL, 'paquete', '/awaiting-image.jpeg', '2025-10-23 04:48:31', '2025-10-23 04:48:31'),
 (8, 'Gomitas Haribo', 'Gomitas de frutas importadas', 4.00, NULL, 80, 20, 10, 5, 1, 67, NULL, 'bolsa', '/awaiting-image.jpeg', '2025-10-23 04:48:31', '2025-10-23 04:48:31'),
-(9, 'Caramelos de menta', 'Caramelos refrescantes', 2.50, NULL, 120, 20, 10, 4, 0, 23, NULL, 'bolsa', '/awaiting-image.jpeg', '2025-10-23 04:48:31', '2025-10-23 04:48:31'),
+(9, 'Caramelos de menta', 'Caramelos refrescantes', 2.50, NULL, 120, 20, 10, 4, 1, 23, NULL, 'bolsa', '/awaiting-image.jpeg', '2025-10-23 04:48:31', '2025-11-18 02:50:17'),
 (10, 'Doritos Nacho', 'Papas sabor queso nacho', 5.00, NULL, 60, 20, 10, 7, 1, 89, NULL, 'bolsa', '/awaiting-image.jpeg', '2025-10-23 04:48:31', '2025-10-23 04:48:31'),
 (11, 'Pringles Original', 'Papas en tubo originales', 6.50, NULL, 40, 20, 10, 7, 0, 56, NULL, 'tubo', '/awaiting-image.jpeg', '2025-10-23 04:48:31', '2025-10-23 04:48:31'),
 (12, 'Cheetos Flamin Hot', 'Snack picante de queso', 4.50, NULL, 70, 20, 10, 9, 1, 78, NULL, 'bolsa', '/awaiting-image.jpeg', '2025-10-23 04:48:31', '2025-10-23 04:48:31'),
@@ -389,6 +387,66 @@ INSERT INTO `roles` (`rol_id`, `nombre`, `descripcion`, `permisos`, `creado_en`,
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `sesiones_tracking`
+--
+
+CREATE TABLE `sesiones_tracking` (
+  `tracking_id` int(11) NOT NULL,
+  `usuario_id` int(11) DEFAULT NULL,
+  `sesion_temporal` varchar(100) DEFAULT NULL COMMENT 'Para usuarios no logueados',
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `dispositivo` enum('mobile','desktop','tablet') DEFAULT NULL,
+  `navegador` varchar(100) DEFAULT NULL,
+  `sistema_operativo` varchar(100) DEFAULT NULL,
+  `resolucion_pantalla` varchar(20) DEFAULT NULL,
+  `fuente_trafico` varchar(100) DEFAULT NULL COMMENT 'utm_source',
+  `medio_trafico` varchar(100) DEFAULT NULL COMMENT 'utm_medium',
+  `campania` varchar(100) DEFAULT NULL COMMENT 'utm_campaign',
+  `referrer` text DEFAULT NULL,
+  `pagina_entrada` varchar(500) DEFAULT NULL,
+  `fecha_sesion` timestamp NOT NULL DEFAULT current_timestamp(),
+  `duracion_sesion` int(11) DEFAULT NULL COMMENT 'En segundos'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `sesiones_tracking`
+--
+
+INSERT INTO `sesiones_tracking` (`tracking_id`, `usuario_id`, `sesion_temporal`, `ip_address`, `user_agent`, `dispositivo`, `navegador`, `sistema_operativo`, `resolucion_pantalla`, `fuente_trafico`, `medio_trafico`, `campania`, `referrer`, `pagina_entrada`, `fecha_sesion`, `duracion_sesion`) VALUES
+(1, 1, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0', 'desktop', 'Firefox 144.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-13 17:18:08', NULL),
+(2, 2, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0', 'desktop', 'Firefox 144.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-13 17:19:01', NULL),
+(3, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0', 'desktop', 'Firefox 144.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-13 17:24:02', NULL),
+(4, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 05:38:34', NULL),
+(5, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 05:40:02', NULL),
+(6, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 05:40:12', NULL),
+(7, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 05:40:48', NULL),
+(8, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 05:46:38', NULL),
+(9, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 05:47:57', NULL),
+(10, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 05:50:49', NULL),
+(11, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 05:58:26', NULL),
+(12, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 05:59:39', NULL),
+(13, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 18:40:48', NULL),
+(14, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 23:46:25', NULL),
+(15, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 23:54:06', NULL),
+(16, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-17 23:57:24', NULL),
+(17, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 00:10:33', NULL),
+(18, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 00:17:51', NULL),
+(19, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 00:48:18', NULL),
+(20, 1, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 00:48:43', NULL),
+(21, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 00:48:56', NULL),
+(22, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 00:49:12', NULL),
+(23, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 00:49:53', NULL),
+(24, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 00:53:52', NULL),
+(25, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 00:58:29', NULL),
+(26, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 18:26:09', NULL),
+(27, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 18:45:52', NULL),
+(28, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 20:02:06', NULL),
+(29, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-18 20:02:23', NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `sesiones_usuario`
 --
 
@@ -412,7 +470,10 @@ CREATE TABLE `sesiones_usuario` (
 CREATE TABLE `usuarios` (
   `usuario_id` int(11) NOT NULL,
   `email` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  `auth_provider` enum('manual','google') DEFAULT 'manual',
+  `google_id` varchar(255) DEFAULT NULL,
+  `foto_perfil_url` varchar(500) DEFAULT NULL,
   `creado_en` datetime DEFAULT NULL,
   `actualizado_en` datetime DEFAULT NULL,
   `rol_id` int(11) DEFAULT 4 COMMENT '4=cliente por defecto',
@@ -421,6 +482,8 @@ CREATE TABLE `usuarios` (
   `direccion` text DEFAULT NULL,
   `distrito` varchar(100) DEFAULT NULL,
   `ciudad` varchar(100) DEFAULT 'Huánuco',
+  `pais` varchar(100) DEFAULT 'Perú',
+  `departamento` varchar(100) DEFAULT 'Huánuco',
   `codigo_postal` varchar(10) DEFAULT NULL,
   `documento_tipo` enum('DNI','RUC','CE') DEFAULT 'DNI',
   `documento_numero` varchar(20) DEFAULT NULL,
@@ -431,15 +494,37 @@ CREATE TABLE `usuarios` (
   `telefono_verificado` tinyint(1) DEFAULT 0,
   `ultimo_acceso` timestamp NULL DEFAULT NULL,
   `intentos_fallidos` int(11) DEFAULT 0,
-  `bloqueado_hasta` timestamp NULL DEFAULT NULL
+  `bloqueado_hasta` timestamp NULL DEFAULT NULL,
+  `como_nos_conocio` varchar(100) DEFAULT NULL COMMENT 'Canal de adquisición',
+  `categorias_interes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Array de IDs de categorías' CHECK (json_valid(`categorias_interes`)),
+  `frecuencia_compra` enum('primera_vez','mensual','trimestral','ocasional') DEFAULT NULL,
+  `rango_presupuesto` enum('hasta_50','50_100','100_250','250_500','mas_500') DEFAULT NULL,
+  `perfil_completado` tinyint(1) DEFAULT 0 COMMENT 'Si completó datos adicionales'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`usuario_id`, `email`, `password`, `creado_en`, `actualizado_en`, `rol_id`, `nombre_completo`, `telefono`, `direccion`, `distrito`, `ciudad`, `codigo_postal`, `documento_tipo`, `documento_numero`, `fecha_nacimiento`, `genero`, `estado`, `email_verificado`, `telefono_verificado`, `ultimo_acceso`, `intentos_fallidos`, `bloqueado_hasta`) VALUES
-(1, 'admin@qhatu.com', '$2a$10$YourHashedPasswordHere', NULL, NULL, 1, 'Administrador del Sistema', NULL, NULL, NULL, 'Huánuco', NULL, 'DNI', NULL, NULL, NULL, 'activo', 1, 0, NULL, 0, NULL);
+INSERT INTO `usuarios` (`usuario_id`, `email`, `password`, `auth_provider`, `google_id`, `foto_perfil_url`, `creado_en`, `actualizado_en`, `rol_id`, `nombre_completo`, `telefono`, `direccion`, `distrito`, `ciudad`, `pais`, `departamento`, `codigo_postal`, `documento_tipo`, `documento_numero`, `fecha_nacimiento`, `genero`, `estado`, `email_verificado`, `telefono_verificado`, `ultimo_acceso`, `intentos_fallidos`, `bloqueado_hasta`, `como_nos_conocio`, `categorias_interes`, `frecuencia_compra`, `rango_presupuesto`, `perfil_completado`) VALUES
+(1, 'admin@qhatu.com', '$2b$10$8uAQOLU3fcDjUIhVm6.j8.Kzl.jNfqdcm3nPqFf/LcVw6Kbj/mrE2', 'manual', NULL, NULL, NULL, '2025-11-17 19:48:43', 1, 'Administrador Principal', '962000001', 'Av. Alameda de la República 123', 'Huánuco', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000001', NULL, NULL, 'activo', 1, 0, '2025-11-18 00:48:43', 0, NULL, NULL, NULL, NULL, NULL, 0),
+(2, 'vendedor@qhatu.com', '$2b$10$qXzEjQKm3JvobHGiIUmoRuTWJbwxjzygCd.eGRinYQwZ27KDGLlAC', 'manual', NULL, NULL, '2025-11-09 18:23:50', '2025-11-13 12:19:01', 2, 'María Vendedora', '962000002', 'Jr. Dos de Mayo 456', 'Huánuco', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000002', NULL, NULL, 'activo', 1, 0, '2025-11-13 17:19:01', 0, NULL, NULL, NULL, NULL, NULL, 0),
+(3, 'almacenero@qhatu.com', '$2b$10$BsXYzeA6Rqp6iNThzEASm.cUdftfAsH5k2ySP9QdL2CM4jxHEMAIu', 'manual', NULL, NULL, '2025-11-09 18:23:50', '2025-11-13 12:22:37', 3, 'Carlos Almacenero', '962000003', 'Av. 28 de Julio 789', 'Huánuco', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000003', NULL, NULL, 'bloqueado', 1, 0, NULL, 5, '2025-11-13 17:52:37', NULL, NULL, NULL, NULL, 0),
+(4, 'cliente@qhatu.com', '$2b$10$PLFM53I7OyWYsC4wSq8oM.tBq7N9hY7vnRgrtK79LMGYs4qbIsgLe', 'manual', NULL, NULL, '2025-11-09 18:23:50', '2025-11-18 15:02:23', 4, 'Ana Cliente', '962000004', 'Jr. Progreso 321', 'Huánuco', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000004', NULL, NULL, 'activo', 1, 0, '2025-11-18 20:02:23', 0, NULL, NULL, NULL, NULL, NULL, 0),
+(5, 'cliente2@qhatu.com', '$2b$10$pAka.I9DBHj1bKuz8ecyqeHsqygzp/YPrE.VgIjWgageefHZ2uZX2', 'manual', NULL, NULL, '2025-11-09 18:23:50', '2025-11-09 18:23:50', 4, 'Pedro Cliente', '962000005', 'Av. Universitaria 555', 'Amarilis', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000005', NULL, NULL, 'activo', 1, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `usuario_categorias_interes`
+--
+
+CREATE TABLE `usuario_categorias_interes` (
+  `id` int(11) NOT NULL,
+  `usuario_id` int(11) NOT NULL,
+  `categoria_id` int(11) NOT NULL,
+  `creado_en` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -452,7 +537,7 @@ CREATE TABLE `ventas` (
   `carrito_id` int(11) DEFAULT NULL,
   `usuario_id` int(11) DEFAULT NULL,
   `vendedor_id` int(11) DEFAULT NULL COMMENT 'Usuario con rol vendedor que procesó',
-  `numero_venta` varchar(50) NOT NULL COMMENT 'VEN-YYYYMMDD-XXXX',
+  `numero_venta` varchar(20) NOT NULL COMMENT 'QH-0001, QH-0002, etc.',
   `cliente_nombre` varchar(255) DEFAULT NULL,
   `cliente_email` varchar(255) DEFAULT NULL,
   `cliente_telefono` varchar(20) DEFAULT NULL,
@@ -461,7 +546,7 @@ CREATE TABLE `ventas` (
   `subtotal` decimal(10,2) NOT NULL,
   `descuento_total` decimal(10,2) DEFAULT 0.00,
   `total` decimal(10,2) NOT NULL,
-  `estado` enum('pendiente','confirmada','en_preparacion','lista_entrega','en_camino','entregada','cancelada') DEFAULT 'pendiente',
+  `estado` enum('pendiente','confirmada','procesando','en_preparacion','lista_entrega','en_camino','enviada','entregada','cancelada') DEFAULT 'pendiente',
   `metodo_pago` enum('whatsapp_pago','yape','plin','transferencia','efectivo') DEFAULT 'whatsapp_pago',
   `comprobante_pago` varchar(255) DEFAULT NULL COMMENT 'URL del comprobante subido',
   `notas_venta` text DEFAULT NULL,
@@ -472,12 +557,34 @@ CREATE TABLE `ventas` (
   `fecha_confirmacion` timestamp NULL DEFAULT NULL,
   `fecha_entrega` timestamp NULL DEFAULT NULL,
   `fecha_cancelacion` timestamp NULL DEFAULT NULL,
-  `actualizado_en` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `actualizado_en` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `enviado_whatsapp` tinyint(1) DEFAULT 0 COMMENT 'Si se envió por WhatsApp',
+  `fecha_envio_whatsapp` datetime DEFAULT NULL COMMENT 'Fecha en que se envió por WhatsApp',
+  `mensaje_whatsapp` text DEFAULT NULL COMMENT 'Mensaje enviado al vendedor',
+  `cliente_notas` text DEFAULT NULL COMMENT 'Notas del cliente sobre el pedido'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Disparadores `ventas`
 --
+DELIMITER $$
+CREATE TRIGGER `before_insert_venta_qhatu` BEFORE INSERT ON `ventas` FOR EACH ROW BEGIN
+  DECLARE next_number INT;
+  
+  -- Solo generar si no viene numero_venta
+  IF NEW.numero_venta IS NULL OR NEW.numero_venta = '' THEN
+    -- Obtener el siguiente número
+    SELECT COALESCE(MAX(CAST(SUBSTRING(numero_venta, 4) AS UNSIGNED)), 0) + 1 
+    INTO next_number
+    FROM ventas
+    WHERE numero_venta LIKE 'QH-%';
+    
+    -- Generar el número con formato QH-XXXX (padding de 4 dígitos)
+    SET NEW.numero_venta = CONCAT('QH-', LPAD(next_number, 4, '0'));
+  END IF;
+END
+$$
+DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `trg_venta_historial_update` AFTER UPDATE ON `ventas` FOR EACH ROW BEGIN
   IF OLD.estado != NEW.estado THEN
@@ -536,7 +643,10 @@ CREATE TABLE `venta_items` (
   `cantidad` int(11) NOT NULL,
   `precio_unitario` decimal(10,2) NOT NULL,
   `precio_descuento` decimal(10,2) DEFAULT NULL,
-  `subtotal` decimal(10,2) NOT NULL
+  `subtotal` decimal(10,2) NOT NULL,
+  `producto_codigo` varchar(50) DEFAULT NULL COMMENT 'Código del producto (snapshot)',
+  `producto_url_imagen` varchar(500) DEFAULT NULL COMMENT 'Imagen del producto (snapshot)',
+  `creado_en` datetime DEFAULT current_timestamp() COMMENT 'Fecha de creación'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -568,16 +678,48 @@ CREATE TABLE `v_banners_activos` (
 -- --------------------------------------------------------
 
 --
+-- Estructura Stand-in para la vista `v_usuarios_analisis`
+-- (Véase abajo para la vista actual)
+--
+CREATE TABLE `v_usuarios_analisis` (
+`usuario_id` int(11)
+,`email` varchar(255)
+,`nombre_completo` varchar(255)
+,`auth_provider` enum('manual','google')
+,`telefono` varchar(20)
+,`ciudad` varchar(100)
+,`departamento` varchar(100)
+,`pais` varchar(100)
+,`genero` enum('M','F','Otro','Prefiero no decir')
+,`fecha_nacimiento` date
+,`edad` bigint(21)
+,`como_nos_conocio` varchar(100)
+,`frecuencia_compra` enum('primera_vez','mensual','trimestral','ocasional')
+,`rango_presupuesto` enum('hasta_50','50_100','100_250','250_500','mas_500')
+,`perfil_completado` tinyint(1)
+,`creado_en` datetime
+,`ultimo_acceso` timestamp
+,`rol_nombre` varchar(50)
+,`total_compras` bigint(21)
+,`valor_total_compras` decimal(32,2)
+,`ticket_promedio` decimal(14,6)
+,`ultima_compra` timestamp
+,`dias_desde_ultima_compra` int(7)
+);
+
+-- --------------------------------------------------------
+
+--
 -- Estructura Stand-in para la vista `v_ventas_pendientes`
 -- (Véase abajo para la vista actual)
 --
 CREATE TABLE `v_ventas_pendientes` (
 `venta_id` int(11)
-,`numero_venta` varchar(50)
+,`numero_venta` varchar(20)
 ,`cliente_nombre` varchar(255)
 ,`cliente_telefono` varchar(20)
 ,`total` decimal(10,2)
-,`estado` enum('pendiente','confirmada','en_preparacion','lista_entrega','en_camino','entregada','cancelada')
+,`estado` enum('pendiente','confirmada','procesando','en_preparacion','lista_entrega','en_camino','enviada','entregada','cancelada')
 ,`fecha_venta` timestamp
 ,`total_items` bigint(21)
 ,`vendedor_nombre` varchar(255)
@@ -591,6 +733,15 @@ CREATE TABLE `v_ventas_pendientes` (
 DROP TABLE IF EXISTS `v_banners_activos`;
 
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_banners_activos`  AS SELECT `b`.`banner_id` AS `banner_id`, `b`.`titulo` AS `titulo`, `b`.`descripcion` AS `descripcion`, `b`.`categoria_id` AS `categoria_id`, `c`.`nombre` AS `categoria_nombre`, `b`.`porcentaje_descuento` AS `porcentaje_descuento`, `b`.`url_imagen_fondo` AS `url_imagen_fondo`, `b`.`color_fondo` AS `color_fondo`, `b`.`color_texto` AS `color_texto`, `b`.`fecha_inicio` AS `fecha_inicio`, `b`.`fecha_fin` AS `fecha_fin`, `b`.`prioridad` AS `prioridad`, `b`.`tipo_descuento` AS `tipo_descuento`, `b`.`monto_minimo` AS `monto_minimo`, `b`.`clicks` AS `clicks`, `b`.`vistas` AS `vistas`, to_days(`b`.`fecha_fin`) - to_days(current_timestamp()) AS `dias_restantes` FROM (`banners_descuento` `b` join `categorias` `c` on(`b`.`categoria_id` = `c`.`categoria_id`)) WHERE `b`.`activo` = 1 AND current_timestamp() between `b`.`fecha_inicio` and `b`.`fecha_fin` ORDER BY `b`.`prioridad` DESC, `b`.`fecha_fin` ASC ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `v_usuarios_analisis`
+--
+DROP TABLE IF EXISTS `v_usuarios_analisis`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_usuarios_analisis`  AS SELECT `u`.`usuario_id` AS `usuario_id`, `u`.`email` AS `email`, `u`.`nombre_completo` AS `nombre_completo`, `u`.`auth_provider` AS `auth_provider`, `u`.`telefono` AS `telefono`, `u`.`ciudad` AS `ciudad`, `u`.`departamento` AS `departamento`, `u`.`pais` AS `pais`, `u`.`genero` AS `genero`, `u`.`fecha_nacimiento` AS `fecha_nacimiento`, timestampdiff(YEAR,`u`.`fecha_nacimiento`,curdate()) AS `edad`, `u`.`como_nos_conocio` AS `como_nos_conocio`, `u`.`frecuencia_compra` AS `frecuencia_compra`, `u`.`rango_presupuesto` AS `rango_presupuesto`, `u`.`perfil_completado` AS `perfil_completado`, `u`.`creado_en` AS `creado_en`, `u`.`ultimo_acceso` AS `ultimo_acceso`, `r`.`nombre` AS `rol_nombre`, count(distinct `v`.`venta_id`) AS `total_compras`, coalesce(sum(`v`.`total`),0) AS `valor_total_compras`, coalesce(avg(`v`.`total`),0) AS `ticket_promedio`, max(`v`.`fecha_venta`) AS `ultima_compra`, to_days(current_timestamp()) - to_days(max(`v`.`fecha_venta`)) AS `dias_desde_ultima_compra` FROM ((`usuarios` `u` left join `roles` `r` on(`u`.`rol_id` = `r`.`rol_id`)) left join `ventas` `v` on(`u`.`usuario_id` = `v`.`usuario_id` and `v`.`estado` = 'entregada')) GROUP BY `u`.`usuario_id` ;
 
 -- --------------------------------------------------------
 
@@ -646,8 +797,32 @@ ALTER TABLE `carruseles`
 --
 ALTER TABLE `categorias`
   ADD PRIMARY KEY (`categoria_id`),
+  ADD UNIQUE KEY `nombre` (`nombre`),
+  ADD UNIQUE KEY `nombre_2` (`nombre`),
+  ADD UNIQUE KEY `nombre_3` (`nombre`),
+  ADD UNIQUE KEY `nombre_4` (`nombre`),
+  ADD UNIQUE KEY `nombre_5` (`nombre`),
+  ADD UNIQUE KEY `nombre_6` (`nombre`),
+  ADD UNIQUE KEY `nombre_7` (`nombre`),
   ADD KEY `idx_nombre_categoria` (`nombre`),
   ADD KEY `idx_padre_id` (`padre_id`);
+
+--
+-- Indices de la tabla `eventos_navegacion`
+--
+ALTER TABLE `eventos_navegacion`
+  ADD PRIMARY KEY (`evento_id`),
+  ADD KEY `producto_id` (`producto_id`),
+  ADD KEY `categoria_id` (`categoria_id`),
+  ADD KEY `idx_usuario_evento` (`usuario_id`,`tipo_evento`,`timestamp`),
+  ADD KEY `idx_tracking` (`tracking_id`,`timestamp`);
+
+--
+-- Indices de la tabla `perfil_preferencias`
+--
+ALTER TABLE `perfil_preferencias`
+  ADD PRIMARY KEY (`preferencia_id`),
+  ADD UNIQUE KEY `usuario_id` (`usuario_id`);
 
 --
 -- Indices de la tabla `productos`
@@ -669,6 +844,15 @@ ALTER TABLE `roles`
   ADD UNIQUE KEY `nombre` (`nombre`);
 
 --
+-- Indices de la tabla `sesiones_tracking`
+--
+ALTER TABLE `sesiones_tracking`
+  ADD PRIMARY KEY (`tracking_id`),
+  ADD KEY `idx_usuario_fecha` (`usuario_id`,`fecha_sesion`),
+  ADD KEY `idx_sesion_temporal` (`sesion_temporal`),
+  ADD KEY `idx_fuente_trafico` (`fuente_trafico`,`medio_trafico`);
+
+--
 -- Indices de la tabla `sesiones_usuario`
 --
 ALTER TABLE `sesiones_usuario`
@@ -683,7 +867,16 @@ ALTER TABLE `sesiones_usuario`
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`usuario_id`),
   ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `google_id` (`google_id`),
   ADD KEY `idx_usuarios_rol` (`rol_id`,`estado`);
+
+--
+-- Indices de la tabla `usuario_categorias_interes`
+--
+ALTER TABLE `usuario_categorias_interes`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_usuario_categoria` (`usuario_id`,`categoria_id`),
+  ADD KEY `categoria_id` (`categoria_id`);
 
 --
 -- Indices de la tabla `ventas`
@@ -697,7 +890,10 @@ ALTER TABLE `ventas`
   ADD KEY `idx_estado` (`estado`),
   ADD KEY `idx_fecha` (`fecha_venta`),
   ADD KEY `idx_numero` (`numero_venta`),
-  ADD KEY `idx_ventas_fecha_estado` (`fecha_venta`,`estado`);
+  ADD KEY `idx_ventas_fecha_estado` (`fecha_venta`,`estado`),
+  ADD KEY `idx_ventas_fecha_estado_vendedor` (`fecha_venta`,`estado`,`vendedor_id`),
+  ADD KEY `idx_ventas_cliente` (`cliente_email`,`cliente_telefono`),
+  ADD KEY `idx_ventas_whatsapp` (`enviado_whatsapp`,`fecha_envio_whatsapp`);
 
 --
 -- Indices de la tabla `venta_historial`
@@ -751,6 +947,18 @@ ALTER TABLE `categorias`
   MODIFY `categoria_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
+-- AUTO_INCREMENT de la tabla `eventos_navegacion`
+--
+ALTER TABLE `eventos_navegacion`
+  MODIFY `evento_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `perfil_preferencias`
+--
+ALTER TABLE `perfil_preferencias`
+  MODIFY `preferencia_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
@@ -763,6 +971,12 @@ ALTER TABLE `roles`
   MODIFY `rol_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT de la tabla `sesiones_tracking`
+--
+ALTER TABLE `sesiones_tracking`
+  MODIFY `tracking_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+
+--
 -- AUTO_INCREMENT de la tabla `sesiones_usuario`
 --
 ALTER TABLE `sesiones_usuario`
@@ -772,7 +986,13 @@ ALTER TABLE `sesiones_usuario`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `usuario_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `usuario_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT de la tabla `usuario_categorias_interes`
+--
+ALTER TABLE `usuario_categorias_interes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `ventas`
@@ -825,13 +1045,34 @@ ALTER TABLE `carruseles`
 -- Filtros para la tabla `categorias`
 --
 ALTER TABLE `categorias`
-  ADD CONSTRAINT `categorias_ibfk_1` FOREIGN KEY (`padre_id`) REFERENCES `categorias` (`categoria_id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `categorias_ibfk_1` FOREIGN KEY (`padre_id`) REFERENCES `categorias` (`categoria_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `eventos_navegacion`
+--
+ALTER TABLE `eventos_navegacion`
+  ADD CONSTRAINT `eventos_navegacion_ibfk_1` FOREIGN KEY (`tracking_id`) REFERENCES `sesiones_tracking` (`tracking_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `eventos_navegacion_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`usuario_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `eventos_navegacion_ibfk_3` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`producto_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `eventos_navegacion_ibfk_4` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`categoria_id`) ON DELETE SET NULL;
+
+--
+-- Filtros para la tabla `perfil_preferencias`
+--
+ALTER TABLE `perfil_preferencias`
+  ADD CONSTRAINT `perfil_preferencias_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`usuario_id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `productos`
 --
 ALTER TABLE `productos`
   ADD CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`categoria_id`);
+
+--
+-- Filtros para la tabla `sesiones_tracking`
+--
+ALTER TABLE `sesiones_tracking`
+  ADD CONSTRAINT `sesiones_tracking_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`usuario_id`) ON DELETE SET NULL;
 
 --
 -- Filtros para la tabla `sesiones_usuario`
@@ -845,6 +1086,13 @@ ALTER TABLE `sesiones_usuario`
 ALTER TABLE `usuarios`
   ADD CONSTRAINT `fk_usuario_rol` FOREIGN KEY (`rol_id`) REFERENCES `roles` (`rol_id`),
   ADD CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`rol_id`) REFERENCES `roles` (`rol_id`);
+
+--
+-- Filtros para la tabla `usuario_categorias_interes`
+--
+ALTER TABLE `usuario_categorias_interes`
+  ADD CONSTRAINT `usuario_categorias_interes_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`usuario_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `usuario_categorias_interes_ibfk_2` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`categoria_id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `ventas`

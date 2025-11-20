@@ -1,20 +1,21 @@
 // C:\qhatu\frontend\src\components\cart\CartWidget\CartWidget.jsx
-import React from 'react';
-import { useCart } from '../../../contexts/CartContext';
+import React, { memo, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { useCart } from '../../../hooks/useCart';
 import './CartWidget.css';
 
-// ====================================
-// 🎨 ICONO SVG DEL CARRITO
-// ====================================
-const CartIcon = () => (
+// ==================== ICONOS ====================
+
+const CartIcon = ({ className = "" }) => (
   <svg 
+    className={className} 
     width="24" 
     height="24" 
     viewBox="0 0 24 24" 
     fill="none" 
     stroke="currentColor" 
-    strokeWidth="2"
-    strokeLinecap="round"
+    strokeWidth="2" 
+    strokeLinecap="round" 
     strokeLinejoin="round"
   >
     <circle cx="9" cy="21" r="1"/>
@@ -23,42 +24,73 @@ const CartIcon = () => (
   </svg>
 );
 
-// ====================================
-// 🧩 COMPONENTE CART WIDGET
-// ====================================
-// IMPORTANTE: Este componente solo dispara un evento, NO abre el modal directamente
-const CartWidget = () => {
-  const { getTotalItems } = useCart();
-  const totalItems = getTotalItems();
+// ==================== COMPONENTE ====================
 
-  // Handler que dispara un evento personalizado
-  // El Header escuchará este evento y abrirá el modal
-  const handleClick = () => {
-    // Disparar evento personalizado para que el Header maneje la apertura del modal
-    const event = new CustomEvent('openCartModal');
-    window.dispatchEvent(event);
-  };
+const CartWidget = memo(() => {
+  const { getItemCount, getCartTotal, syncStatus, error } = useCart();
+
+  // Memoizar cálculos para evitar re-renders innecesarios
+  const itemCount = useMemo(() => getItemCount(), [getItemCount]);
+  const total = useMemo(() => getCartTotal(), [getCartTotal]);
+  
+  const isSyncing = syncStatus === 'syncing';
+  const hasError = syncStatus === 'error';
+
+  console.log('🛒 CartWidget render:', {
+    itemCount,
+    total,
+    syncStatus,
+    hasError
+  });
 
   return (
-    <button 
-      className="cart-widget"
-      onClick={handleClick}
-      aria-label={`Carrito de compras: ${totalItems} ${totalItems === 1 ? 'producto' : 'productos'}`}
-      type="button"
-    >
-      <span className="cart-widget__icon">
-        <CartIcon />
-      </span>
-      
-      {totalItems > 0 && (
-        <span className="cart-widget__badge" aria-label={`${totalItems} productos`}>
-          {totalItems > 99 ? '99+' : totalItems}
-        </span>
-      )}
+    <div className="cart-widget">
+      <Link 
+        to="/cart" 
+        className="cart-widget__link" 
+        aria-label={`Carrito de compras: ${itemCount} productos`}
+      >
+        {/* Icono con badge */}
+        <div className="cart-widget__icon-wrapper">
+          <CartIcon 
+            className={`cart-widget__icon ${isSyncing ? 'cart-widget__icon--syncing' : ''}`} 
+          />
+          
+          {/* Badge con contador */}
+          {itemCount > 0 && (
+            <span 
+              className={`cart-widget__badge ${hasError ? 'cart-widget__badge--error' : ''}`}
+              aria-label={`${itemCount} ${itemCount === 1 ? 'producto' : 'productos'}`}
+            >
+              {itemCount > 99 ? '99+' : itemCount}
+            </span>
+          )}
+        </div>
 
-      <span className="cart-widget__pulse" />
-    </button>
+        {/* Información del carrito */}
+        {itemCount > 0 && (
+          <div className="cart-widget__info">
+            <span className="cart-widget__count">
+              {itemCount} {itemCount === 1 ? 'producto' : 'productos'}
+            </span>
+            <span className="cart-widget__total">
+              S/. {total.toFixed(2)}
+            </span>
+          </div>
+        )}
+      </Link>
+
+      {/* Tooltip de error */}
+      {error && (
+        <div className="cart-widget__error-tooltip" role="alert">
+          <span className="cart-widget__error-icon">⚠️</span>
+          <span>Error sincronizando carrito</span>
+        </div>
+      )}
+    </div>
   );
-};
+});
+
+CartWidget.displayName = 'CartWidget';
 
 export default CartWidget;

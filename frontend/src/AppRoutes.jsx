@@ -1,34 +1,41 @@
-// C:\qhatu\frontend\src\AppRoutes.jsx
+// UBICACIÓN: src/AppRoutes.jsx
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import Home from './pages/Home/Home';
-import Products from './pages/Products/Products';
-import ProductDetail from './pages/ProductDetail/ProductDetail';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import VendedorDashboard from './pages/Vendedor/VendedorDashboard';
-import AlmaceneroDashboard from './pages/Almacenero/AlmaceneroDashboard';
-import Nosotros from './pages/Nosotros/Nosotros';
-import Contact from './pages/Contact/Contact';
-import Login from './components/layout/Auth/Login';
-import Register from './components/layout/Auth/Register';
-import ForgotPassword from './components/layout/Auth/ForgotPassword';
-import ResetPassword from './components/layout/Auth/ResetPassword';
-import ProtectedRoute from './components/ProtectedRoute';
+import Home from './pages/Home/Home.jsx';
+import Products from './pages/Products/Products.jsx';
+import ProductDetail from './pages/ProductDetail/ProductDetail.jsx';
+import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
+import VendedorDashboard from './pages/Vendedor/VendedorDashboard.jsx';
+import AlmaceneroDashboard from './pages/Almacenero/AlmaceneroDashboard.jsx';
+import Nosotros from './pages/Nosotros/Nosotros.jsx';
+import Contact from './pages/Contact/Contact.jsx';
+import Login from './components/layout/Auth/Login.jsx';
+import Register from './components/layout/Auth/Register.jsx';
+import ForgotPassword from './components/layout/Auth/ForgotPassword.jsx';
+import ResetPassword from './components/layout/Auth/ResetPassword.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+
+// 🚀 IMPORTACIÓN DE LA NUEVA PÁGINA DEL CARRITO - Añadimos .jsx
+import CartPage from './pages/Cart/CartPage.jsx'; 
 
 const AppRoutes = () => {
     const location = useLocation();
     
-    // Obtener la ubicación de fondo desde el state
+    // Obtener la ubicación de fondo desde el state (para modales como Login/Register)
     const backgroundLocation = location.state?.backgroundLocation;
 
     return (
         <>
-            {/* Rutas principales - se muestran detrás del modal */}
+            {/* Rutas principales - se muestran detrás del modal o como páginas completas */}
             <Routes location={backgroundLocation || location}>
                 {/* ========== RUTAS PÚBLICAS ========== */}
                 <Route path="/" element={<Home />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
+                
+                {/* ✅ RUTA NUEVA: PÁGINA DEDICADA DEL CARRITO */}
+                <Route path="/cart" element={<CartPage />} />
+
                 <Route path="/nosotros" element={<Nosotros />} />
                 <Route path="/contact" element={<Contact />} />
                 
@@ -74,34 +81,20 @@ const AppRoutes = () => {
                     </>
                 )}
                 
-                {/* ========== 404 ========== */}
+                {/* ========== 404 - Página no encontrada ========== */}
                 <Route 
                     path="*" 
                     element={
-                        <div style={{ 
-                            textAlign: 'center', 
-                            padding: '60px 20px',
-                            minHeight: '400px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-                                404 - Página no encontrada
+                        <div className="text-center p-16 min-h-[400px] flex flex-col items-center justify-center">
+                            <h2 className="text-4xl font-extrabold mb-4 text-red-600">
+                                404
                             </h2>
-                            <p style={{ color: '#666', marginBottom: '2rem' }}>
-                                La página que buscas no existe
+                            <p className="text-xl text-gray-700 mb-8">
+                                ¡Oops! Página no encontrada.
                             </p>
                             <a 
                                 href="/" 
-                                style={{
-                                    padding: '10px 24px',
-                                    background: '#007bff',
-                                    color: '#fff',
-                                    textDecoration: 'none',
-                                    borderRadius: '4px'
-                                }}
+                                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition"
                             >
                                 Volver al inicio
                             </a>
@@ -110,7 +103,7 @@ const AppRoutes = () => {
                 />
             </Routes>
 
-            {/* Modales de autenticación - solo se muestran si hay backgroundLocation */}
+            {/* Modales de autenticación - Se muestran sobre las rutas principales si hay backgroundLocation */}
             {backgroundLocation && (
                 <Routes>
                     <Route path="/register" element={<Register />} />
