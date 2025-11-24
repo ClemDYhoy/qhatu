@@ -10,9 +10,9 @@ const Venta = sequelize.define('Venta', {
   },
   numero_venta: {
     type: DataTypes.STRING(20),
-    allowNull: false,
+    allowNull: true, // ⚡ PERMITIR NULL para que el trigger lo genere
     unique: true,
-    comment: 'QH-0001, QH-0002, etc.'
+    comment: 'QH-0001, QH-0002, etc. Generado automáticamente por trigger MySQL'
   },
   carrito_id: {
     type: DataTypes.INTEGER,
@@ -163,7 +163,13 @@ const Venta = sequelize.define('Venta', {
   }
 });
 
-// Método de instancia: obtener estado legible
+// ====================================
+// 🔧 MÉTODOS DE INSTANCIA
+// ====================================
+
+/**
+ * Obtener estado con emoji y etiqueta legible
+ */
 Venta.prototype.getEstadoLabel = function() {
   const labels = {
     pendiente: '⏳ Pendiente',
@@ -177,6 +183,35 @@ Venta.prototype.getEstadoLabel = function() {
     cancelada: '❌ Cancelada'
   };
   return labels[this.estado] || this.estado;
+};
+
+/**
+ * Verificar si la venta está en estado modificable
+ */
+Venta.prototype.esModificable = function() {
+  return ['pendiente', 'confirmada'].includes(this.estado);
+};
+
+/**
+ * Verificar si la venta puede ser confirmada
+ */
+Venta.prototype.puedeConfirmarse = function() {
+  return this.estado === 'pendiente';
+};
+
+/**
+ * Obtener resumen para notificaciones
+ */
+Venta.prototype.getResumen = function() {
+  return {
+    numero_venta: this.numero_venta,
+    cliente: this.cliente_nombre,
+    telefono: this.cliente_telefono,
+    total: parseFloat(this.total),
+    estado: this.estado,
+    estado_label: this.getEstadoLabel(),
+    fecha: this.fecha_venta
+  };
 };
 
 export default Venta;

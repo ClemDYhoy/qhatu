@@ -1,5 +1,5 @@
-// UBICACIÓN: src/components/cart/CartContent.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+// C:\qhatu\frontend\src\components\cart\CartContent.jsx
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext.jsx';
 import { useAuth } from '../../hooks/useAuth.js';
@@ -37,32 +37,49 @@ const CartContent = ({ onClose, isPage = false }) => {
     }, [cart]);
 
     const handleComprarWhatsApp = async () => {
-        const confirmPurchase = window.confirm('¿Confirmar la compra de estos productos?');
+        console.log('🛒 Iniciando compra por WhatsApp...');
         
-        if (!confirmPurchase) return;
-
+        // Validaciones previas
         if (!user) {
-            console.error('Debes iniciar sesión para comprar'); 
+            alert('Debes iniciar sesión para realizar una compra');
             navigate('/login');
             return;
         }
 
         if (isEmpty) {
-            console.warn('El carrito está vacío');
+            alert('Tu carrito está vacío');
             return;
         }
 
+        const confirmPurchase = window.confirm(
+            `¿Confirmar la compra de ${itemCount} producto(s) por un total de S/.${total.toFixed(2)}?\n\n` +
+            `Se abrirá WhatsApp para completar tu pedido.`
+        );
+        
+        if (!confirmPurchase) return;
+
         try {
+            console.log('📱 Llamando a comprarPorWhatsApp...');
             const result = await comprarPorWhatsApp();
 
-            if (result.success) {
-                const { numero_venta } = result.data;
+            console.log('📦 Resultado de compra:', result);
+
+            if (result.success && result.data) {
+                const { numero_venta, whatsapp_url } = result.data;
                 
-                setSuccessMessage(`¡Pedido ${numero_venta} creado!`);
+                console.log(`✅ Pedido creado: ${numero_venta}`);
+                
+                // Mostrar mensaje de éxito
+                setSuccessMessage(`¡Pedido ${numero_venta} creado! Se abrirá WhatsApp...`);
                 setShowSuccess(true);
                 
+                // Limpiar carrito
                 await clearCart();
                 
+                // ⚡ WhatsApp ya se abrió automáticamente en useWhatsApp
+                // Solo informamos al usuario
+                
+                // Redirigir después de 3 segundos
                 setTimeout(() => {
                     setShowSuccess(false);
                     if (isPage) {
@@ -70,13 +87,26 @@ const CartContent = ({ onClose, isPage = false }) => {
                     } else {
                         onClose(); 
                     }
-                }, 2000);
+                }, 3000);
             } else {
-                throw new Error(result.message || 'Error al crear pedido');
+                throw new Error(result.message || 'Error al crear el pedido');
             }
         } catch (error) {
             console.error('❌ Error en compra:', error);
-            alert(error.message || 'Error al procesar el pedido. Intente nuevamente.');
+            
+            let mensajeError = 'Error al procesar el pedido. Por favor intenta nuevamente.';
+            
+            // Mensajes específicos según el error
+            if (error.message.includes('carrito vacío')) {
+                mensajeError = 'Tu carrito está vacío. Agrega productos para continuar.';
+            } else if (error.message.includes('stock')) {
+                mensajeError = 'Algunos productos no tienen stock suficiente.';
+            } else if (error.message.includes('sesión')) {
+                mensajeError = 'Tu sesión expiró. Por favor inicia sesión nuevamente.';
+                setTimeout(() => navigate('/login'), 2000);
+            }
+            
+            alert(mensajeError);
         }
     };
 
@@ -87,6 +117,8 @@ const CartContent = ({ onClose, isPage = false }) => {
         }
         await updateQuantity(itemId, newQuantity);
     };
+
+    // Continuación de CartContent.jsx
 
     const handleRemoveItem = async (itemId) => {
         if (window.confirm('¿Eliminar este producto del carrito?')) {
@@ -146,7 +178,7 @@ const CartContent = ({ onClose, isPage = false }) => {
                         <button 
                             className="cart-content__empty-btn"
                             onClick={() => {
-                                onClose();
+                                if (onClose) onClose();
                                 navigate('/products');
                             }}
                         >
@@ -163,9 +195,9 @@ const CartContent = ({ onClose, isPage = false }) => {
                                 <div key={item.item_id} className="cart-item">
                                     <div className="cart-item__image">
                                         <img 
-                                            src={item.producto?.url_imagen || 'https://placehold.co/64x64/E0E0E0/333?text=IMG'} 
+                                            src={item.producto?.url_imagen || '/awaiting-image.jpeg'} 
                                             alt={item.producto?.nombre}
-                                            onError={(e) => { e.target.src = 'https://placehold.co/64x64/E0E0E0/333?text=IMG'; }}
+                                            onError={(e) => { e.target.src = '/awaiting-image.jpeg'; }}
                                         />
                                     </div>
 
@@ -260,7 +292,7 @@ const CartContent = ({ onClose, isPage = false }) => {
                                 </svg>
                                 <div className="cart-content__alert-content">
                                     <p className="cart-content__alert-title">¡Éxito!</p>
-                                    <p className="cart-content__alert-text">{successMessage} - Redirigiendo...</p>
+                                    <p className="cart-content__alert-text">{successMessage}</p>
                                 </div>
                             </div>
                         )}
@@ -279,7 +311,7 @@ const CartContent = ({ onClose, isPage = false }) => {
                         
                         {cart.descuento_total > 0 && (
                             <div className="cart-content__total-row cart-content__total-row--discount">
-                                <span className="cart-content__total-label">Descuento Aplicado:</span>
+                                <span className="cart-content__total-label">Descuento:</span>
                                 <span className="cart-content__total-value">-S/.{parseFloat(cart.descuento_total).toFixed(2)}</span>
                             </div>
                         )}
@@ -299,7 +331,7 @@ const CartContent = ({ onClose, isPage = false }) => {
                             {whatsappLoading ? (
                                 <>
                                     <div className="cart-content__btn-spinner"></div>
-                                    <span>Procesando Pedido...</span>
+                                    <span>Procesando...</span>
                                 </>
                             ) : showSuccess ? (
                                 <>
@@ -314,17 +346,20 @@ const CartContent = ({ onClose, isPage = false }) => {
                                     <svg className="cart-content__btn-icon" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
                                     </svg>
-                                    <span>Confirmar y Comprar por WhatsApp</span>
+                                    <span>Comprar por WhatsApp</span>
                                 </>
                             )}
                         </button>
                         
                         <button
                             className="cart-content__btn cart-content__btn--secondary"
-                            onClick={onClose}
+                            onClick={() => {
+                                if (onClose) onClose();
+                                if (isPage) navigate('/products');
+                            }}
                             disabled={whatsappLoading}
                         >
-                            {isPage ? 'Volver a la Tienda' : 'Seguir Comprando'}
+                            {isPage ? 'Seguir Comprando' : 'Cerrar'}
                         </button>
                     </div>
                 </div>

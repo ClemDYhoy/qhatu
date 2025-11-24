@@ -1,104 +1,150 @@
 // C:\qhatu\frontend\src\hooks\useWhatsApp.js
-import { useState } from 'react';
-import ventasService from '../services/ventasService';
+import { useState, useCallback } from 'react';
+import { crearVentaWhatsApp } from '../services/ventasService';
 
 /**
- * 📱 Hook para manejar compras por WhatsApp
+ * 📲 Abrir WhatsApp Web o App
+ */
+const abrirWhatsApp = (url) => {
+  if (!url) {
+    console.error('❌ URL de WhatsApp vacía');
+    return false;
+  }
+
+  // Detectar si es móvil
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+  console.log(`📱 Dispositivo: ${isMobile ? 'Móvil' : 'Escritorio'}`);
+  console.log(`🔗 Abriendo WhatsApp: ${url.substring(0, 80)}...`);
+
+  try {
+    if (isMobile) {
+      // En móvil, redirigir directamente
+      console.log('📱 Abriendo app de WhatsApp...');
+      window.location.href = url;
+      return true;
+    } else {
+      // En escritorio, abrir en nueva pestaña
+      console.log('💻 Abriendo WhatsApp Web en nueva pestaña...');
+      
+      const ventana = window.open(url, '_blank', 'noopener,noreferrer');
+      
+      // Verificar si el popup fue bloqueado
+      if (!ventana || ventana.closed || typeof ventana.closed === 'undefined') {
+        console.warn('⚠️ Popup bloqueado por el navegador');
+        
+        // Fallback: preguntar al usuario
+        const abrirEnMismaVentana = window.confirm(
+          '⚠️ Tu navegador bloqueó la ventana de WhatsApp.\n\n' +
+          '¿Quieres abrir WhatsApp en esta pestaña?\n\n' +
+          '(Recomendamos permitir ventanas emergentes para una mejor experiencia)'
+        );
+        
+        if (abrirEnMismaVentana) {
+          console.log('📱 Abriendo en la misma pestaña...');
+          window.location.href = url;
+          return true;
+        } else {
+          console.log('❌ Usuario canceló apertura de WhatsApp');
+          return false;
+        }
+      }
+      
+      console.log('✅ WhatsApp Web abierto exitosamente');
+      return true;
+    }
+  } catch (error) {
+    console.error('❌ Error al abrir WhatsApp:', error);
+    
+    // Último intento: copiar URL al portapapeles
+    const copiarURL = window.confirm(
+      '❌ No se pudo abrir WhatsApp automáticamente.\n\n' +
+      '¿Quieres copiar el enlace para abrirlo manualmente?'
+    );
+    
+    if (copiarURL) {
+      try {
+        navigator.clipboard.writeText(url);
+        alert('✅ Enlace copiado al portapapeles. Pégalo en tu navegador para abrir WhatsApp.');
+      } catch (clipError) {
+        alert(`No se pudo copiar. Copia este enlace manualmente:\n\n${url}`);
+      }
+    }
+    
+    return false;
+  }
+};
+
+/**
+ * 🎣 Hook para manejar compras por WhatsApp
  */
 export const useWhatsApp = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  /**
-   * 🛒 Crear venta y abrir WhatsApp
-   */
-  const comprarPorWhatsApp = async () => {
+  const comprarPorWhatsApp = useCallback(async (datosAdicionales = {}) => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
-
       console.log('📱 Iniciando compra por WhatsApp...');
-
+      
       // 1️⃣ Crear venta en el backend
-      const response = await ventasService.crearVentaWhatsApp();
+      const result = await crearVentaWhatsApp(datosAdicionales);
 
-      if (!response.success) {
-        throw new Error(response.message || 'Error al crear venta');
+      if (!result.success) {
+        throw new Error(result.message || 'Error al crear venta');
       }
 
-      const { numero_venta, venta_id, total, whatsapp_url } = response.data;
-
+      const { whatsapp_url, numero_venta, total } = result.data;
+      
       console.log('✅ Venta creada:', numero_venta);
+      console.log('📱 URL WhatsApp recibida:', whatsapp_url ? 'Sí' : 'No');
 
-      // 2️⃣ Abrir WhatsApp
+      // 2️⃣ Abrir WhatsApp si hay URL
       if (whatsapp_url) {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        console.log('📲 Intentando abrir WhatsApp...');
+        const abierto = abrirWhatsApp(whatsapp_url);
         
-        if (isMobile) {
-          // En móvil, abrir directamente
-          window.location.href = whatsapp_url;
-        } else {
-          // En escritorio, abrir en nueva pestaña
-          const ventana = window.open(whatsapp_url, '_blank', 'noopener,noreferrer');
-          
-          if (!ventana) {
-            console.warn('⚠️ Ventana bloqueada, intentando location.href');
-            window.open(whatsapp_url, '_blank');
-          }
+        if (!abierto) {
+          console.warn('⚠️ WhatsApp no se abrió automáticamente');
         }
       } else {
-        console.warn('⚠️ No se generó URL de WhatsApp');
+        console.error('❌ No se recibió URL de WhatsApp del backend');
+        throw new Error('No se generó el enlace de WhatsApp');
       }
-
+      
       return {
         success: true,
-        data: {
-          numero_venta,
-          venta_id,
-          total,
-          whatsapp_url
-        }
+        data: result.data,
+        message: `Pedido ${numero_venta} creado por S/.${parseFloat(total).toFixed(2)}`
       };
 
     } catch (err) {
       console.error('❌ Error en comprarPorWhatsApp:', err);
       
-      // Mensajes de error específicos
-      let userMessage = 'Error al procesar la compra';
-      
-      if (err.message.includes('vacío') || err.message.includes('empty')) {
-        userMessage = 'Tu carrito está vacío';
-      } else if (err.message.includes('stock')) {
-        userMessage = 'Algunos productos no tienen stock suficiente';
-      } else if (err.message.includes('sesión') || err.message.includes('autenticación')) {
-        userMessage = 'Tu sesión expiró. Por favor inicia sesión nuevamente';
-      }
-      
-      setError(userMessage);
+      const errorMessage = err.message || 'Error al procesar la compra';
+      setError(errorMessage);
       
       return {
         success: false,
-        message: userMessage,
-        error: err.message
+        message: errorMessage,
+        error: err
       };
-
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  /**
-   * 🔄 Limpiar error
-   */
-  const clearError = () => {
+  const resetError = useCallback(() => {
     setError(null);
-  };
+  }, []);
 
   return {
     comprarPorWhatsApp,
     loading,
     error,
-    clearError
+    resetError
   };
 };
 

@@ -1,11 +1,6 @@
 // C:\qhatu\backend\src\models\Cart.js
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-import User from './User.js'; // Importación requerida para la referencia
-// Importamos CartItem y Product solo para que las relaciones se definan en index.js
-// y para usarlos en el repositorio.
-import CartItem from './CartItem.js'; 
-import Product from './Product.js'; 
 
 const Cart = sequelize.define('Cart', {
     carrito_id: {
@@ -15,43 +10,71 @@ const Cart = sequelize.define('Cart', {
     },
     usuario_id: {
         type: DataTypes.INTEGER,
-        allowNull: true,
-        references: { model: User, key: 'usuario_id' }
+        allowNull: true
     },
     sesion_temporal: {
         type: DataTypes.STRING(255),
-        allowNull: true
+        allowNull: true,
+        comment: 'Para usuarios no logueados'
     },
     estado: {
-        type: DataTypes.ENUM('activo', 'enviado', 'cancelado', 'procesando'),
+        type: DataTypes.ENUM(
+            'activo', 
+            'abandonado', 
+            'procesando', 
+            'enviado', 
+            'completado', 
+            'cancelado'
+        ),
         defaultValue: 'activo'
     },
     subtotal: { 
         type: DataTypes.DECIMAL(10, 2), 
-        defaultValue: 0,
+        defaultValue: 0.00,
         allowNull: false
     },
     descuento_total: { 
         type: DataTypes.DECIMAL(10, 2), 
-        defaultValue: 0,
+        defaultValue: 0.00,
         allowNull: false
     },
     total: { 
         type: DataTypes.DECIMAL(10, 2), 
-        defaultValue: 0,
+        defaultValue: 0.00,
         allowNull: false
     },
-    notas_cliente: DataTypes.TEXT
+    notas_cliente: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    convertido_venta_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        comment: 'ID de venta si se completó'
+    }
 }, {
     tableName: 'carritos',
     timestamps: true,
     createdAt: 'creado_en',
-    updatedAt: 'actualizado_en'
+    updatedAt: 'actualizado_en',
+    indexes: [
+        {
+            name: 'idx_usuario_estado',
+            fields: ['usuario_id', 'estado']
+        },
+        {
+            name: 'idx_sesion',
+            fields: ['sesion_temporal']
+        },
+        {
+            name: 'idx_estado',
+            fields: ['estado']
+        },
+        {
+            name: 'idx_carritos_actualizado',
+            fields: ['actualizado_en']
+        }
+    ]
 });
-
-// Nota: Las asociaciones se definirán en index.js (como ya lo tienes) 
-// pero se mantienen las básicas aquí por claridad si se requiere.
-Cart.belongsTo(User, { foreignKey: 'usuario_id' });
-User.hasOne(Cart, { foreignKey: 'usuario_id' });
 
 export default Cart;

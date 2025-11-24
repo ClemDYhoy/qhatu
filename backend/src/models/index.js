@@ -1,190 +1,250 @@
 // C:\qhatu\backend\src\models\index.js
 import sequelize from '../config/database.js';
+
+// ====================================
+// 📦 IMPORTACIÓN DE MODELOS
+// ====================================
+
+// Modelos base
 import Product from './Product.js';
 import Category from './Category.js';
 import Carousel from './Carousel.js';
+
+// Usuarios y autenticación
 import User from './User.js';
 import Role from './Role.js';
+
+// Carrito de compras
 import Cart from './Cart.js';
 import CartItem from './CartItem.js';
+
+// Sistema de ventas
+import Venta from './Venta.js';
+import VentaItem from './VentaItem.js';
+
+// Tracking y análisis
 import SessionTracking from './SessionTracking.js';
-import Venta from './Venta.js'; // 🆕 NUEVO
-import VentaItem from './VentaItem.js'; // 🆕 NUEVO
 
 // ====================================
-// 📊 RELACIONES ENTRE MODELOS
+// 🔗 DEFINICIÓN DE RELACIONES
 // ====================================
 
-// --- 👤 Usuarios y Roles ---
-User.belongsTo(Role, {
-  foreignKey: 'rol_id',
-  as: 'rol',
-  targetKey: 'rol_id'
-});
+/**
+ * Configura todas las asociaciones entre modelos
+ * Se ejecuta una sola vez al importar este módulo
+ */
+const setupAssociations = () => {
+  console.log('🔗 Configurando asociaciones de modelos...');
 
-Role.hasMany(User, {
-  foreignKey: 'rol_id',
-  as: 'usuarios'
-});
+  // ==========================================
+  // 👤 USUARIOS Y ROLES
+  // ==========================================
+  
+  User.belongsTo(Role, {
+    foreignKey: 'rol_id',
+    as: 'rol',
+    targetKey: 'rol_id'
+  });
 
-// --- 📦 Productos y Categorías ---
-Product.belongsTo(Category, {
-  foreignKey: 'categoria_id',
-  as: 'categoria'
-});
+  Role.hasMany(User, {
+    foreignKey: 'rol_id',
+    as: 'usuarios'
+  });
 
-Category.hasMany(Product, {
-  foreignKey: 'categoria_id',
-  as: 'productos'
-});
+  // ==========================================
+  // 📦 PRODUCTOS Y CATEGORÍAS
+  // ==========================================
+  
+  Product.belongsTo(Category, {
+    foreignKey: 'categoria_id',
+    as: 'categoria'
+  });
 
-// --- 🛒 Usuarios y Carritos ---
-User.hasOne(Cart, {
-  foreignKey: 'usuario_id',
-  as: 'carrito'
-});
+  Category.hasMany(Product, {
+    foreignKey: 'categoria_id',
+    as: 'productos'
+  });
 
-Cart.belongsTo(User, {
-  foreignKey: 'usuario_id',
-  as: 'usuario'
-});
+  // ==========================================
+  // 🎠 CARRUSELES Y CATEGORÍAS
+  // ==========================================
+  
+  Carousel.belongsTo(Category, {
+    foreignKey: 'categoria_id',
+    as: 'categoria'
+  });
 
-// --- 🛍️ Carritos y Items ---
-Cart.hasMany(CartItem, {
-  foreignKey: 'carrito_id',
-  as: 'items',
-  onDelete: 'CASCADE'
-});
+  Category.hasMany(Carousel, {
+    foreignKey: 'categoria_id',
+    as: 'carruseles'
+  });
 
-CartItem.belongsTo(Cart, {
-  foreignKey: 'carrito_id',
-  as: 'carrito'
-});
+  // ==========================================
+  // 🛒 CARRITOS DE COMPRA
+  // ==========================================
+  
+  // Usuario <-> Carrito (1:1)
+  User.hasOne(Cart, {
+    foreignKey: 'usuario_id',
+    as: 'carrito'
+  });
 
-// --- 📦 Items y Productos ---
-CartItem.belongsTo(Product, {
-  foreignKey: 'producto_id',
-  as: 'producto'
-});
+  Cart.belongsTo(User, {
+    foreignKey: 'usuario_id',
+    as: 'usuario'
+  });
 
-Product.hasMany(CartItem, {
-  foreignKey: 'producto_id',
-  as: 'items_carrito'
-});
+  // Carrito <-> Items (1:N)
+  Cart.hasMany(CartItem, {
+    foreignKey: 'carrito_id',
+    as: 'items',
+    onDelete: 'CASCADE'
+  });
+
+  CartItem.belongsTo(Cart, {
+    foreignKey: 'carrito_id',
+    as: 'carrito'
+  });
+
+  // CartItem <-> Producto (N:1)
+  CartItem.belongsTo(Product, {
+    foreignKey: 'producto_id',
+    as: 'producto'
+  });
+
+  Product.hasMany(CartItem, {
+    foreignKey: 'producto_id',
+    as: 'items_carrito'
+  });
+
+  // ==========================================
+  // 💰 SISTEMA DE VENTAS
+  // ==========================================
+  
+  // Venta <-> Usuario Cliente (N:1)
+  Venta.belongsTo(User, {
+    foreignKey: 'usuario_id',
+    as: 'usuario'
+  });
+
+  User.hasMany(Venta, {
+    foreignKey: 'usuario_id',
+    as: 'ventas'
+  });
+
+  // Venta <-> Usuario Vendedor (N:1)
+  Venta.belongsTo(User, {
+    foreignKey: 'vendedor_id',
+    as: 'vendedor'
+  });
+
+  User.hasMany(Venta, {
+    foreignKey: 'vendedor_id',
+    as: 'ventas_gestionadas'
+  });
+
+  // Venta <-> Carrito (1:1)
+  Venta.belongsTo(Cart, {
+    foreignKey: 'carrito_id',
+    as: 'carrito'
+  });
+
+  Cart.hasOne(Venta, {
+    foreignKey: 'carrito_id',
+    as: 'venta'
+  });
+
+  // Venta <-> VentaItems (1:N)
+  Venta.hasMany(VentaItem, {
+    foreignKey: 'venta_id',
+    as: 'items',
+    onDelete: 'CASCADE'
+  });
+
+  VentaItem.belongsTo(Venta, {
+    foreignKey: 'venta_id',
+    as: 'venta'
+  });
+
+  // VentaItem <-> Producto (N:1)
+  VentaItem.belongsTo(Product, {
+    foreignKey: 'producto_id',
+    as: 'producto'
+  });
+
+  Product.hasMany(VentaItem, {
+    foreignKey: 'producto_id',
+    as: 'ventas_items'
+  });
+
+  // ==========================================
+  // 📊 TRACKING Y ANÁLISIS
+  // ==========================================
+  
+  User.hasMany(SessionTracking, {
+    foreignKey: 'usuario_id',
+    as: 'sesiones'
+  });
+
+  SessionTracking.belongsTo(User, {
+    foreignKey: 'usuario_id',
+    as: 'usuario'
+  });
+
+  console.log('✅ Asociaciones configuradas exitosamente');
+};
+
+// Ejecutar configuración de asociaciones
+setupAssociations();
 
 // ====================================
-// 💰 RELACIONES DE VENTAS (NUEVO)
-// ====================================
-
-// --- Venta y Usuario (Cliente) ---
-Venta.belongsTo(User, {
-  foreignKey: 'usuario_id',
-  as: 'usuario'
-});
-
-User.hasMany(Venta, {
-  foreignKey: 'usuario_id',
-  as: 'ventas'
-});
-
-// --- Venta y Usuario (Vendedor) ---
-Venta.belongsTo(User, {
-  foreignKey: 'vendedor_id',
-  as: 'vendedor'
-});
-
-User.hasMany(Venta, {
-  foreignKey: 'vendedor_id',
-  as: 'ventas_gestionadas'
-});
-
-// --- Venta y Carrito ---
-Venta.belongsTo(Cart, {
-  foreignKey: 'carrito_id',
-  as: 'carrito'
-});
-
-Cart.hasOne(Venta, {
-  foreignKey: 'carrito_id',
-  as: 'venta'
-});
-
-// --- Venta y VentaItems ---
-Venta.hasMany(VentaItem, {
-  foreignKey: 'venta_id',
-  as: 'items',
-  onDelete: 'CASCADE'
-});
-
-VentaItem.belongsTo(Venta, {
-  foreignKey: 'venta_id',
-  as: 'venta'
-});
-
-// --- VentaItem y Producto ---
-VentaItem.belongsTo(Product, {
-  foreignKey: 'producto_id',
-  as: 'producto'
-});
-
-Product.hasMany(VentaItem, {
-  foreignKey: 'producto_id',
-  as: 'ventas_items'
-});
-
-// ====================================
-// 📊 TRACKING
-// ====================================
-
-// --- Usuarios y Sesiones de Tracking ---
-User.hasMany(SessionTracking, {
-  foreignKey: 'usuario_id',
-  as: 'sesiones'
-});
-
-SessionTracking.belongsTo(User, {
-  foreignKey: 'usuario_id',
-  as: 'usuario'
-});
-
-// ====================================
-// 🔄 FUNCIÓN DE SINCRONIZACIÓN (CONTROLADA)
+// 🔧 UTILIDADES DE GESTIÓN
 // ====================================
 
 /**
  * Sincronizar modelos con la base de datos
- * ⚠️ SOLO llamar explícitamente desde server.js
+ * ⚠️ USAR CON PRECAUCIÓN EN PRODUCCIÓN
  * 
  * @param {Object} options - Opciones de sincronización
- * @param {boolean} options.force - Eliminar y recrear tablas
- * @param {boolean} options.alter - Modificar tablas existentes
+ * @param {boolean} options.force - Eliminar y recrear tablas (¡PELIGRO!)
+ * @param {boolean} options.alter - Modificar tablas existentes (recomendado)
+ * @returns {Promise<boolean>}
  */
 export const syncModels = async (options = {}) => {
   try {
-    const mode = options.force ? 'FORCE' : options.alter ? 'ALTER' : 'SAFE';
-    console.log(`🔄 Sincronizando modelos (${mode})...`);
+    const mode = options.force ? '🔴 FORCE (destruirá datos)' 
+               : options.alter ? '🟡 ALTER (modificará estructura)' 
+               : '🟢 SAFE (solo verificación)';
+    
+    console.log(`\n🔄 Sincronizando modelos: ${mode}\n`);
+    
+    if (options.force) {
+      console.warn('⚠️  ADVERTENCIA: Se eliminarán TODOS los datos');
+      console.warn('⚠️  Esta operación es IRREVERSIBLE\n');
+    }
     
     await sequelize.sync(options);
     
-    console.log('✅ Modelos sincronizados correctamente');
+    console.log('✅ Modelos sincronizados correctamente\n');
     return true;
   } catch (error) {
     console.error('❌ Error al sincronizar modelos:');
     console.error(`   ${error.message}`);
+    if (error.original) {
+      console.error(`   SQL Error: ${error.original.message}`);
+    }
     throw error;
   }
 };
 
-// ====================================
-// 🧪 VERIFICAR ASOCIACIONES
-// ====================================
-
 /**
- * Verificar que todas las asociaciones estén configuradas
- * Útil para debugging
+ * Verificar estado de las asociaciones
+ * Útil para debugging y validación
+ * 
+ * @returns {Object} Resumen de asociaciones por modelo
  */
 export const verifyAssociations = () => {
-  console.log('\n🔍 Verificando asociaciones...\n');
+  console.log('\n🔍 Verificando asociaciones de modelos...\n');
   
   const models = {
     User,
@@ -193,42 +253,134 @@ export const verifyAssociations = () => {
     Category,
     Cart,
     CartItem,
-    Venta, // 🆕 NUEVO
-    VentaItem, // 🆕 NUEVO
+    Venta,
+    VentaItem,
     SessionTracking,
     Carousel
   };
   
+  const report = {};
+  
   Object.entries(models).forEach(([name, model]) => {
     const associations = Object.keys(model.associations);
-    console.log(`📋 ${name}:`, associations.length > 0 ? associations.join(', ') : '❌ Sin asociaciones');
+    const count = associations.length;
+    
+    report[name] = {
+      count,
+      associations
+    };
+    
+    const status = count > 0 ? '✅' : '❌';
+    const list = count > 0 ? associations.join(', ') : 'Sin asociaciones';
+    
+    console.log(`${status} ${name.padEnd(20)} (${count}): ${list}`);
   });
   
-  console.log('');
+  console.log('\n');
+  return report;
+};
+
+/**
+ * Verificar conexión a la base de datos
+ * 
+ * @returns {Promise<Object>} Información de la conexión
+ */
+export const checkConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    
+    const [result] = await sequelize.query('SELECT VERSION() as version, DATABASE() as database');
+    const { version, database } = result[0];
+    
+    return {
+      success: true,
+      connected: true,
+      database,
+      version,
+      dialect: sequelize.getDialect()
+    };
+  } catch (error) {
+    return {
+      success: false,
+      connected: false,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Obtener estadísticas de la base de datos
+ * 
+ * @returns {Promise<Object>} Estadísticas
+ */
+export const getDatabaseStats = async () => {
+  try {
+    const [tables] = await sequelize.query(`
+      SELECT 
+        TABLE_NAME,
+        TABLE_ROWS,
+        ROUND(((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024), 2) AS size_mb
+      FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = DATABASE()
+      ORDER BY (DATA_LENGTH + INDEX_LENGTH) DESC
+    `);
+
+    const totalRows = tables.reduce((sum, table) => sum + (table.TABLE_ROWS || 0), 0);
+    const totalSize = tables.reduce((sum, table) => sum + (parseFloat(table.size_mb) || 0), 0);
+
+    return {
+      tables: tables.map(t => ({
+        name: t.TABLE_NAME,
+        rows: t.TABLE_ROWS || 0,
+        size: `${t.size_mb} MB`
+      })),
+      summary: {
+        total_tables: tables.length,
+        total_rows: totalRows,
+        total_size: `${totalSize.toFixed(2)} MB`
+      }
+    };
+  } catch (error) {
+    console.error('Error obteniendo estadísticas:', error.message);
+    return null;
+  }
 };
 
 // ====================================
 // 📤 EXPORTACIONES
 // ====================================
 
-// Export individual de modelos
+// Exportaciones individuales (recomendado)
 export {
   sequelize,
+  
+  // Modelos principales
   Product,
   Category,
   Carousel,
+  
+  // Usuarios
   User,
   Role,
+  
+  // Carrito
   Cart,
   CartItem,
-  Venta, // 🆕 NUEVO
-  VentaItem, // 🆕 NUEVO
+  
+  // Ventas
+  Venta,
+  VentaItem,
+  
+  // Tracking
   SessionTracking
 };
 
-// Export por defecto (objeto con todos los modelos)
+// Exportación por defecto (objeto con todo)
 export default {
+  // Instancia de Sequelize
   sequelize,
+  
+  // Modelos
   Product,
   Category,
   Carousel,
@@ -236,9 +388,13 @@ export default {
   Role,
   Cart,
   CartItem,
-  Venta, // 🆕 NUEVO
-  VentaItem, // 🆕 NUEVO
+  Venta,
+  VentaItem,
   SessionTracking,
+  
+  // Utilidades
   syncModels,
-  verifyAssociations
+  verifyAssociations,
+  checkConnection,
+  getDatabaseStats
 };

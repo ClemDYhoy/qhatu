@@ -1,6 +1,6 @@
 // C:\qhatu\backend\src\controllers\ventaController.js
 import { Venta, VentaItem, Cart, CartItem, Product, User } from '../models/index.js';
-import { Op, Sequelize } from 'sequelize';
+import { Op } from 'sequelize';
 import whatsappService from '../services/whatsappService.js';
 
 const VentaController = {
@@ -12,6 +12,8 @@ const VentaController = {
 
     try {
       const usuario_id = req.user?.usuario_id;
+      
+      // 1️⃣ Validar autenticación
       if (!usuario_id) {
         await transaction.rollback();
         return res.status(401).json({ 
@@ -20,7 +22,9 @@ const VentaController = {
         });
       }
 
-      // 1️⃣ Obtener carrito activo con bloqueo de transacción
+      console.log(`\n🛒 Iniciando creación de venta para usuario ${usuario_id}...`);
+
+      // 2️⃣ Obtener carrito activo con bloqueo
       const carrito = await Cart.findOne({
         where: { usuario_id, estado: 'activo' },
         include: [{
@@ -39,13 +43,16 @@ const VentaController = {
       // Validar carrito
       if (!carrito || !carrito.items || carrito.items.length === 0) {
         await transaction.rollback();
+        console.warn('⚠️ Carrito vacío o no encontrado');
         return res.status(400).json({ 
           success: false, 
-          message: 'Carrito vacío o no encontrado' 
+          message: 'Tu carrito está vacío. Agrega productos para continuar.' 
         });
       }
 
-      // 2️⃣ VALIDACIÓN CRÍTICA DE STOCK
+      console.log(`✅ Carrito encontrado: ${carrito.items.length} items`);
+
+      // 3️⃣ VALIDACIÓN CRÍTICA DE STOCK
       const stockErrors = [];
       for (const item of carrito.items) {
         if (!item.producto) {
@@ -67,14 +74,17 @@ const VentaController = {
 
       if (stockErrors.length > 0) {
         await transaction.rollback();
+        console.warn('⚠️ Stock insuficiente:', stockErrors);
         return res.status(400).json({
           success: false,
-          message: 'Stock insuficiente para completar el pedido',
+          message: 'Stock insuficiente para algunos productos',
           errores: stockErrors
         });
       }
 
-      // 3️⃣ Obtener datos del cliente
+      console.log('✅ Stock validado correctamente');
+
+      // 4️⃣ Obtener datos del cliente
       const usuario = await User.findByPk(usuario_id, {
         attributes: ['nombre_completo', 'email', 'telefono', 'direccion', 'distrito'],
         transaction
@@ -88,8 +98,11 @@ const VentaController = {
         });
       }
 
-      // 4️⃣ Crear venta (el trigger genera numero_venta automáticamente)
+      // 5️⃣ Crear venta (SIN numero_venta - lo genera el trigger)
+      console.log('📝 Creando registro de venta...');
+      
       const venta = await Venta.create({
+        // ⚡ NO incluir numero_venta - el trigger MySQL lo genera
         carrito_id: carrito.carrito_id,
         usuario_id,
         cliente_nombre: usuario.nombre_completo || 'Cliente',
@@ -107,7 +120,18 @@ const VentaController = {
         fecha_envio_whatsapp: null
       }, { transaction });
 
-      // 5️⃣ Crear items de venta (snapshot de productos)
+      // ⚡ CRÍTICO: Recargar para obtener numero_venta generado por trigger
+      await venta.reload({ transaction });
+      
+      if (!venta.numero_venta) {
+        throw new Error('El trigger no generó numero_venta correctamente');
+      }
+
+      console.log(`✅ Venta creada exitosamente: ${venta.numero_venta}`);
+
+      // 6️⃣ Crear items de venta (snapshot de productos)
+      console.log('📦 Creando items de venta...');
+      
       const itemsCreados = await Promise.all(
         carrito.items.map(item => {
           const p = item.producto;
@@ -129,7 +153,9 @@ const VentaController = {
         })
       );
 
-      // 6️⃣ Cambiar estado del carrito y crear uno nuevo
+      console.log(`✅ ${itemsCreados.length} items creados`);
+
+      // 7️⃣ Actualizar carrito y crear uno nuevo
       await carrito.update({ 
         estado: 'enviado',
         convertido_venta_id: venta.venta_id 
@@ -143,44 +169,45 @@ const VentaController = {
         total: 0
       }, { transaction });
 
-      // ✅ Commit de la transacción ANTES de enviar WhatsApp
-      await transaction.commit();
+      console.log('✅ Carrito actualizado y nuevo carrito creado');
 
-      // 7️⃣ GENERAR URL DE WHATSAPP
-      let whatsappResult = { success: false, url: null };
+      // ✅ COMMIT - Transacción completada exitosamente
+      await transaction.commit();
+      console.log('✅ Transacción comprometida exitosamente');
+
+      // 8️⃣ GENERAR URL DE WHATSAPP (después del commit)
+      let whatsappResult = { success: false, url: null, mensaje: null };
 
       try {
+        console.log('📱 Generando URL de WhatsApp...');
+        
         whatsappResult = await whatsappService.enviarPedidoCliente({
           numero_venta: venta.numero_venta,
           cliente_nombre: venta.cliente_nombre,
           cliente_telefono: venta.cliente_telefono,
-          cliente_direccion: venta.cliente_direccion,
-          cliente_notas: venta.cliente_notas,
-          total: parseFloat(venta.total),
-          items: itemsCreados.map(item => ({
-            nombre: item.producto_nombre,
-            cantidad: item.cantidad,
-            precio_unitario: parseFloat(item.precio_unitario),
-            precio_descuento: item.precio_descuento ? parseFloat(item.precio_descuento) : null,
-            subtotal: parseFloat(item.subtotal)
-          }))
+          total: parseFloat(venta.total)
         });
 
-        // Actualizar estado de envío WhatsApp
         if (whatsappResult.success) {
+          console.log('✅ URL WhatsApp generada:', whatsappResult.url);
+          
+          // Actualizar estado de envío (sin transacción, ya hicimos commit)
           await venta.update({
             enviado_whatsapp: true,
             fecha_envio_whatsapp: new Date(),
             mensaje_whatsapp: whatsappResult.mensaje
           });
+        } else {
+          console.warn('⚠️ No se pudo generar URL WhatsApp:', whatsappResult.error);
         }
       } catch (whatsappError) {
         console.error('⚠️ Error al generar URL WhatsApp:', whatsappError.message);
+        // No fallar la venta por error de WhatsApp
       }
 
-      // 8️⃣ 🔔 EMITIR NOTIFICACIÓN SOCKET.IO A VENDEDORES
+      // 9️⃣ 🔔 EMITIR NOTIFICACIÓN SOCKET.IO
       if (req.io) {
-        console.log('🔔 Emitiendo nueva-venta-pendiente via Socket.IO');
+        console.log('🔔 Emitiendo notificación Socket.IO...');
         
         req.io.emit('nueva-venta-pendiente', {
           venta_id: venta.venta_id,
@@ -193,39 +220,43 @@ const VentaController = {
           enviado_whatsapp: venta.enviado_whatsapp,
           timestamp: Date.now()
         });
-      } else {
-        console.warn('⚠️ Socket.IO no disponible en req.io');
+        
+        console.log('✅ Notificación Socket.IO enviada');
       }
 
-      // 9️⃣ Respuesta al frontend
+      // 🔟 Respuesta exitosa al frontend
+      console.log(`\n✅ VENTA ${venta.numero_venta} COMPLETADA EXITOSAMENTE\n`);
+      
       return res.status(201).json({
-      success: true,
-      message: 'Pedido creado exitosamente',
-      whatsapp_enviado: venta.enviado_whatsapp,
-      data: {
-        venta_id: venta.venta_id,
-        numero_venta: venta.numero_venta,
-        total: parseFloat(venta.total),
-        whatsapp_url: whatsappResult.url || null, // ⚡ CRÍTICO
-        items: itemsCreados.map(item => ({
-          producto_nombre: item.producto_nombre,
-          cantidad: item.cantidad,
-          precio_unitario: parseFloat(item.precio_unitario),
-          precio_descuento: item.precio_descuento ? parseFloat(item.precio_descuento) : null,
-          subtotal: parseFloat(item.subtotal)
-        })),
-        cliente: {
-          nombre: venta.cliente_nombre,
-          telefono: venta.cliente_telefono,
-          email: venta.cliente_email,
-          direccion: venta.cliente_direccion
+        success: true,
+        message: 'Pedido creado exitosamente',
+        whatsapp_enviado: venta.enviado_whatsapp,
+        data: {
+          venta_id: venta.venta_id,
+          numero_venta: venta.numero_venta,
+          total: parseFloat(venta.total),
+          whatsapp_url: whatsappResult.url || null, // ⚡ URL para abrir WhatsApp
+          items: itemsCreados.map(item => ({
+            producto_nombre: item.producto_nombre,
+            cantidad: item.cantidad,
+            precio_unitario: parseFloat(item.precio_unitario),
+            precio_descuento: item.precio_descuento ? parseFloat(item.precio_descuento) : null,
+            subtotal: parseFloat(item.subtotal)
+          })),
+          cliente: {
+            nombre: venta.cliente_nombre,
+            telefono: venta.cliente_telefono,
+            email: venta.cliente_email,
+            direccion: venta.cliente_direccion
+          }
         }
-      }
-    });
+      });
 
     } catch (error) {
       await transaction.rollback();
-      console.error('❌ Error en crearVentaWhatsApp:', error);
+      console.error('\n❌ ERROR EN crearVentaWhatsApp:', error);
+      console.error('Stack:', error.stack);
+      
       return res.status(500).json({
         success: false,
         message: 'Error interno al procesar el pedido',
@@ -310,7 +341,7 @@ const VentaController = {
         });
       }
 
-      if (venta.estado !== 'pendiente') {
+      if (!venta.puedeConfirmarse()) {
         await transaction.rollback();
         return res.status(400).json({ 
           success: false, 
@@ -382,7 +413,9 @@ const VentaController = {
     }
   },
 
-  // Resto de métodos igual...
+  // ====================================
+  // 📊 OBTENER DETALLE DE VENTA
+  // ====================================
   obtenerDetalleVenta: async (req, res) => {
     try {
       const { ventaId } = req.params;
@@ -410,30 +443,34 @@ const VentaController = {
     }
   },
 
+  // ====================================
+  // 📊 ESTADÍSTICAS DEL VENDEDOR
+  // ====================================
   obtenerEstadisticas: async (req, res) => {
     try {
       const vendedor_id = req.user.usuario_id;
 
-      const stats = await Venta.findAll({
-        attributes: [
-          [Sequelize.fn('COUNT', Sequelize.literal("CASE WHEN DATE(fecha_venta) = CURDATE() THEN 1 END")), 'ventasHoy'],
-          [Sequelize.fn('SUM', Sequelize.col('total')), 'totalVentas'],
-          [Sequelize.fn('COUNT', Sequelize.literal("CASE WHEN estado = 'pendiente' THEN 1 END")), 'pendientes']
-        ],
-        where: { vendedor_id },
-        raw: true
+      const [stats] = await Venta.sequelize.query(`
+        SELECT 
+          COUNT(CASE WHEN DATE(fecha_venta) = CURDATE() THEN 1 END) as ventasHoy,
+          SUM(total) as totalVentas,
+          COUNT(CASE WHEN estado = 'pendiente' THEN 1 END) as pendientes
+        FROM ventas
+        WHERE vendedor_id = ?
+      `, {
+        replacements: [vendedor_id],
+        type: Venta.sequelize.QueryTypes.SELECT
       });
 
-      const data = stats[0] || {};
-      const totalVentas = parseFloat(data.totalVentas || 0);
+      const totalVentas = parseFloat(stats.totalVentas || 0);
       const comision = (totalVentas * 0.05).toFixed(2);
 
       return res.json({
         success: true,
         data: {
-          ventasHoy: parseInt(data.ventasHoy || 0),
+          ventasHoy: parseInt(stats.ventasHoy || 0),
           totalVentas: totalVentas.toFixed(2),
-          pendientes: parseInt(data.pendientes || 0),
+          pendientes: parseInt(stats.pendientes || 0),
           comision,
           porcentaje_comision: 5
         }
@@ -448,6 +485,9 @@ const VentaController = {
     }
   },
 
+  // ====================================
+  // 📱 MARCAR COMO ENVIADO POR WHATSAPP
+  // ====================================
   marcarEnviadoWhatsApp: async (req, res) => {
     try {
       const { ventaId } = req.params;

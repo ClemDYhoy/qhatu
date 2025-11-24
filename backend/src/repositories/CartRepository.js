@@ -1,16 +1,26 @@
 // C:\qhatu\backend\src\repositories\CartRepository.js
 import sequelize from '../config/database.js';
-import { Cart, CartItem, Product } from '../models/index.js'; // Importamos todos los modelos desde index
+import { Cart, CartItem, Product } from '../models/index.js';
 import { Op } from 'sequelize';
+
+// ====================================
+// 📦 ESTRUCTURA DE CARRITO VACÍO
+// ====================================
+const EMPTY_CART_STRUCTURE = {
+    items: [],
+    subtotal: 0.00,
+    descuento_total: 0.00,
+    total: 0.00,
+    estado: 'activo',
+    notas_cliente: null
+};
 
 // ====================================
 // 🔧 FUNCIONES DE CÁLCULO
 // ====================================
 
 /**
- * Recalcula el subtotal, descuento y total del carrito basado en sus items.
- * @param {number} carritoId
- * @param {Object} transaction - Transacción de Sequelize opcional
+ * Recalcula totales del carrito
  */
 const recalcularTotales = async (carritoId, transaction = null) => {
     try {
@@ -26,34 +36,30 @@ const recalcularTotales = async (carritoId, transaction = null) => {
             const precioFinal = item.precio_descuento || item.precio_unitario;
             const itemSubtotal = parseFloat(precioFinal) * item.cantidad;
             
-            // Actualizar subtotal del item si es necesario (para asegurar consistencia)
             if (parseFloat(item.subtotal) !== itemSubtotal) {
-                await item.update({ subtotal: itemSubtotal }, { transaction });
+                await item.update({ subtotal: itemSubtotal.toFixed(2) }, { transaction });
             }
 
             subtotal += itemSubtotal;
             
-            // Calcular el ahorro por descuento
             if (item.precio_descuento) {
                 const ahorroUnitario = parseFloat(item.precio_unitario) - parseFloat(item.precio_descuento);
                 descuentoTotal += ahorroUnitario * item.cantidad;
             }
         }
 
-        const totalFinal = subtotal; // Aquí podrías añadir impuestos o envío
-
         await Cart.update({
-            subtotal: subtotal,
-            descuento_total: descuentoTotal,
-            total: totalFinal
+            subtotal: subtotal.toFixed(2),
+            descuento_total: descuentoTotal.toFixed(2),
+            total: subtotal.toFixed(2)
         }, {
             where: { carrito_id: carritoId },
             transaction
         });
 
     } catch (error) {
-        console.error('Error al recalcular totales:', error);
-        throw new Error('Fallo en la lógica de cálculo del carrito.');
+        console.error('❌ Error al recalcular totales:', error);
+        throw new Error('Error en cálculo del carrito');
     }
 };
 
@@ -62,9 +68,9 @@ const recalcularTotales = async (carritoId, transaction = null) => {
 // ====================================
 
 /**
- * Busca un carrito activo por usuario o sesión, o crea uno.
+ * Obtener o crear carrito activo
  */
-const obtenerOCrearCarrito = async (usuarioId, sesionTemporal) => {
+const obtenerOCrearCarrito = async (usuarioId, sesionTemporal = null) => {
     let whereClause = { estado: 'activo' };
     
     if (usuarioId) {
@@ -72,7 +78,7 @@ const obtenerOCrearCarrito = async (usuarioId, sesionTemporal) => {
     } else if (sesionTemporal) {
         whereClause.sesion_temporal = sesionTemporal;
     } else {
-        throw new Error("Se requiere usuarioId o sesionTemporal para obtener o crear el carrito.");
+        throw new Error("Se requiere usuarioId o sesionTemporal");
     }
 
     try {
@@ -80,79 +86,73 @@ const obtenerOCrearCarrito = async (usuarioId, sesionTemporal) => {
             where: whereClause,
             defaults: {
                 usuario_id: usuarioId,
-                sesion_temporal: sesionTemporal
+                sesion_temporal: sesionTemporal,
+                estado: 'activo',
+                subtotal: 0.00,
+                descuento_total: 0.00,
+                total: 0.00
             }
         });
+
         return carrito;
     } catch (error) {
-        console.error('Error en obtenerOCrearCarrito:', error.message);
+        console.error('❌ Error en obtenerOCrearCarrito:', error);
         throw error;
     }
 };
 
 /**
- * Agrega o actualiza un producto en el carrito.
+ * Agregar producto al carrito
  */
 const agregarProducto = async (carritoId, producto_id, cantidad) => {
     const transaction = await sequelize.transaction();
+    
     try {
-        // 1. Obtener datos del producto y stock
         const product = await Product.findByPk(producto_id, { transaction });
+        
         if (!product) {
-            throw new Error(`Producto con ID ${producto_id} no encontrado.`);
+            throw new Error(`Producto ${producto_id} no encontrado`);
         }
         
-        // El precio real a usar (con o sin descuento)
         const precioUnitario = parseFloat(product.precio);
         const precioDescuento = product.precio_descuento ? parseFloat(product.precio_descuento) : null;
         const precioFinal = precioDescuento || precioUnitario;
 
-        // 2. Verificar stock (Lógica de negocio robusta)
-        if (product.stock < cantidad) {
-            await transaction.rollback();
-            throw new Error(`Stock insuficiente. Solo quedan ${product.stock} unidades de ${product.nombre}.`);
-        }
-
-        // 3. Buscar item existente
         let item = await CartItem.findOne({
-            where: { carrito_id: carritoId, producto_id: producto_id },
+            where: { carrito_id: carritoId, producto_id },
             transaction
         });
         
-        // 4. Insertar o Actualizar
         if (item) {
-            // Actualizar cantidad (sumar la nueva cantidad)
             const nuevaCantidad = item.cantidad + cantidad;
             
-            // Re-verificar stock con la nueva cantidad total
             if (product.stock < nuevaCantidad) {
-                await transaction.rollback();
-                throw new Error(`Stock insuficiente. La cantidad total excede el stock disponible (${product.stock}).`);
+                throw new Error(`Stock insuficiente. Disponible: ${product.stock}`);
             }
 
             await item.update({ 
                 cantidad: nuevaCantidad,
-                subtotal: nuevaCantidad * precioFinal
+                subtotal: (nuevaCantidad * precioFinal).toFixed(2)
             }, { transaction });
-            
         } else {
-            // Crear nuevo item
+            if (product.stock < cantidad) {
+                throw new Error(`Stock insuficiente. Disponible: ${product.stock}`);
+            }
+
             item = await CartItem.create({
                 carrito_id: carritoId,
-                producto_id: producto_id,
-                cantidad: cantidad,
+                producto_id,
+                cantidad,
                 precio_unitario: precioUnitario,
                 precio_descuento: precioDescuento,
-                subtotal: cantidad * precioFinal
+                subtotal: (cantidad * precioFinal).toFixed(2)
             }, { transaction });
         }
 
-        // 5. Recalcular Totales del Carrito
         await recalcularTotales(carritoId, transaction);
-
         await transaction.commit();
-        return item;
 
+        return item;
     } catch (error) {
         await transaction.rollback();
         throw error;
@@ -160,32 +160,234 @@ const agregarProducto = async (carritoId, producto_id, cantidad) => {
 };
 
 /**
- * Obtiene el carrito completo con sus items y los detalles del producto.
+ * Actualizar cantidad de un item
+ */
+const actualizarCantidad = async (item_id, cantidad) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        const item = await CartItem.findByPk(item_id, {
+            include: [{ model: Product, as: 'producto' }],
+            transaction
+        });
+
+        if (!item) {
+            throw new Error('Item no encontrado');
+        }
+
+        if (cantidad < 1) {
+            throw new Error('Cantidad debe ser al menos 1');
+        }
+
+        if (item.producto.stock < cantidad) {
+            throw new Error(`Stock insuficiente. Disponible: ${item.producto.stock}`);
+        }
+
+        const precioFinal = item.precio_descuento || item.precio_unitario;
+        
+        await item.update({
+            cantidad,
+            subtotal: (cantidad * parseFloat(precioFinal)).toFixed(2)
+        }, { transaction });
+
+        await recalcularTotales(item.carrito_id, transaction);
+        await transaction.commit();
+
+        return await obtenerCarritoCompleto(item.carrito_id);
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
+};
+
+/**
+ * Eliminar item del carrito
+ */
+const eliminarItem = async (item_id) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        const item = await CartItem.findByPk(item_id, { transaction });
+
+        if (!item) {
+            throw new Error('Item no encontrado');
+        }
+
+        const carrito_id = item.carrito_id;
+        await item.destroy({ transaction });
+        await recalcularTotales(carrito_id, transaction);
+        await transaction.commit();
+
+        return await obtenerCarritoCompleto(carrito_id);
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
+};
+
+/**
+ * Vaciar carrito completo
+ */
+const vaciarCarrito = async (carrito_id) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        await CartItem.destroy({
+            where: { carrito_id },
+            transaction
+        });
+
+        await Cart.update({
+            subtotal: 0.00,
+            descuento_total: 0.00,
+            total: 0.00
+        }, {
+            where: { carrito_id },
+            transaction
+        });
+
+        await transaction.commit();
+        return await obtenerCarritoCompleto(carrito_id);
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
+};
+
+/**
+ * Obtener carrito completo con items y productos
  */
 const obtenerCarritoCompleto = async (carritoId) => {
-    if (!carritoId) {
-        return null;
-    }
+    if (!carritoId) return null;
+
     return await Cart.findByPk(carritoId, {
-        include: [{ 
-            model: CartItem, 
-            as: 'items', 
+        include: [{
+            model: CartItem,
+            as: 'items',
             include: [{
                 model: Product,
                 as: 'producto',
-                attributes: ['producto_id', 'nombre', 'url_imagen', 'stock'] 
+                attributes: ['producto_id', 'nombre', 'url_imagen', 'stock', 'precio', 'precio_descuento']
             }]
         }]
     });
 };
 
+/**
+ * Actualizar notas del cliente
+ */
+const actualizarNotas = async (carrito_id, notas) => {
+    await Cart.update(
+        { notas_cliente: notas },
+        { where: { carrito_id } }
+    );
+};
 
-// Exportamos el objeto que contiene las funciones que el controlador necesita
+/**
+ * Obtener resumen del carrito
+ */
+const obtenerResumen = async (usuarioId, sesionTemporal) => {
+    const carrito = await obtenerOCrearCarrito(usuarioId, sesionTemporal);
+    const carritoCompleto = await obtenerCarritoCompleto(carrito.carrito_id);
+
+    return {
+        total_items: carritoCompleto?.items?.reduce((sum, item) => sum + item.cantidad, 0) || 0,
+        total: parseFloat(carritoCompleto?.total || 0)
+    };
+};
+
+/**
+ * Migrar carrito de sesión temporal a usuario autenticado
+ */
+const migrarCarrito = async (sesionTemporal, usuarioId) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        // Buscar carrito temporal
+        const carritoTemporal = await Cart.findOne({
+            where: { sesion_temporal: sesionTemporal, estado: 'activo' },
+            include: [{ model: CartItem, as: 'items' }],
+            transaction
+        });
+
+        if (!carritoTemporal || carritoTemporal.items.length === 0) {
+            await transaction.commit();
+            return null;
+        }
+
+        // Buscar carrito del usuario
+        let carritoUsuario = await Cart.findOne({
+            where: { usuario_id: usuarioId, estado: 'activo' },
+            transaction
+        });
+
+        if (!carritoUsuario) {
+            // Convertir carrito temporal en carrito de usuario
+            await carritoTemporal.update({
+                usuario_id: usuarioId,
+                sesion_temporal: null
+            }, { transaction });
+
+            await transaction.commit();
+            return await obtenerCarritoCompleto(carritoTemporal.carrito_id);
+        } else {
+            // Fusionar items del carrito temporal al carrito del usuario
+            for (const item of carritoTemporal.items) {
+                const itemExistente = await CartItem.findOne({
+                    where: {
+                        carrito_id: carritoUsuario.carrito_id,
+                        producto_id: item.producto_id
+                    },
+                    transaction
+                });
+
+                if (itemExistente) {
+                    await itemExistente.update({
+                        cantidad: itemExistente.cantidad + item.cantidad
+                    }, { transaction });
+                } else {
+                    await CartItem.create({
+                        carrito_id: carritoUsuario.carrito_id,
+                        producto_id: item.producto_id,
+                        cantidad: item.cantidad,
+                        precio_unitario: item.precio_unitario,
+                        precio_descuento: item.precio_descuento,
+                        subtotal: item.subtotal
+                    }, { transaction });
+                }
+            }
+
+            // Eliminar carrito temporal
+            await carritoTemporal.destroy({ transaction });
+
+            // Recalcular totales del carrito del usuario
+            await recalcularTotales(carritoUsuario.carrito_id, transaction);
+            await transaction.commit();
+
+            return await obtenerCarritoCompleto(carritoUsuario.carrito_id);
+        }
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
+};
+
+// ====================================
+// 📤 EXPORTACIÓN
+// ====================================
+
 const CartRepository = {
+    EMPTY_CART_STRUCTURE,
     obtenerOCrearCarrito,
     agregarProducto,
+    actualizarCantidad,
+    eliminarItem,
+    vaciarCarrito,
     obtenerCarritoCompleto,
-    recalcularTotales // Puede ser útil para otros servicios
+    recalcularTotales,
+    actualizarNotas,
+    obtenerResumen,
+    migrarCarrito
 };
 
 export default CartRepository;
