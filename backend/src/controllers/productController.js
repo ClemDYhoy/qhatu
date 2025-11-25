@@ -135,8 +135,8 @@ export const getAllProducts = async (req, res) => {
 
     // Filtro por productos destacados (soporta ambas nomenclaturas)
     const featuredFilter = highlighted || destacado;
-    if (featuredFilter === 'true' || featuredFilter === '1' || featuredFilter === true) {
-      where.destacado = true;
+    if (featuredFilter === 'true' || featuredFilter === '1' || featuredFilter === true || featuredFilter === 1) {
+      where.destacado = 1;
     }
 
     // Validar y sanitizar ordenamiento

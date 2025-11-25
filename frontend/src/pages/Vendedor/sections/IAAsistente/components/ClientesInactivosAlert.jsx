@@ -1,184 +1,251 @@
-
 // C:\qhatu\frontend\src\pages\Vendedor\sections\IAAsistente\components\ClientesInactivosAlert.jsx
-// Componente para identificar y reactivar clientes inactivos
-// Detecta clientes que no han comprado recientemente
-// Sugiere estrategias personalizadas de reactivación
-// Calcula el valor histórico del cliente (LTV) para priorizar acciones
+import React, { useState, useEffect } from 'react';
+import { useAnalytics } from '../../../../../hooks/useAnalytics';
 
-import React from 'react';
+const ClientesInactivosAlert = () => {
+  const {
+    loading,
+    clientesInactivos,
+    cargarClientesInactivos
+  } = useAnalytics();
 
-const ClientesInactivosAlert = ({ clientes }) => {
-  
-  const calcularDiasInactivo = (ultimaCompra) => {
-    const hoy = new Date();
-    const ultima = new Date(ultimaCompra);
-    const diferencia = Math.floor((hoy - ultima) / (1000 * 60 * 60 * 24));
-    return diferencia;
-  };
+  const [diasInactividad, setDiasInactividad] = useState(60);
 
-  const getNivelUrgencia = (dias) => {
-    if (dias >= 90) return { class: 'critico', label: 'Crítico', icon: '🔴' };
-    if (dias >= 60) return { class: 'alto', label: 'Alto', icon: '🟠' };
-    if (dias >= 30) return { class: 'medio', label: 'Medio', icon: '🟡' };
-    return { class: 'bajo', label: 'Bajo', icon: '🟢' };
-  };
+  useEffect(() => {
+    cargarClientesInactivos(diasInactividad);
+  }, [diasInactividad]);
 
-  const handleReactivar = (cliente) => {
-    const dias = calcularDiasInactivo(cliente.ultima_compra);
+  const handleWhatsApp = (cliente) => {
+    let numeroLimpio = cliente.cliente_telefono.replace(/\D/g, '');
     
-    const mensaje = `Hola ${cliente.nombre}, ¡Te extrañamos! 🎉
+    if (!numeroLimpio.startsWith('51')) {
+      numeroLimpio = '51' + numeroLimpio;
+    }
 
-Han pasado ${dias} días desde tu última compra y queremos volver a verte.
+    const mensaje = `Hola ${cliente.cliente_nombre}! 😊
 
-${cliente.incentivo_sugerido}
+¡Te extrañamos en Qhatu! 
 
-¿Hay algo en lo que podamos ayudarte?`;
-    
-    const url = `https://wa.me/51${cliente.telefono}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
+Vimos que hace ${cliente.dias_sin_comprar} días no compras con nosotros y queremos invitarte a ver nuestros nuevos productos.
+
+¿Hay algo específico que estés buscando? Estoy aquí para ayudarte.
+
+¡Saludos! 🛍️`;
+
+    const url = `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  if (clientes.length === 0) {
-    return (
-      <div className="empty-state">
-        <div className="empty-icon">✅</div>
-        <h3>¡Excelente! Todos tus clientes están activos</h3>
-        <p>No hay clientes inactivos por el momento</p>
-      </div>
-    );
-  }
+  const getPriorityColor = (prioridad) => {
+    switch (prioridad) {
+      case 'alta': return 'priority-high';
+      case 'media': return 'priority-medium';
+      case 'baja': return 'priority-low';
+      default: return '';
+    }
+  };
+
+  const getPriorityLabel = (prioridad) => {
+    switch (prioridad) {
+      case 'alta': return '🔴 Alta';
+      case 'media': return '🟡 Media';
+      case 'baja': return '🟢 Baja';
+      default: return prioridad;
+    }
+  };
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('es-PE', {
+      style: 'currency',
+      currency: 'PEN'
+    }).format(value || 0);
+  };
 
   return (
-    <div className="clientes-inactivos-container">
-      <div className="info-banner banner-warning">
-        <span className="banner-icon">⚠️</span>
-        <div className="banner-content">
-          <strong>Alerta:</strong> Estos clientes no han comprado recientemente. 
-          Una reactivación oportuna puede recuperar ventas perdidas.
+    <div className="clientes-inactivos-section">
+      {/* Header */}
+      <div className="section-header">
+        <div className="header-left">
+          <h3 className="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            Clientes Inactivos
+          </h3>
+          <p className="section-subtitle">
+            Clientes que no compran hace más de {diasInactividad} días
+          </p>
+        </div>
+
+        <div className="header-right">
+          <select
+            className="dias-select"
+            value={diasInactividad}
+            onChange={(e) => setDiasInactividad(Number(e.target.value))}
+            disabled={loading}
+          >
+            <option value={30}>30 días</option>
+            <option value={60}>60 días</option>
+            <option value={90}>90 días</option>
+            <option value={180}>6 meses</option>
+          </select>
         </div>
       </div>
 
-      <div className="clientes-inactivos-grid">
-        {clientes.map((cliente, index) => {
-          const diasInactivo = calcularDiasInactivo(cliente.ultima_compra);
-          const urgencia = getNivelUrgencia(diasInactivo);
-          
-          return (
-            <div key={index} className={`cliente-inactivo-card urgencia-${urgencia.class}`}>
-              <div className="urgencia-badge">
-                <span className="urgencia-icon">{urgencia.icon}</span>
-                <span className="urgencia-text">{urgencia.label}</span>
+      {/* Alert Info */}
+      <div className="info-alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="16" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12.01" y2="8" />
+        </svg>
+        <div className="alert-content">
+          <strong>💡 Consejo de IA:</strong>
+          <p>
+            Contactar clientes inactivos puede aumentar tus ventas hasta un 30%. 
+            Usa el botón de WhatsApp para enviarles un mensaje personalizado.
+          </p>
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="loading-clientes">
+          <div className="spinner"></div>
+          <p>Analizando clientes inactivos...</p>
+        </div>
+      )}
+
+      {/* Lista de Clientes */}
+      {!loading && clientesInactivos.length > 0 && (
+        <div className="clientes-list">
+          {clientesInactivos.map((cliente) => (
+            <div key={cliente.cliente_id} className="cliente-card">
+              {/* Priority Badge */}
+              <div className={`priority-badge ${getPriorityColor(cliente.prioridad_reactivacion)}`}>
+                {getPriorityLabel(cliente.prioridad_reactivacion)}
               </div>
 
-              <div className="cliente-header">
-                <div className="cliente-avatar-large">
-                  {cliente.nombre?.[0]?.toUpperCase() || '?'}
-                </div>
-                <div className="cliente-info-header">
-                  <h4>{cliente.nombre}</h4>
-                  <p className="cliente-email">{cliente.email}</p>
-                </div>
-              </div>
-
-              <div className="inactividad-stats">
-                <div className="stat-item">
-                  <span className="stat-icon">⏰</span>
-                  <div>
-                    <p className="stat-value">{diasInactivo} días</p>
-                    <p className="stat-label">Sin comprar</p>
+              {/* Cliente Info */}
+              <div className="cliente-info">
+                <div className="cliente-header">
+                  <div className="cliente-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <div className="cliente-details">
+                    <h4 className="cliente-nombre">{cliente.cliente_nombre}</h4>
+                    <span className="cliente-telefono">{cliente.cliente_telefono}</span>
                   </div>
                 </div>
 
-                <div className="stat-item">
-                  <span className="stat-icon">🛍️</span>
-                  <div>
-                    <p className="stat-value">{cliente.total_compras || 0}</p>
-                    <p className="stat-label">Compras anteriores</p>
+                {/* Estadísticas */}
+                <div className="cliente-stats">
+                  <div className="stat-item">
+                    <span className="stat-label">Última compra:</span>
+                    <span className="stat-value highlight">
+                      Hace {cliente.dias_sin_comprar} días
+                    </span>
+                  </div>
+
+                  <div className="stat-item">
+                    <span className="stat-label">Compras históricas:</span>
+                    <span className="stat-value">{cliente.total_compras_historial}</span>
+                  </div>
+
+                  <div className="stat-item">
+                    <span className="stat-label">Gastó en total:</span>
+                    <span className="stat-value success">
+                      {formatCurrency(cliente.gasto_total_historial)}
+                    </span>
                   </div>
                 </div>
 
-                <div className="stat-item">
-                  <span className="stat-icon">💰</span>
-                  <div>
-                    <p className="stat-value">S/ {cliente.valor_historico?.toFixed(2) || '0.00'}</p>
-                    <p className="stat-label">Valor histórico</p>
-                  </div>
+                {/* Recomendación IA */}
+                <div className="ia-recommendation">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <p>
+                    {cliente.prioridad_reactivacion === 'alta' 
+                      ? `Cliente VIP con alto valor de compra. ¡Contáctalo pronto!`
+                      : cliente.prioridad_reactivacion === 'media'
+                      ? `Buen cliente. Ofrécele productos nuevos o descuentos.`
+                      : `Cliente ocasional. Un mensaje amigable puede ayudar.`
+                    }
+                  </p>
                 </div>
-              </div>
 
-              <div className="ultima-compra-info">
-                <strong>Última compra:</strong>
-                <p>{new Date(cliente.ultima_compra).toLocaleDateString('es-PE')}</p>
-                <p className="producto-ultimo">{cliente.ultimo_producto}</p>
-              </div>
+                {/* Acciones */}
+                <div className="cliente-actions">
+                  <button
+                    className="btn-action btn-whatsapp"
+                    onClick={() => handleWhatsApp(cliente)}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    Enviar WhatsApp
+                  </button>
 
-              <div className="incentivo-sugerido">
-                <strong>🎁 Incentivo sugerido por IA:</strong>
-                <p className="incentivo-texto">{cliente.incentivo_sugerido}</p>
-              </div>
-
-              <div className="estrategia-reactivacion">
-                <strong>💡 Estrategia recomendada:</strong>
-                <ul className="estrategia-lista">
-                  {cliente.estrategias?.map((estrategia, idx) => (
-                    <li key={idx}>{estrategia}</li>
-                  )) || [
-                    'Enviar mensaje personalizado',
-                    'Ofrecer descuento exclusivo',
-                    'Recordar productos favoritos'
-                  ].map((estrategia, idx) => (
-                    <li key={idx}>{estrategia}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="cliente-actions">
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => handleReactivar(cliente)}
-                >
-                  💬 Reactivar Cliente
-                </button>
-              </div>
-
-              <div className="probabilidad-bar">
-                <div className="probabilidad-label">
-                  <span>Prob. de reactivación:</span>
-                  <span>{cliente.probabilidad_reactivacion || 65}%</span>
-                </div>
-                <div className="probabilidad-progress">
-                  <div 
-                    className="probabilidad-fill"
-                    style={{ width: `${cliente.probabilidad_reactivacion || 65}%` }}
-                  ></div>
+                  <button className="btn-action btn-secondary">
+                    Ver Historial
+                  </button>
                 </div>
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
-      <div className="leyenda-urgencias">
-        <h4>Niveles de Urgencia</h4>
-        <div className="leyenda-grid">
-          <div className="leyenda-item">
-            <span className="leyenda-icon">🔴</span>
-            <span>Crítico: +90 días</span>
+      {/* Empty State */}
+      {!loading && clientesInactivos.length === 0 && (
+        <div className="empty-state">
+          <div className="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </div>
-          <div className="leyenda-item">
-            <span className="leyenda-icon">🟠</span>
-            <span>Alto: 60-89 días</span>
-          </div>
-          <div className="leyenda-item">
-            <span className="leyenda-icon">🟡</span>
-            <span>Medio: 30-59 días</span>
-          </div>
-          <div className="leyenda-item">
-            <span className="leyenda-icon">🟢</span>
-            <span>Bajo: -30 días</span>
+          <h3>¡Excelente!</h3>
+          <p>No hay clientes inactivos en este periodo</p>
+          <span>Todos tus clientes están activos</span>
+        </div>
+      )}
+
+      {/* Resumen */}
+      {!loading && clientesInactivos.length > 0 && (
+        <div className="clientes-summary">
+          <div className="summary-stats">
+            <div className="summary-item">
+              <span className="summary-label">Total Clientes Inactivos:</span>
+              <span className="summary-value">{clientesInactivos.length}</span>
+            </div>
+            
+            <div className="summary-item">
+              <span className="summary-label">Prioridad Alta:</span>
+              <span className="summary-value priority-high">
+                {clientesInactivos.filter(c => c.prioridad_reactivacion === 'alta').length}
+              </span>
+            </div>
+
+            <div className="summary-item">
+              <span className="summary-label">Valor Potencial:</span>
+              <span className="summary-value success">
+                {formatCurrency(
+                  clientesInactivos.reduce((sum, c) => 
+                    sum + parseFloat(c.gasto_total_historial), 0
+                  )
+                )}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

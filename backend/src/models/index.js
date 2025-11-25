@@ -25,6 +25,10 @@ import VentaItem from './VentaItem.js';
 // Tracking y análisis
 import SessionTracking from './SessionTracking.js';
 
+// 🆕 Analytics - Ventas Realizadas
+import VentaRealizada from './VentaRealizada.js';
+import VentaRealizadaItem from './VentaRealizadaItem.js';
+
 // ====================================
 // 🔗 DEFINICIÓN DE RELACIONES
 // ====================================
@@ -191,6 +195,77 @@ const setupAssociations = () => {
     as: 'usuario'
   });
 
+  // ==========================================
+  // 🆕 ANALYTICS - VENTAS REALIZADAS
+  // ==========================================
+  
+  // VentaRealizada <-> Venta Original
+  VentaRealizada.belongsTo(Venta, {
+    foreignKey: 'venta_id',
+    as: 'venta_original'
+  });
+
+  Venta.hasOne(VentaRealizada, {
+    foreignKey: 'venta_id',
+    as: 'analytics'
+  });
+
+  // VentaRealizada <-> Usuario Cliente
+  VentaRealizada.belongsTo(User, {
+    foreignKey: 'cliente_id',
+    as: 'cliente'
+  });
+
+  User.hasMany(VentaRealizada, {
+    foreignKey: 'cliente_id',
+    as: 'compras_realizadas'
+  });
+
+  // VentaRealizada <-> Usuario Vendedor
+  VentaRealizada.belongsTo(User, {
+    foreignKey: 'vendedor_id',
+    as: 'vendedor'
+  });
+
+  User.hasMany(VentaRealizada, {
+    foreignKey: 'vendedor_id',
+    as: 'ventas_confirmadas'
+  });
+
+  // VentaRealizada <-> Items
+  VentaRealizada.hasMany(VentaRealizadaItem, {
+    foreignKey: 'venta_realizada_id',
+    as: 'items',
+    onDelete: 'CASCADE'
+  });
+
+  VentaRealizadaItem.belongsTo(VentaRealizada, {
+    foreignKey: 'venta_realizada_id',
+    as: 'venta_realizada'
+  });
+
+  // VentaRealizadaItem <-> Producto
+  VentaRealizadaItem.belongsTo(Product, {
+    foreignKey: 'producto_id',
+    as: 'producto'
+  });
+
+  Product.hasMany(VentaRealizadaItem, {
+    foreignKey: 'producto_id',
+    as: 'analytics_items'
+  });
+
+  // VentaRealizadaItem <-> Categoría
+  VentaRealizadaItem.belongsTo(Category, {
+    foreignKey: 'categoria_id',
+    as: 'categoria'
+  });
+
+  Category.hasMany(VentaRealizadaItem, {
+    foreignKey: 'categoria_id',
+    as: 'items_vendidos'
+  });
+
   console.log('✅ Asociaciones configuradas exitosamente');
 };
 
@@ -204,11 +279,6 @@ setupAssociations();
 /**
  * Sincronizar modelos con la base de datos
  * ⚠️ USAR CON PRECAUCIÓN EN PRODUCCIÓN
- * 
- * @param {Object} options - Opciones de sincronización
- * @param {boolean} options.force - Eliminar y recrear tablas (¡PELIGRO!)
- * @param {boolean} options.alter - Modificar tablas existentes (recomendado)
- * @returns {Promise<boolean>}
  */
 export const syncModels = async (options = {}) => {
   try {
@@ -239,9 +309,6 @@ export const syncModels = async (options = {}) => {
 
 /**
  * Verificar estado de las asociaciones
- * Útil para debugging y validación
- * 
- * @returns {Object} Resumen de asociaciones por modelo
  */
 export const verifyAssociations = () => {
   console.log('\n🔍 Verificando asociaciones de modelos...\n');
@@ -256,7 +323,9 @@ export const verifyAssociations = () => {
     Venta,
     VentaItem,
     SessionTracking,
-    Carousel
+    Carousel,
+    VentaRealizada,
+    VentaRealizadaItem
   };
   
   const report = {};
@@ -282,8 +351,6 @@ export const verifyAssociations = () => {
 
 /**
  * Verificar conexión a la base de datos
- * 
- * @returns {Promise<Object>} Información de la conexión
  */
 export const checkConnection = async () => {
   try {
@@ -310,8 +377,6 @@ export const checkConnection = async () => {
 
 /**
  * Obtener estadísticas de la base de datos
- * 
- * @returns {Promise<Object>} Estadísticas
  */
 export const getDatabaseStats = async () => {
   try {
@@ -372,7 +437,11 @@ export {
   VentaItem,
   
   // Tracking
-  SessionTracking
+  SessionTracking,
+  
+  // 🆕 Analytics
+  VentaRealizada,
+  VentaRealizadaItem
 };
 
 // Exportación por defecto (objeto con todo)
@@ -380,7 +449,7 @@ export default {
   // Instancia de Sequelize
   sequelize,
   
-  // Modelos
+  // Modelos existentes
   Product,
   Category,
   Carousel,
@@ -391,6 +460,10 @@ export default {
   Venta,
   VentaItem,
   SessionTracking,
+  
+  // 🆕 Modelos Analytics
+  VentaRealizada,
+  VentaRealizadaItem,
   
   // Utilidades
   syncModels,

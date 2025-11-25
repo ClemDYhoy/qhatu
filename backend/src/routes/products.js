@@ -563,7 +563,7 @@ router.get('/', async (req, res) => {
 
     // Productos destacados
     if (highlighted === 'true' || highlighted === '1') {
-      where.destacado = true;
+      where.destacado = 1;
     }
 
     // === ORDENAMIENTO Y PAGINACIÓN ===

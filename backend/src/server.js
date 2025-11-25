@@ -35,6 +35,7 @@ import discountBannersRoutes from './routes/discountBanners.js';
 import cartRoutes from './routes/cart.js';
 import analyticsRoutes from './routes/analytics.js';
 import ventasRoutes from './routes/ventas.js';
+import analyticsVentasRoutes from './routes/analytics-ventas.js';
 
 // ====================================
 // 📊 VARIABLES DE ENTORNO
@@ -419,6 +420,15 @@ app.get('/', (req, res) => {
         users: 'GET /api/users/*',
         products: 'POST /api/products',
         categories: 'POST /api/categories'
+      },
+      analytics: {
+        kpis: 'GET /api/analytics-ventas/kpis',
+        rendimiento_vendedores: 'GET /api/analytics-ventas/vendedores/rendimiento',
+        mi_rendimiento: 'GET /api/analytics-ventas/vendedores/mi-rendimiento',
+        clientes_vip: 'GET /api/analytics-ventas/clientes/vip',
+        productos_mas_vendidos: 'GET /api/analytics-ventas/productos/mas-vendidos',
+        dashboard_admin: 'GET /api/analytics-ventas/dashboard-admin',
+        dashboard_vendedor: 'GET /api/analytics-ventas/dashboard-vendedor'
       }
     },
     
@@ -453,6 +463,7 @@ app.use('/api/banners-descuento', discountBannersRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ventas', ventasRoutes);
+app.use('/api/analytics-ventas', analyticsVentasRoutes);
 
 // ====================================
 // ❌ MANEJO DE ERRORES

@@ -467,7 +467,7 @@ const ProductCard = memo(({ product }) => {
                     </span>
                   ) : (
                     <span className="stock-badge stock-badge--available">
-                      <CheckIcon /> {stockInfo.stock} disponibles
+                      <PlusIcon /> {stockInfo.stock} disponibles
                     </span>
                   )}
                 </div>
