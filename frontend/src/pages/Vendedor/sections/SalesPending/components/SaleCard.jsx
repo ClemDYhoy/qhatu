@@ -1,9 +1,12 @@
-// C:\qhatu\frontend\src\pages\Vendedor\sections\SalesPending\components\SaleCard.jsx
-import React, { useState } from 'react';
-import { confirmarVenta, obtenerDetalleVenta } from '../../../../../services/ventasService';
+// frontend/src/pages/Vendedor/sections/SalesPending/components/SaleCard.jsx
+import React, { useState, useEffect } from 'react';
+import { confirmarVenta, obtenerDetalleVenta } from '../../../../../services';
+import mlService from '../../../../../services/mlService';
 import './SaleCard.css';
 
-// SVG Icons
+// ====================================
+// SVG Icons (todos los que usas)
+// ====================================
 const Icons = {
   Package: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -16,7 +19,7 @@ const Icons = {
   Clock: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
+      <polyline points="12 6 12 12 16 14" />  
     </svg>
   ),
   CheckCircle: (
@@ -63,12 +66,6 @@ const Icons = {
       <line x1="9" y1="14" x2="15" y2="14" />
     </svg>
   ),
-  DollarSign: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <line x1="12" y1="1" x2="12" y2="23" />
-      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-    </svg>
-  ),
   MessageCircle: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -104,6 +101,12 @@ const SaleCard = ({ venta, onConfirm }) => {
   const [error, setError] = useState(null);
   const [detallesCompletos, setDetallesCompletos] = useState(null);
 
+  // Estados para IA
+  const [mlData, setMlData] = useState(null);
+  const [mlLoading, setMlLoading] = useState(false);
+  const [mlError, setMlError] = useState(null);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+
   const {
     venta_id,
     numero_venta,
@@ -116,195 +119,302 @@ const SaleCard = ({ venta, onConfirm }) => {
     total,
     estado,
     fecha_venta,
-    items,
-    enviado_whatsapp
+    items = [],
+    enviado_whatsapp,
+    usuario_id,
   } = venta;
 
+  // Carga automática de análisis IA solo para ventas pendientes
+  useEffect(() => {
+    if (venta_id && usuario_id && estado === 'pendiente' && !mlData && !mlLoading) {
+      cargarDatosML();
+    }
+  }, [venta_id, usuario_id, estado, mlData, mlLoading]);
+
+  // Carga de datos de Machine Learning
+  const cargarDatosML = async () => {
+    setMlLoading(true);
+    setMlError(null);
+
+    try {
+      console.log(`Cargando análisis IA para venta ${venta_id}...`);
+      const resultado = await mlService.obtenerAnalisisCompleto(venta_id, usuario_id);
+
+      if (resultado.success) {
+        setMlData(resultado.data);
+        console.log(`Datos IA cargados para ${numero_venta}`, resultado.data);
+      } else {
+        throw new Error(resultado.error || 'Error del servicio IA');
+      }
+    } catch (err) {
+      console.error('Error cargando IA:', err);
+      setMlError(err.message || 'IA temporalmente no disponible');
+    } finally {
+      setMlLoading(false);
+    }
+  };
+
+  // Enviar recomendaciones por WhatsApp usando IA
+  const enviarRecomendacionesWhatsApp = async () => {
+    if (!mlData?.analisis?.recomendacionesProductos?.recomendaciones?.length) return;
+
+    setLoading(true);
+    try {
+      const productos = mlData.analisis.recomendacionesProductos.recomendaciones.slice(0, 3);
+      const resultado = await mlService.enviarRecomendacionesWhatsApp({
+        ventaId: venta_id,
+        usuarioId: usuario_id,
+        productosRecomendados: productos,
+      });
+
+      if (resultado.success) {
+        window.open(resultado.data.urlWhatsApp, '_blank', 'noopener,noreferrer');
+        alert(`Recomendaciones enviadas a ${cliente_nombre} por WhatsApp`);
+      } else {
+        throw new Error(resultado.error);
+      }
+    } catch (err) {
+      alert(`Error enviando recomendaciones: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Componentes de IA
+  const SegmentoBadge = () => {
+    if (!mlData || mlLoading) return null;
+    const seg = mlData.analisis.segmentoCliente;
+    return (
+      <div className={`segmento-badge segmento-${seg.color}`}>
+        <span className="segmento-icon">{seg.icono}</span>
+        <span className="segmento-text">{seg.nombre}</span>
+        <span className="segmento-score">{seg.score}pts</span>
+      </div>
+    );
+  };
+
+  const ProbabilityMeter = () => {
+    if (!mlData || mlLoading) return null;
+    const prob = mlData.analisis.probabilidadCierre;
+    return (
+      <div className="probability-meter">
+        <div className="probability-header">
+          <span className="probability-label">Prob. Cierre IA:</span>
+          <span className="probability-value">{prob.probabilidad}%</span>
+        </div>
+        <div className="probability-bar">
+          <div
+            className="probability-fill"
+            style={{ width: `${prob.probabilidad}%` }}
+          />
+        </div>
+        <div className="probability-confidence">
+          Confianza: {prob.confianza.toLowerCase()}
+        </div>
+      </div>
+    );
+  };
+
+  const RecommendationsPanel = () => {
+    if (!mlData || !showRecommendations) return null;
+    const recs = mlData.analisis.recomendacionesProductos.recomendaciones;
+
+    if (!recs?.length) {
+      return (
+        <div className="recommendations-panel empty">
+          <p>No hay recomendaciones disponibles en este momento</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="recommendations-panel">
+        <div className="recommendations-header">
+          <h4>Recomendaciones IA</h4>
+          <span className="recommendations-count">{recs.length} sugerencias</span>
+        </div>
+        <div className="recommendations-list">
+          {recs.slice(0, 3).map((p, i) => (
+            <div key={i} className="recommendation-item">
+              <div className="recommendation-info">
+                <span className="product-name">{p.producto_nombre}</span>
+                <span className="product-similarity">{p.similitud}% similar</span>
+                <span className="product-reason">{p.razon}</span>
+              </div>
+              <div className="recommendation-price">
+                S/.{parseFloat(p.precio).toFixed(2)}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="recommendations-actions">
+          <button
+            className="btn-recommendation-send"
+            onClick={enviarRecomendacionesWhatsApp}
+            disabled={loading}
+          >
+            {loading ? 'Enviando...' : 'Enviar por WhatsApp'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const MLLoadingIndicator = () => mlLoading && (
+    <div className="ml-loading">
+      <div className="ml-spinner" />
+      <span>Analizando con IA...</span>
+    </div>
+  );
+
+  const MLErrorIndicator = () => mlError && (
+    <div className="ml-error">
+      <span className="error-icon">Warning</span>
+      <span className="error-text">IA no disponible</span>
+    </div>
+  );
+
+  // Funciones existentes
   const cargarDetalles = async () => {
-    if (detallesCompletos || items?.length > 0) {
+    if (detallesCompletos || items.length > 0) {
       setExpanded(!expanded);
       return;
     }
-
     setLoadingDetails(true);
-    setError(null);
-
     try {
-      console.log(`Cargando detalles de ${numero_venta}...`);
-      const response = await obtenerDetalleVenta(venta_id);
-
-      if (response.success) {
-        setDetallesCompletos(response.data);
+      const res = await obtenerDetalleVenta(venta_id);
+      if (res.success) {
+        setDetallesCompletos(res.data);
         setExpanded(true);
-        console.log(`Detalles cargados para ${numero_venta}`);
-      } else {
-        throw new Error(response.message || 'Error al cargar detalles');
       }
     } catch (err) {
-      console.error('Error cargando detalles:', err);
-      setError('No se pudieron cargar los detalles');
+      setError('Error al cargar detalles');
     } finally {
       setLoadingDetails(false);
     }
   };
 
   const handleConfirmar = async () => {
+    const prob = mlData?.analisis.probabilidadCierre.probabilidad || 'N/A';
+    const seg = mlData?.analisis.segmentoCliente.nombre || 'N/A';
+
     const confirmar = window.confirm(
       `¿Confirmar venta ${numero_venta}?\n\n` +
       `Cliente: ${cliente_nombre}\n` +
+      `Segmento IA: ${seg}\n` +
+      `Probabilidad IA: ${prob}%\n` +
       `Total: S/.${parseFloat(total).toFixed(2)}\n\n` +
-      `Esto actualizará el inventario automáticamente.`
+      `Se actualizará el inventario automáticamente.`
     );
-    
+
     if (!confirmar) return;
 
     setLoading(true);
-    setError(null);
-
     try {
-      console.log(`Confirmando venta ${numero_venta}...`);
-      const response = await confirmarVenta(venta_id, '');
-
-      if (response.success) {
-        console.log(`Venta ${numero_venta} confirmada exitosamente`);
-        alert(`Venta ${numero_venta} confirmada\n\nEl stock ha sido actualizado automáticamente.`);
+      const res = await confirmarVenta(venta_id, '');
+      if (res.success) {
+        alert(`Venta ${numero_venta} confirmada\n\nStock actualizado automáticamente.`);
         onConfirm?.();
       } else {
-        throw new Error(response.message || 'Error al confirmar venta');
+        throw new Error(res.message);
       }
     } catch (err) {
-      console.error('Error al confirmar:', err);
-      const mensaje = err.message || 'Error al confirmar venta';
-      setError(mensaje);
-      alert(`Error: ${mensaje}`);
+      alert(`Error: ${err.message || 'No se pudo confirmar'}`);
     } finally {
       setLoading(false);
     }
   };
 
   const handleWhatsApp = () => {
-    let numeroLimpio = cliente_telefono.replace(/\D/g, '');
-    
-    if (!numeroLimpio.startsWith('51')) {
-      numeroLimpio = '51' + numeroLimpio;
-    }
+    let numero = cliente_telefono.replace(/\D/g, '');
+    if (!numero.startsWith('51')) numero = '51' + numero;
 
-    const mensaje = `Hola ${cliente_nombre}
+    const mensaje = `Hola ${cliente_nombre}\n\n¡Gracias por tu compra en Qhatu!\n\n` +
+      `Pedido: ${numero_venta}\nTotal: S/.${parseFloat(total).toFixed(2)}\n\n` +
+      `${estado === 'pendiente' ? 'Tu pedido está siendo procesado.' : 'Tu pedido ha sido confirmado.'}\n\n¿Alguna consulta?`;
 
-¡Gracias por tu compra en Qhatu!
-
-Pedido: ${numero_venta}
-Total: S/.${parseFloat(total).toFixed(2)}
-
-${estado === 'pendiente' 
-  ? 'Tu pedido está siendo procesado. Te confirmaremos los detalles pronto.' 
-  : 'Tu pedido ha sido confirmado y está en proceso.'
-}
-
-¿Tienes alguna consulta?`;
-
-    const url = `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`;
-    console.log(`Abriendo WhatsApp: ${numeroLimpio}`);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, '_blank');
   };
 
   const copiarNumeroVenta = () => {
     navigator.clipboard.writeText(numero_venta).then(() => {
-      alert(`Código ${numero_venta} copiado al portapapeles`);
-    }).catch(() => {
-      alert('No se pudo copiar el código');
+      alert(`Código ${numero_venta} copiado`);
     });
   };
 
   const formatearFecha = (fecha) => {
     const date = new Date(fecha);
     const ahora = new Date();
-    const diferencia = ahora - date;
-    const minutos = Math.floor(diferencia / 60000);
-    const horas = Math.floor(diferencia / 3600000);
-    const dias = Math.floor(diferencia / 86400000);
+    const diff = ahora - date;
+    const mins = Math.floor(diff / 60000);
+    const horas = Math.floor(diff / 3600000);
+    const dias = Math.floor(diff / 86400000);
 
-    if (minutos < 1) return 'Ahora mismo';
-    if (minutos < 60) return `Hace ${minutos} min`;
+    if (mins < 1) return 'Ahora';
+    if (mins < 60) return `Hace ${mins} min`;
     if (horas < 24) return `Hace ${horas}h`;
-    if (dias === 1) return `Ayer ${date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`;
-    
-    return date.toLocaleString('es-PE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (dias === 1) return `Ayer`;
+    return date.toLocaleString('es-PE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   };
 
   const getEstadoBadge = () => {
     const badges = {
-      pendiente: { icon: Icons.Clock, label: 'Pendiente', className: 'badge-pending' },
-      confirmada: { icon: Icons.CheckCircle, label: 'Confirmada', className: 'badge-confirmed' },
-      procesando: { icon: Icons.Zap, label: 'Procesando', className: 'badge-processing' },
-      en_preparacion: { icon: Icons.Package, label: 'En Preparación', className: 'badge-preparation' },
-      lista_entrega: { icon: Icons.Package, label: 'Lista', className: 'badge-ready' },
-      en_camino: { icon: Icons.MessageCircle, label: 'En Camino', className: 'badge-delivery' },
-      enviada: { icon: Icons.MessageCircle, label: 'Enviada', className: 'badge-sent' },
-      entregada: { icon: Icons.CheckCircle, label: 'Entregada', className: 'badge-delivered' },
-      cancelada: { icon: Icons.AlertCircle, label: 'Cancelada', className: 'badge-canceled' }
+      pendiente: { icon: Icons.Clock, label: 'Pendiente', class: 'badge-pending' },
+      confirmada: { icon: Icons.CheckCircle, label: 'Confirmada', class: 'badge-confirmed' },
+      procesando: { icon: Icons.Zap, label: 'Procesando', class: 'badge-processing' },
+      en_preparacion: { icon: Icons.Package, label: 'Preparando', class: 'badge-preparation' },
+      lista_entrega: { icon: Icons.Package, label: 'Lista', class: 'badge-ready' },
+      en_camino: { icon: Icons.MessageCircle, label: 'En Camino', class: 'badge-delivery' },
+      enviada: { icon: Icons.MessageCircle, label: 'Enviada', class: 'badge-sent' },
+      entregada: { icon: Icons.CheckCircle, label: 'Entregada', class: 'badge-delivered' },
+      cancelada: { icon: Icons.AlertCircle, label: 'Cancelada', class: 'badge-canceled' },
     };
-
-    const badge = badges[estado] || badges.pendiente;
-
+    const b = badges[estado] || badges.pendiente;
     return (
-      <span className={`sale-badge ${badge.className}`}>
-        <span className="badge-icon">{badge.icon}</span>
-        <span className="badge-label">{badge.label}</span>
+      <span className={`sale-badge ${b.class}`}>
+        <span className="badge-icon">{b.icon}</span>
+        <span className="badge-label">{b.label}</span>
       </span>
     );
   };
 
-  const itemsAMostrar = detallesCompletos?.items || items || [];
+  const itemsAMostrar = detallesCompletos?.items || items;
   const totalItems = itemsAMostrar.length;
 
   return (
     <article className={`sale-card ${estado === 'pendiente' ? 'sale-card-new' : ''}`}>
-      {estado === 'pendiente' && (
-        <div className="sale-card-ribbon" aria-label="Nueva venta">
-          NUEVA
-        </div>
-      )}
+      {estado === 'pendiente' && <div className="sale-card-ribbon">NUEVA</div>}
 
-      {/* Header */}
+      {/* Header con IA */}
       <header className="sale-card-header">
         <div className="header-left">
           <div className="sale-number-section">
-            <button
-              className="sale-number"
-              onClick={copiarNumeroVenta}
-              title="Copiar número de venta"
-              aria-label={`Copiar número ${numero_venta}`}
-            >
+            <button className="sale-number" onClick={copiarNumeroVenta}>
               <span className="copy-icon">{Icons.Copy}</span>
               <span className="number-text">{numero_venta}</span>
             </button>
             {getEstadoBadge()}
+            <SegmentoBadge />
           </div>
         </div>
-
         <div className="header-right">
-          {enviado_whatsapp && (
-            <span className="badge-whatsapp" title="Pedido enviado por WhatsApp" aria-label="Enviado por WhatsApp">
-              <span className="whatsapp-icon">{Icons.MessageCircle}</span>
-            </span>
-          )}
+          {enviado_whatsapp && <span className="badge-whatsapp"><span className="whatsapp-icon">{Icons.MessageCircle}</span></span>}
+          <MLLoadingIndicator />
+          <MLErrorIndicator />
         </div>
       </header>
 
+      {/* Probabilidad de cierre IA */}
+      <div className="sale-card-ia-section">
+        <ProbabilityMeter />
+      </div>
+
       {/* Cliente */}
-      <section className="sale-card-client" aria-label="Información del cliente">
+      <section className="sale-card-client">
         <div className="client-header">
           <span className="client-icon">{Icons.User}</span>
           <h3 className="client-name">{cliente_nombre}</h3>
         </div>
-
         <div className="client-contacts">
           {cliente_telefono && (
             <div className="contact-item">
@@ -312,7 +422,6 @@ ${estado === 'pendiente'
               <span className="contact-value">{cliente_telefono}</span>
             </div>
           )}
-          
           {cliente_email && (
             <div className="contact-item">
               <span className="contact-icon">{Icons.Mail}</span>
@@ -320,7 +429,6 @@ ${estado === 'pendiente'
             </div>
           )}
         </div>
-
         {cliente_direccion && (
           <div className="client-address">
             <span className="address-icon">{Icons.MapPin}</span>
@@ -333,45 +441,32 @@ ${estado === 'pendiente'
       </section>
 
       {/* Items */}
-      <section className="sale-card-items" aria-label="Productos">
+      <section className="sale-card-items">
         <div className="items-header">
           <div className="items-count">
             <span className="package-icon">{Icons.Package}</span>
             <span className="count-text">{totalItems} producto{totalItems !== 1 ? 's' : ''}</span>
           </div>
-          
-          <button 
-            className="btn-expand-items"
-            onClick={cargarDetalles}
-            disabled={loadingDetails}
-            aria-expanded={expanded}
-            aria-label={expanded ? 'Ocultar detalles' : 'Ver detalles'}
-          >
-            {loadingDetails ? (
-              <span className="spinner-mini" />
-            ) : (
+          <button className="btn-expand-items" onClick={cargarDetalles} disabled={loadingDetails}>
+            {loadingDetails ? <span className="spinner-mini" /> : (
               <>
-                <span className="chevron-icon">
-                  {expanded ? Icons.ChevronUp : Icons.ChevronDown}
-                </span>
+                <span className="chevron-icon">{expanded ? Icons.ChevronUp : Icons.ChevronDown}</span>
                 <span className="expand-text">{expanded ? 'Ocultar' : 'Ver'}</span>
               </>
             )}
           </button>
         </div>
-        
+
         {!expanded && totalItems > 0 && (
           <div className="items-preview">
-            {itemsAMostrar.slice(0, 2).map((item, idx) => (
-              <div key={idx} className="item-preview">
+            {itemsAMostrar.slice(0, 2).map((it, i) => (
+              <div key={i} className="item-preview">
                 <span className="item-bullet">•</span>
-                <span className="item-name">{item.producto_nombre}</span>
-                <span className="item-qty">x{item.cantidad}</span>
+                <span className="item-name">{it.producto_nombre}</span>
+                <span className="item-qty">x{it.cantidad}</span>
               </div>
             ))}
-            {totalItems > 2 && (
-              <span className="items-more">+{totalItems - 2} más</span>
-            )}
+            {totalItems > 2 && <span className="items-more">+{totalItems - 2} más</span>}
           </div>
         )}
 
@@ -384,36 +479,21 @@ ${estado === 'pendiente'
                 <span>Precio</span>
                 <span>Subtotal</span>
               </div>
-              
-              {itemsAMostrar.map((item, idx) => {
-                const precioFinal = item.precio_descuento || item.precio_unitario;
-                const tieneDescuento = item.precio_descuento && item.precio_descuento < item.precio_unitario;
-                
+              {itemsAMostrar.map((it, i) => {
+                const precio = it.precio_descuento || it.precio_unitario;
+                const descuento = it.precio_descuento && it.precio_descuento < it.precio_unitario;
                 return (
-                  <div key={idx} className="table-row">
+                  <div key={i} className="table-row">
                     <div className="item-detail">
-                      <span className="item-text">{item.producto_nombre}</span>
-                      {tieneDescuento && (
-                        <span className="discount-badge">Desc.</span>
-                      )}
+                      <span className="item-text">{it.producto_nombre}</span>
+                      {descuento && <span className="discount-badge">Desc.</span>}
                     </div>
-                    
-                    <span className="qty">x{item.cantidad}</span>
-                    
+                    <span className="qty">x{it.cantidad}</span>
                     <div className="prices">
-                      {tieneDescuento && (
-                        <span className="price-old">
-                          S/.{parseFloat(item.precio_unitario).toFixed(2)}
-                        </span>
-                      )}
-                      <span className="price-current">
-                        S/.{parseFloat(precioFinal).toFixed(2)}
-                      </span>
+                      {descuento && <span className="price-old">S/.{parseFloat(it.precio_unitario).toFixed(2)}</span>}
+                      <span className="price-current">S/.{parseFloat(precio).toFixed(2)}</span>
                     </div>
-                    
-                    <span className="subtotal">
-                      S/.{parseFloat(item.subtotal).toFixed(2)}
-                    </span>
+                    <span className="subtotal">S/.{parseFloat(it.subtotal).toFixed(2)}</span>
                   </div>
                 );
               })}
@@ -422,9 +502,22 @@ ${estado === 'pendiente'
         )}
       </section>
 
+      {/* Botón para mostrar recomendaciones IA */}
+      {mlData && !showRecommendations && (
+        <div className="ia-recommendations-toggle">
+          <button className="btn-show-recommendations" onClick={() => setShowRecommendations(true)}>
+            <span className="btn-icon">Target</span>
+            <span className="btn-text">Ver Recomendaciones IA</span>
+          </button>
+        </div>
+      )}
+
+      {/* Panel de recomendaciones */}
+      <RecommendationsPanel />
+
       {/* Notas */}
       {cliente_notas && (
-        <section className="sale-card-notes" aria-label="Notas del cliente">
+        <section className="sale-card-notes">
           <div className="notes-header">
             <span className="notes-icon">{Icons.FileText}</span>
             <h4>Notas:</h4>
@@ -433,19 +526,18 @@ ${estado === 'pendiente'
         </section>
       )}
 
-      {/* Total */}
+      {/* Total y fecha */}
       <div className="sale-card-total">
         <span className="total-label">Total:</span>
         <span className="total-amount">S/.{parseFloat(total).toFixed(2)}</span>
       </div>
 
-      {/* Fecha */}
       <div className="sale-card-date">
         <span className="date-icon">{Icons.Clock}</span>
         <span className="date-text">{formatearFecha(fecha_venta)}</span>
       </div>
 
-      {/* Error */}
+      {/* Errores */}
       {error && (
         <div className="sale-card-error" role="alert">
           <span className="error-icon">{Icons.AlertCircle}</span>
@@ -455,23 +547,13 @@ ${estado === 'pendiente'
 
       {/* Acciones */}
       <footer className="sale-card-actions">
-        <button
-          className="btn-action btn-whatsapp"
-          onClick={handleWhatsApp}
-          title="Contactar al cliente por WhatsApp"
-          aria-label="Enviar mensaje por WhatsApp"
-        >
+        <button className="btn-action btn-whatsapp" onClick={handleWhatsApp}>
           <span className="btn-icon">{Icons.MessageCircle}</span>
           <span className="btn-text">Contactar</span>
         </button>
 
         {estado === 'pendiente' && (
-          <button
-            className="btn-action btn-confirm"
-            onClick={handleConfirmar}
-            disabled={loading}
-            aria-label="Confirmar venta"
-          >
+          <button className="btn-action btn-confirm" onClick={handleConfirmar} disabled={loading}>
             {loading ? (
               <>
                 <span className="spinner-small" />
@@ -480,18 +562,16 @@ ${estado === 'pendiente'
             ) : (
               <>
                 <span className="btn-icon">{Icons.CheckCircle}</span>
-                <span className="btn-text">Confirmar</span>
+                <span className="btn-text">
+                  Confirmar {mlData && `(${mlData.analisis.probabilidadCierre.probabilidad}%)`}
+                </span>
               </>
             )}
           </button>
         )}
 
         {estado === 'confirmada' && (
-          <button
-            className="btn-action btn-info"
-            disabled
-            aria-label="Venta confirmada"
-          >
+          <button className="btn-action btn-info" disabled>
             <span className="btn-icon">{Icons.CheckCircle}</span>
             <span className="btn-text">Confirmada</span>
           </button>

@@ -1,8 +1,9 @@
-// C:\qhatu\frontend\src\pages\Vendedor\VendedorDashboard.jsx
+// frontend/src/pages/Vendedor/VendedorDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import authService from '../../services/authService';
-import api from '../../services/api';
+
+// Servicios centralizados (gracias a nuestro nuevo index.js)
+import { authService, analyticsService, api } from '@/services';
 
 import Sidebar from './sections/Sidebar';
 import NavBar from './sections/NavBar';
@@ -17,65 +18,104 @@ import './VendedorDashboard.css';
 
 const VendedorDashboard = () => {
   const navigate = useNavigate();
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState('inicio'); // ← Nueva sección inicio
+  const [activeSection, setActiveSection] = useState('inicio');
 
+  // Estadísticas en tiempo real desde el backend
   const [stats, setStats] = useState({
-    carritosHoy: 7,
-    ventasHoy: 23,
-    totalVentas: 5890,
-    comision: 294.50,
+    carritosHoy: 0,
+    ventasHoy: 0,
+    ingresosHoy: 0,
+    tasaConversion: 0,
+    clientesAtendidos: 0,
+    comision: 0,
   });
 
-  // Verificación de autenticación y rol
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(null);
+
+  // Verificar autenticación y rol
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
-    if (!currentUser) return navigate('/login');
-    if (currentUser.rol_nombre !== 'vendedor') return navigate('/');
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    if (currentUser.rol_nombre !== 'vendedor') {
+      navigate('/');
+      return;
+    }
 
     setUser(currentUser);
     setLoading(false);
   }, [navigate]);
 
-  // Cargar estadísticas con refresco automático
-  const loadStats = async () => {
+  // Cargar estadísticas con analyticsService (el bueno)
+  const cargarEstadisticas = async () => {
+    if (!user) return;
+
+    setStatsLoading(true);
+    setStatsError(null);
+
     try {
-      const response = await api.get('/analytics/vendedor-stats');
-      setStats(response.data || {
-        carritosHoy: 0,
-        ventasHoy: 0,
-        totalVentas: 0,
-        comision: 0,
-      });
-    } catch (error) {
-      console.warn('Endpoint /analytics/vendedor-stats no existe aún (404). Usando datos por defecto.');
-      // ← DATOS DE PRUEBA PARA QUE SE VEA ALGO
+      const resultado = await analyticsService.obtenerMiRendimiento('hoy');
+
+      if (resultado.success && resultado.data) {
+        setStats({
+          carritosHoy: resultado.data.carritosHoy || 0,
+          ventasHoy: resultado.data.ventasHoy || 0,
+          ingresosHoy: resultado.data.ingresosHoy || 0,
+          tasaConversion: resultado.data.tasaConversion || 0,
+          clientesAtendidos: resultado.data.clientesAtendidos || 0,
+          comision: Number(resultado.data.comision) || 0,
+        });
+      } else {
+        throw new Error(resultado.error || 'Datos no disponibles');
+      }
+    } catch (err) {
+      console.warn('analyticsService falló, usando fallback:', err.message);
+
+      // Fallback realista para desarrollo / demo
       setStats({
-        carritosHoy: 7,
-        ventasHoy: 23,
-        totalVentas: 5890,
-        comision: 294.50,
+        carritosHoy: 12,
+        ventasHoy: 8,
+        ingresosHoy: 485.00,
+        tasaConversion: 78,
+        clientesAtendidos: 5,
+        comision: 72.75,
       });
+
+      setStatsError('Estadísticas en modo demo');
+    } finally {
+      setStatsLoading(false);
     }
   };
 
+  // Cargar estadísticas al montar y cada 2 minutos
   useEffect(() => {
     if (user) {
-      loadStats();
-      const interval = setInterval(loadStats, 120000); // Cada 2 minutos
+      cargarEstadisticas();
+      const interval = setInterval(cargarEstadisticas, 120000); // 2 min
       return () => clearInterval(interval);
     }
   }, [user]);
 
-
-
+  // Renderizar contenido según sección activa
   const renderContent = () => {
     switch (activeSection) {
       case 'inicio':
-        return <DashboardOverview setActiveSection={setActiveSection} />;
+        return (
+          <DashboardOverview
+            stats={stats}
+            statsLoading={statsLoading}
+            statsError={statsError}
+            setActiveSection={setActiveSection}
+          />
+        );
       case 'ventas-pendientes':
-        return <SalesPending loadStats={loadStats} />; // ← Para refrescar al confirmar venta
+        return <SalesPending onVentaConfirmada={cargarEstadisticas} />;
       case 'historial':
         return <Historial />;
       case 'analytics':
@@ -85,29 +125,32 @@ const VendedorDashboard = () => {
       case 'ia-asistente':
         return <IAAsistente />;
       default:
-        return <DashboardOverview />;
+        return <DashboardOverview stats={stats} statsLoading={statsLoading} />;
     }
   };
 
+  // Pantalla de carga inicial
   if (loading) {
     return (
       <div className="vendedor-loading">
         <div className="spinner"></div>
-        <p>Cargando tu dashboard...</p>
+        <p>Cargando tu dashboard de vendedor...</p>
       </div>
     );
   }
 
   return (
     <div className="vendedor-dashboard-container">
+      {/* Sidebar */}
       <Sidebar
         activeSection={activeSection}
         setActiveSection={setActiveSection}
         user={user}
       />
 
+      {/* Contenido principal */}
       <div className="vendedor-main-content">
-        <NavBar user={user} stats={stats} />
+        <NavBar user={user} stats={stats} statsLoading={statsLoading} />
 
         <main className="vendedor-content-area">
           {renderContent()}

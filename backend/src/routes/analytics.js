@@ -370,4 +370,15 @@ router.get('/dashboard', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+// 🔥 RUTA NECESARIA PARA EL VENDEDOR AUTENTICADO
+import AnalyticsController from '../controllers/analyticsController.js';
+
+
+router.get(
+  '/vendedores/mi-rendimiento',
+  requireAuth,
+  AnalyticsController.obtenerMiRendimiento
+);
+
+
 export default router;

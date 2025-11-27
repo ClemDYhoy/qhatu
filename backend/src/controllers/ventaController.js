@@ -320,203 +320,362 @@ const VentaController = {
   // ====================================
   // ✅ CONFIRMAR VENTA
   // ====================================
-  confirmarVenta: async (req, res) => {
-    const transaction = await Venta.sequelize.transaction();
+  // C:\qhatu\backend\src\controllers\ventaController.js
+// ✅ CONFIRMAR VENTA - VERSIÓN MEJORADA Y MÁS ROBUSTA
 
-    try {
-      const { ventaId } = req.params;
-      const vendedor_id = req.user.usuario_id;
-      const { notas_vendedor } = req.body;
+confirmarVenta: async (req, res) => {
+  const transaction = await Venta.sequelize.transaction();
+  
+  try {
+    const { ventaId } = req.params;
+    const vendedor_id = req.user?.usuario_id;
+    const { notas_vendedor } = req.body;
 
-      console.log(`\n✅ Iniciando confirmación de venta ${ventaId}...`);
+    console.log(`\n✅ [CONFIRMACIÓN] Iniciando venta ${ventaId} por vendedor ${vendedor_id}...`);
 
-      // 1️⃣ Validar que ventaId es un número
-      const ventaIdNum = parseInt(ventaId);
-      if (isNaN(ventaIdNum)) {
-        await transaction.rollback();
-        return res.status(400).json({ 
-          success: false, 
-          message: 'ID de venta inválido' 
-        });
-      }
-
-      // 2️⃣ Obtener venta con items
-      const venta = await Venta.findByPk(ventaIdNum, {
-        include: [{ 
-          model: VentaItem, 
-          as: 'items',
-          required: true // Asegurar que tenga items
-        }],
-        transaction
-      });
-
-      if (!venta) {
-        await transaction.rollback();
-        console.error(`❌ Venta ${ventaIdNum} no encontrada`);
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Venta no encontrada' 
-        });
-      }
-
-      console.log(`📦 Venta encontrada: ${venta.numero_venta} con ${venta.items.length} items`);
-
-      // 3️⃣ Validar que la venta puede confirmarse
-      if (venta.estado !== 'pendiente') {
-        await transaction.rollback();
-        console.warn(`⚠️ Venta ${venta.numero_venta} ya está en estado: ${venta.estado}`);
-        return res.status(400).json({ 
-          success: false, 
-          message: `Esta venta ya fue ${venta.estado}` 
-        });
-      }
-
-      // 4️⃣ Validar items
-      if (!venta.items || venta.items.length === 0) {
-        await transaction.rollback();
-        console.error(`❌ Venta ${venta.numero_venta} no tiene items`);
-        return res.status(400).json({
-          success: false,
-          message: 'La venta no tiene productos'
-        });
-      }
-
-      console.log(`🔍 Validando stock de ${venta.items.length} productos...`);
-
-      // 5️⃣ VALIDAR Y DESCONTAR STOCK ATÓMICAMENTE
-      for (const item of venta.items) {
-        // Validar que el item tiene producto_id
-        if (!item.producto_id) {
-          console.warn(`⚠️ Item sin producto_id: ${item.producto_nombre}`);
-          continue;
-        }
-
-        // Obtener producto actual con bloqueo
-        const producto = await Product.findByPk(item.producto_id, {
-          transaction,
-          lock: transaction.LOCK.UPDATE
-        });
-
-        if (!producto) {
-          await transaction.rollback();
-          console.error(`❌ Producto no encontrado: ID ${item.producto_id}`);
-          return res.status(404).json({
-            success: false,
-            message: `Producto ${item.producto_nombre} no encontrado`
-          });
-        }
-
-        // Validar stock suficiente
-        if (producto.stock < item.cantidad) {
-          await transaction.rollback();
-          console.error(`❌ Stock insuficiente: ${producto.nombre} (necesita ${item.cantidad}, hay ${producto.stock})`);
-          return res.status(400).json({
-            success: false,
-            message: `Stock insuficiente para: ${producto.nombre}`,
-            disponible: producto.stock,
-            solicitado: item.cantidad
-          });
-        }
-
-        // Descontar stock
-        const nuevoStock = producto.stock - item.cantidad;
-        await producto.update({
-          stock: nuevoStock,
-          ventas: producto.ventas + item.cantidad
-        }, { transaction });
-
-        console.log(`✅ Stock actualizado: ${producto.nombre} (${producto.stock} → ${nuevoStock})`);
-      }
-
-      console.log(`✅ Stock de todos los productos actualizado`);
-
-      // 6️⃣ ACTUALIZAR VENTA A CONFIRMADA
-      const fechaConfirmacion = new Date();
-      
-      await venta.update({
-        estado: 'confirmada',
-        vendedor_id,
-        fecha_confirmacion: fechaConfirmacion,
-        notas_vendedor: notas_vendedor || null
-      }, { transaction });
-
-      console.log(`✅ Venta ${venta.numero_venta} actualizada a: confirmada`);
-
-      // 7️⃣ COMMIT - ACTIVA EL TRIGGER
-      await transaction.commit();
-      console.log(`✅ Transacción commit - Trigger activado`);
-
-      // 8️⃣ Recargar venta con relaciones
-      const ventaActualizada = await Venta.findByPk(ventaIdNum, {
-        include: [
-          { model: VentaItem, as: 'items' },
-          { model: User, as: 'usuario', attributes: ['nombre_completo', 'email'] },
-          { model: User, as: 'vendedor', attributes: ['nombre_completo', 'email'] }
-        ]
-      });
-
-      // 9️⃣ 🔔 NOTIFICAR VÍA SOCKET.IO
-      if (req.io) {
-        console.log('🔔 Emitiendo evento Socket.IO: venta-confirmada');
-        
-        req.io.emit('venta-confirmada', { 
-          venta_id: venta.venta_id,
-          numero_venta: venta.numero_venta,
-          vendedor_id,
-          total: parseFloat(venta.total),
-          timestamp: Date.now()
-        });
-
-        // Emitir actualización de stock
-        req.io.emit('stock-actualizado', {
-          productos_actualizados: venta.items.map(item => item.producto_id),
-          timestamp: Date.now()
-        });
-      }
-
-      console.log(`\n✅ VENTA ${venta.numero_venta} CONFIRMADA EXITOSAMENTE\n`);
-
-      // 🔟 RESPUESTA EXITOSA
-      return res.json({ 
-        success: true, 
-        message: 'Venta confirmada exitosamente. El stock ha sido actualizado automáticamente.', 
-        data: {
-          venta_id: ventaActualizada.venta_id,
-          numero_venta: ventaActualizada.numero_venta,
-          estado: ventaActualizada.estado,
-          fecha_confirmacion: ventaActualizada.fecha_confirmacion,
-          vendedor: ventaActualizada.vendedor?.nombre_completo,
-          items: ventaActualizada.items.map(item => ({
-            producto_nombre: item.producto_nombre,
-            cantidad: item.cantidad,
-            precio: item.precio_unitario
-          }))
-        }
-      });
-
-    } catch (error) {
+    // ====================================
+    // 1️⃣ VALIDACIONES INICIALES
+    // ====================================
+    
+    // Validar vendedor autenticado
+    if (!vendedor_id) {
       await transaction.rollback();
-      console.error('\n❌ ERROR CRÍTICO EN confirmarVenta:', error);
-      console.error('Stack:', error.stack);
-      console.error('Detalles:', {
-        name: error.name,
-        message: error.message,
-        sql: error.sql
-      });
-      
-      // Respuesta de error detallada
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Error al confirmar venta',
-        error: process.env.NODE_ENV === 'development' ? {
-          message: error.message,
-          name: error.name,
-          sql: error.sql
-        } : 'Error interno del servidor',
-        code: 'CONFIRM_VENTA_ERROR'
+      return res.status(401).json({
+        success: false,
+        message: 'Vendedor no autenticado'
       });
     }
-  },
+
+    // Validar ID de venta
+    const ventaIdNum = parseInt(ventaId);
+    if (isNaN(ventaIdNum) || ventaIdNum <= 0) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'ID de venta inválido',
+        code: 'INVALID_ID'
+      });
+    }
+
+    // ====================================
+    // 2️⃣ OBTENER VENTA CON BLOQUEO
+    // ====================================
+    
+    const venta = await Venta.findByPk(ventaIdNum, {
+      include: [{
+        model: VentaItem,
+        as: 'items',
+        required: true
+      }],
+      transaction,
+      lock: transaction.LOCK.UPDATE // 🔒 Bloqueo pesimista para evitar race conditions
+    });
+
+    // Validar existencia
+    if (!venta) {
+      await transaction.rollback();
+      console.error(`❌ Venta ${ventaIdNum} no encontrada`);
+      return res.status(404).json({
+        success: false,
+        message: 'Venta no encontrada',
+        code: 'NOT_FOUND'
+      });
+    }
+
+    console.log(`📦 Venta ${venta.numero_venta} encontrada - Estado: ${venta.estado}`);
+
+    // ====================================
+    // 3️⃣ VALIDAR ESTADO
+    // ====================================
+    
+    if (venta.estado !== 'pendiente') {
+      await transaction.rollback();
+      console.warn(`⚠️ Venta ${venta.numero_venta} no puede confirmarse (estado: ${venta.estado})`);
+      
+      // Mensajes específicos por estado
+      const mensajesPorEstado = {
+        confirmada: 'Esta venta ya fue confirmada anteriormente',
+        procesando: 'Esta venta ya está siendo procesada',
+        cancelada: 'Esta venta fue cancelada y no puede confirmarse',
+        enviada: 'Esta venta ya fue enviada',
+        entregada: 'Esta venta ya fue entregada'
+      };
+      
+      return res.status(400).json({
+        success: false,
+        message: mensajesPorEstado[venta.estado] || `Estado actual: ${venta.estado}`,
+        code: 'INVALID_STATE',
+        estado_actual: venta.estado
+      });
+    }
+
+    // ====================================
+    // 4️⃣ VALIDAR ITEMS
+    // ====================================
+    
+    if (!venta.items || venta.items.length === 0) {
+      await transaction.rollback();
+      console.error(`❌ Venta ${venta.numero_venta} sin items`);
+      return res.status(400).json({
+        success: false,
+        message: 'La venta no tiene productos asociados',
+        code: 'NO_ITEMS'
+      });
+    }
+
+    console.log(`🔍 Validando ${venta.items.length} productos...`);
+
+    // ====================================
+    // 5️⃣ VALIDAR Y ACTUALIZAR STOCK
+    // ====================================
+    
+    const productosActualizados = [];
+    const erroresStock = [];
+
+    for (const item of venta.items) {
+      // Validar producto_id
+      if (!item.producto_id) {
+        console.warn(`⚠️ Item sin producto_id: ${item.producto_nombre}`);
+        erroresStock.push({
+          producto: item.producto_nombre,
+          error: 'Producto no identificado'
+        });
+        continue;
+      }
+
+      // Obtener producto con bloqueo
+      const producto = await Product.findByPk(item.producto_id, {
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+
+      // Validar existencia
+      if (!producto) {
+        console.error(`❌ Producto ${item.producto_id} no encontrado`);
+        erroresStock.push({
+          producto: item.producto_nombre,
+          error: 'Producto no encontrado en inventario'
+        });
+        continue;
+      }
+
+      // Validar stock disponible
+      if (producto.stock < item.cantidad) {
+        console.error(
+          `❌ Stock insuficiente: ${producto.nombre}`,
+          `(necesita ${item.cantidad}, disponible ${producto.stock})`
+        );
+        erroresStock.push({
+          producto: producto.nombre,
+          solicitado: item.cantidad,
+          disponible: producto.stock
+        });
+        continue;
+      }
+
+      // ✅ Actualizar stock y estadísticas
+      const stockAnterior = producto.stock;
+      const nuevoStock = stockAnterior - item.cantidad;
+      
+      await producto.update({
+        stock: nuevoStock,
+        ventas: (producto.ventas || 0) + item.cantidad, // Incrementar contador de ventas
+        ultima_venta: new Date() // Registrar última fecha de venta
+      }, { transaction });
+
+      productosActualizados.push({
+        producto_id: producto.producto_id,
+        nombre: producto.nombre,
+        stock_anterior: stockAnterior,
+        stock_nuevo: nuevoStock,
+        cantidad_vendida: item.cantidad
+      });
+
+      console.log(
+        `✅ ${producto.nombre}: ${stockAnterior} → ${nuevoStock}`,
+        `(-${item.cantidad})`
+      );
+    }
+
+    // Si hubo errores de stock, revertir transacción
+    if (erroresStock.length > 0) {
+      await transaction.rollback();
+      console.error(`❌ Errores de stock detectados:`, erroresStock);
+      
+      return res.status(400).json({
+        success: false,
+        message: 'Stock insuficiente para algunos productos',
+        code: 'INSUFFICIENT_STOCK',
+        errores: erroresStock,
+        productos_validos: productosActualizados.length,
+        productos_error: erroresStock.length
+      });
+    }
+
+    console.log(`✅ Stock de ${productosActualizados.length} productos actualizado`);
+
+    // ====================================
+    // 6️⃣ ACTUALIZAR ESTADO DE VENTA
+    // ====================================
+    
+    const fechaConfirmacion = new Date();
+    
+    await venta.update({
+      estado: 'confirmada',
+      vendedor_id,
+      fecha_confirmacion: fechaConfirmacion,
+      notas_vendedor: notas_vendedor || null
+    }, { transaction });
+
+    console.log(`✅ Venta ${venta.numero_venta} → confirmada`);
+
+    // ====================================
+    // 7️⃣ COMMIT - ACTIVAR TRIGGER
+    // ====================================
+    
+    await transaction.commit();
+    console.log(`✅ Transacción commit exitoso - Trigger MySQL activado`);
+
+    // ====================================
+    // 8️⃣ RECARGAR DATOS COMPLETOS
+    // ====================================
+    
+    const ventaActualizada = await Venta.findByPk(ventaIdNum, {
+      include: [
+        { model: VentaItem, as: 'items' },
+        { 
+          model: User, 
+          as: 'usuario', 
+          attributes: ['usuario_id', 'nombre_completo', 'email', 'telefono'] 
+        },
+        { 
+          model: User, 
+          as: 'vendedor', 
+          attributes: ['usuario_id', 'nombre_completo', 'email'] 
+        }
+      ]
+    });
+
+    // ====================================
+    // 9️⃣ NOTIFICAR VÍA SOCKET.IO
+    // ====================================
+    
+    if (req.io) {
+      console.log('🔔 Emitiendo notificación Socket.IO...');
+      
+      // Notificar confirmación de venta
+      req.io.emit('venta-confirmada', {
+        venta_id: venta.venta_id,
+        numero_venta: venta.numero_venta,
+        vendedor_id,
+        vendedor_nombre: ventaActualizada.vendedor?.nombre_completo,
+        total: parseFloat(venta.total),
+        items_count: venta.items.length,
+        timestamp: Date.now()
+      });
+
+      // Notificar actualización de stock
+      req.io.emit('stock-actualizado', {
+        productos: productosActualizados.map(p => ({
+          producto_id: p.producto_id,
+          nombre: p.nombre,
+          stock_nuevo: p.stock_nuevo
+        })),
+        venta_id: venta.venta_id,
+        timestamp: Date.now()
+      });
+
+      console.log('✅ Notificaciones Socket.IO enviadas');
+    }
+
+    // ====================================
+    // 🔟 RESPUESTA EXITOSA
+    // ====================================
+    
+    console.log(`\n✅ [ÉXITO] Venta ${venta.numero_venta} confirmada exitosamente\n`);
+    
+    return res.json({
+      success: true,
+      message: `Venta ${venta.numero_venta} confirmada exitosamente. Stock actualizado automáticamente.`,
+      data: {
+        venta_id: ventaActualizada.venta_id,
+        numero_venta: ventaActualizada.numero_venta,
+        estado: ventaActualizada.estado,
+        fecha_confirmacion: ventaActualizada.fecha_confirmacion,
+        total: parseFloat(ventaActualizada.total),
+        vendedor: {
+          id: ventaActualizada.vendedor?.usuario_id,
+          nombre: ventaActualizada.vendedor?.nombre_completo
+        },
+        cliente: {
+          nombre: ventaActualizada.cliente_nombre,
+          telefono: ventaActualizada.cliente_telefono
+        },
+        items: ventaActualizada.items.map(item => ({
+          producto_id: item.producto_id,
+          producto_nombre: item.producto_nombre,
+          cantidad: item.cantidad,
+          precio_unitario: parseFloat(item.precio_unitario),
+          subtotal: parseFloat(item.subtotal)
+        })),
+        productos_actualizados: productosActualizados
+      }
+    });
+
+  } catch (error) {
+    // ====================================
+    // ❌ MANEJO DE ERRORES
+    // ====================================
+    
+    await transaction.rollback();
+    console.error('\n❌ [ERROR CRÍTICO] confirmarVenta:', error);
+    console.error('Stack trace:', error.stack);
+    
+    // Análisis de tipo de error
+    const errorInfo = {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      sql: error.sql
+    };
+    
+    console.error('Detalles del error:', errorInfo);
+
+    // Mensajes de error específicos
+    let statusCode = 500;
+    let errorMessage = 'Error interno al confirmar venta';
+    let errorCode = 'CONFIRM_ERROR';
+
+    // Error de constraint de base de datos
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      statusCode = 409;
+      errorMessage = 'Conflicto al confirmar venta (posible duplicado)';
+      errorCode = 'CONSTRAINT_ERROR';
+    }
+    
+    // Error de validación
+    if (error.name === 'SequelizeValidationError') {
+      statusCode = 400;
+      errorMessage = 'Datos de venta inválidos';
+      errorCode = 'VALIDATION_ERROR';
+    }
+    
+    // Error de timeout
+    if (error.name === 'SequelizeTimeoutError') {
+      statusCode = 503;
+      errorMessage = 'Tiempo de espera agotado. Intente nuevamente.';
+      errorCode = 'TIMEOUT_ERROR';
+    }
+
+    return res.status(statusCode).json({
+      success: false,
+      message: errorMessage,
+      code: errorCode,
+      error: process.env.NODE_ENV === 'development' ? errorInfo : undefined,
+      timestamp: new Date().toISOString()
+    });
+  }
+},
 
   // ====================================
   // 📊 OBTENER DETALLE DE VENTA

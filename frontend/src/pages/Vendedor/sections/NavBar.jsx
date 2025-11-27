@@ -18,7 +18,7 @@ const NavBar = ({ user, stats }) => {
         </div>
         <div className="stat-mini">
           <span>Comisión</span>
-          <strong>S/ {stats.comision.toFixed(2)}</strong>
+          <strong>S/ {(Number(stats.comision) || 0).toFixed(2)}</strong>
         </div>
         <div className="user-avatar">
           {user?.nombre?.[0] || 'V'}

@@ -36,7 +36,7 @@ import cartRoutes from './routes/cart.js';
 import analyticsRoutes from './routes/analytics.js';
 import ventasRoutes from './routes/ventas.js';
 import analyticsVentasRoutes from './routes/analytics-ventas.js';
-
+import mlRoutes from './routes/ml.js';
 // ====================================
 // 📊 VARIABLES DE ENTORNO
 // ====================================
@@ -464,7 +464,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ventas', ventasRoutes);
 app.use('/api/analytics-ventas', analyticsVentasRoutes);
-
+app.use('/api/ml', mlRoutes);
 // ====================================
 // ❌ MANEJO DE ERRORES
 // ====================================

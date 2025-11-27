@@ -217,6 +217,32 @@ const DashboardOverview = ({ setActiveSection }) => {
               <p>Análisis de rendimiento</p>
             </div>
           </button>
+          <div className="ia-insights-section">
+            <h3 className="section-title">🧠 Insights de IA</h3>
+            <div className="ia-insights-grid">
+              <div className="ia-insight-card">
+                <div className="insight-icon">🎯</div>
+                <div className="insight-content">
+                  <h4>Clientes VIP Activos</h4>
+                  <p>Segmentación automática con K-Means</p>
+                </div>
+              </div>
+              <div className="ia-insight-card">
+                <div className="insight-icon">📊</div>
+                <div className="insight-content">
+                  <h4>Probabilidades en Tiempo Real</h4>
+                  <p>Predicción de cierre con Regresión Lineal</p>
+                </div>
+              </div>
+              <div className="ia-insight-card">
+                <div className="insight-icon">🛍️</div>
+                <div className="insight-content">
+                  <h4>Recomendaciones Inteligentes</h4>
+                  <p>Productos similares con Cosine Similarity</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <button className="action-card warning" onClick={() => setActiveSection('inventario')}>
             <div className="action-icon">
