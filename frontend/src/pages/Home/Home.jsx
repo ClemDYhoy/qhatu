@@ -9,20 +9,38 @@ import './Home.css';
 // ====================================
 const Icons = {
   star: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M10 2l2.5 6.5L19 10l-6.5 2.5L10 19l-2.5-6.5L1 10l6.5-2.5L10 2z" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg 
+      width="20" 
+      height="20" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <path d="M12 2.25l3.09 6.26 6.91 1-5 4.88L18.18 21 12 17.77 5.82 21 7 14.39 2 9.51l6.91-1L12 2.25z"/>
     </svg>
   ),
   fire: (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M10 2s1.5 3 1.5 5.5c0 2-1.5 3.5-3 3.5s-3-1.5-3-3.5c0 0 0-1 .5-2M5 9c-1 1.5-2 3.5-2 5.5 0 3.5 2.5 6 6 6s6-2.5 6-6c0-3-2-6-4-8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path 
+        d="M10 1s1.5 3 1.5 5.5c0 2-1.5 3.5-3 3.5s-3-1.5-3-3.5c0 0 0-1 .5-2M5 8c-1 1.5-2 3.5-2 5.5 0 3.5 2.5 6 6 6s6-2.5 6-6c0-3-2-6-4-8" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   candy: (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="10" cy="10" r="7" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M10 3v14M3 10h14" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <g transform="rotate(-25 12 12)">
+          <path d="M2 12h4l2-2.5 2 2.5h4l2-2.5 2 2.5h4"/>
+          <rect x="6" y="6" width="12" height="12" rx="3"/>
+          <path d="M3 8l3 4M21 8l-3 4M3 16l3-4M21 16l-3-4"/>
+          <line x1="10" y1="9" x2="10" y2="15" strokeWidth="2.5"/>
+          <line x1="14" y1="9" x2="14" y2="15" strokeWidth="2.5"/>
+        </g>
+      </svg>
   ),
   tag: (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
@@ -71,23 +89,87 @@ const Icons = {
     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
       <path d="M10 1l2.5 6.5L19 10l-6.5 2.5L10 19l-2.5-6.5L1 10l6.5-2.5L10 1z"/>
     </svg>
-  )
+  ),
+  wine: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      {/* Copa superior */}
+      <path
+        d="M7 3h10l-1 6.5c-.3 2.5-2.2 4.5-4.5 4.5h-1c-2.3 0-4.2-2-4.5-4.5L6 3z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Tallo */}
+      <line 
+        x1="12" 
+        y1="14" 
+        x2="12" 
+        y2="19" 
+        strokeLinecap="round"
+      />
+      {/* Base */}
+      <line 
+        x1="8" 
+        y1="19" 
+        x2="16" 
+        y2="19" 
+        strokeLinecap="round"
+        strokeWidth="2.5"
+      />
+      {/* Nivel del vino */}
+      <path
+        d="M8 7c1.5 0.8 2.5 1 4 1s2.5-0.2 4-1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  ),
+  alert: (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    {/* Triángulo */}
+    <path 
+      d="M12 2L2 21h20L12 2z" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    />
+    {/* Línea de advertencia */}
+    <line 
+      x1="12" 
+      y1="8" 
+      x2="12" 
+      y2="14" 
+      strokeLinecap="round"
+      strokeWidth="2.5"
+    />
+    {/* Punto de exclamación */}
+    <circle 
+      cx="12" 
+      cy="17.5" 
+      r="1" 
+      fill="currentColor" 
+      stroke="none"
+    />
+  </svg>
+)
 };
 
 const Home = () => {
+  // Estados para cada sección
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
   const [dulcesProducts, setDulcesProducts] = useState([]);
+  const [licoresProducts, setLicoresProducts] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
   const [carruseles, setCarruseles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [carruselError, setCarruselError] = useState(null);
 
-  // Carrusel
+  // Estados del carrusel
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef(null);
 
-  // Auto-play
+  // Auto-play del carrusel
   useEffect(() => {
     if (carruseles.length <= 1 || isPaused) {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -105,7 +187,7 @@ const Home = () => {
   const handlePrev = () => setActiveIndex(prev => (prev - 1 + carruseles.length) % carruseles.length);
   const handleNext = () => setActiveIndex(prev => (prev + 1) % carruseles.length);
 
-  // Scroll header
+  // Scroll header effect
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -121,7 +203,13 @@ const Home = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Cargar carruseles
+  // ============================================
+  // FUNCIONES DE CARGA DE DATOS
+  // ============================================
+
+  /**
+   * Cargar carruseles activos
+   */
   const fetchCarruseles = async () => {
     try {
       setCarruselError(null);
@@ -131,80 +219,132 @@ const Home = () => {
       setCarruseles(activos);
       setActiveIndex(0);
     } catch (err) {
-      console.error('Error cargando carruseles:', err);
+      console.error('❌ Error cargando carruseles:', err);
       setCarruselError('No se pudieron cargar los destacados');
       setCarruseles([]);
     }
   };
 
-  // Cargar productos destacados (destacado = 1)
+  /**
+   * Cargar productos destacados (destacado = 1)
+   * Usa la ruta optimizada /products/featured
+   */
   const fetchFeaturedProducts = async () => {
     try {
-      const response = await api.get('/products', {
-        params: {
-          destacado: 1,
-          limit: 7
-        }
+      const response = await api.get('/products/featured', {
+        params: { limit: 7 }
       });
-      const products = response.data?.data || response.data || [];
+      const products = response.data?.data || [];
       setFeaturedProducts(products);
+      console.log('✅ Productos destacados cargados:', products.length);
     } catch (err) {
-      console.error('Error cargando productos destacados:', err);
+      console.error('❌ Error cargando productos destacados:', err);
       setFeaturedProducts([]);
     }
   };
 
-  // Cargar más vendidos (ordenados por ventas DESC)
+  /**
+   * Cargar más vendidos (ordenados por ventas DESC)
+   * Usa la ruta optimizada /products/best-sellers
+   */
   const fetchBestSellers = async () => {
     try {
-      const response = await api.get('/products', {
-        params: {
-          orderBy: 'ventas',
-          order: 'DESC',
-          limit: 7
-        }
+      const response = await api.get('/products/best-sellers', {
+        params: { limit: 7 }
       });
-      const products = response.data?.data || response.data || [];
+      const products = response.data?.data || [];
       setBestSellers(products);
+      console.log('✅ Más vendidos cargados:', products.length);
     } catch (err) {
-      console.error('Error cargando más vendidos:', err);
+      console.error('❌ Error cargando más vendidos:', err);
       setBestSellers([]);
     }
   };
 
-  // Cargar productos de la categoría Dulces (categoria_id = 1)
+  /**
+   * Cargar productos de la categoría Dulces (categoria_id = 1)
+   * Usa la ruta /products/by-category/1
+   */
   const fetchDulcesProducts = async () => {
     try {
-      const response = await api.get('/products', {
-        params: {
-          categoria_id: 1,
-          limit: 7
-        }
+      const response = await api.get('/products/by-category/1', {
+        params: { limit: 7 }
       });
-      const products = response.data?.data || response.data || [];
+      const products = response.data?.data || [];
       setDulcesProducts(products);
+      console.log('✅ Dulces cargados:', products.length);
     } catch (err) {
-      console.error('Error cargando dulces:', err);
+      console.error('❌ Error cargando dulces:', err);
       setDulcesProducts([]);
     }
   };
 
-  // Cargar todos los datos
+  /**
+   * Cargar productos de la categoría Licores (categoria_id = 18)
+   * Usa la ruta /products/by-category/18
+   */
+  const fetchLicoresProducts = async () => {
+    try {
+      const response = await api.get('/products/by-category/18', {
+        params: { limit: 7 }
+      });
+      const products = response.data?.data || [];
+      setLicoresProducts(products);
+      console.log('✅ Licores cargados:', products.length);
+    } catch (err) {
+      console.error('❌ Error cargando licores:', err);
+      setLicoresProducts([]);
+    }
+  };
+
+  /**
+   * Cargar productos con stock bajo
+   * Usa la ruta optimizada /products/low-stock
+   */
+  const fetchLowStockProducts = async () => {
+    try {
+      const response = await api.get('/products/low-stock', {
+        params: { limit: 7 }
+      });
+      const products = response.data?.data || [];
+      setLowStockProducts(products);
+      console.log('✅ Stock bajo cargados:', products.length);
+    } catch (err) {
+      console.error('❌ Error cargando productos de stock bajo:', err);
+      setLowStockProducts([]);
+    }
+  };
+
+  /**
+   * Cargar todos los datos al montar el componente
+   */
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       
-      await Promise.all([
-        fetchCarruseles(),
-        fetchFeaturedProducts(),
-        fetchBestSellers(),
-        fetchDulcesProducts()
-      ]);
-
-      setLoading(false);
+      try {
+        await Promise.all([
+          fetchCarruseles(),
+          fetchFeaturedProducts(),
+          fetchBestSellers(),
+          fetchDulcesProducts(),
+          fetchLicoresProducts(),
+          fetchLowStockProducts()
+        ]);
+        console.log('✅ Todos los datos cargados correctamente');
+      } catch (error) {
+        console.error('❌ Error cargando datos del home:', error);
+      } finally {
+        setLoading(false);
+      }
     };
+    
     loadData();
   }, []);
+
+  // ============================================
+  // LOADING STATE
+  // ============================================
 
   if (loading) {
     return (
@@ -214,6 +354,10 @@ const Home = () => {
       </div>
     );
   }
+
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
     <div className="home-pro">
@@ -237,7 +381,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CARRUSEL PREMIUM 2025 - ULTRA PROFESIONAL */}
+      {/* CARRUSEL PREMIUM */}
       {carruseles.length > 0 ? (
         <section className="section-pro promo-bg">
           <div 
@@ -245,7 +389,6 @@ const Home = () => {
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >
-            {/* Botones de navegación */}
             <button 
               className="carousel-nav-btn carousel-nav-prev"
               onClick={handlePrev}
@@ -266,7 +409,6 @@ const Home = () => {
               </svg>  
             </button>
 
-            {/* Slides */}
             <div className="premium-carousel-track-container">
               <div 
                 className="premium-carousel-track"
@@ -297,7 +439,6 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Contador + Indicadores Premium */}
             <div className="premium-carousel-controls">
               <div className="premium-slide-counter"></div>
               <div className="premium-indicators">
@@ -326,7 +467,7 @@ const Home = () => {
         <section className="section-pro promo-bg">
           <div className="container-pro">
             <div className="carousel-error-premium">
-              <p>No se pudieron cargar las ofertas del momento</p>
+              <p>{carruselError}</p>
               <button onClick={fetchCarruseles} className="retry-btn-premium">
                 Reintentar carga
               </button>
@@ -343,8 +484,8 @@ const Home = () => {
               <div className="header-content-pro">
                 <div className="icon-badge-pro primary">{Icons.star}</div>
                 <div>
-                  <h2 className="section-title-pro">Productos Destacados</h2>
-                  <p className="section-subtitle-pro">Los más populares de esta semana</p>
+                  <h3 className="section-title-pro">Nuevos y Destacados</h3>
+                  <p className="section-subtitle-pro">Una selección de productos nuevos y destacados para esta temporada.</p>
                 </div>
               </div>
               <Link to="/products?destacado=1" className="link-view-pro">Ver todos {Icons.arrowRight}</Link>
@@ -366,11 +507,11 @@ const Home = () => {
               <div className="header-content-pro">
                 <div className="icon-badge-pro red">{Icons.fire}</div>
                 <div>
-                  <h2 className="section-title-pro">Más Vendidos</h2>
-                  <p className="section-subtitle-pro">Los favoritos de nuestros clientes</p>
+                  <h3 className="section-title-pro">Más Vendidos</h3>
+                  <p className="section-subtitle-pro">Los favoritos indiscutibles de nuestros clientes.</p>
                 </div>
               </div>
-              <Link to="/products?orderBy=ventas" className="link-view-pro">Ver todos {Icons.arrowRight}</Link>
+              <Link to="/products?orderBy=ventas&order=DESC" className="link-view-pro">Ver todos {Icons.arrowRight}</Link>
             </div>
             <div className="products-grid-pro">
               {bestSellers.map(product => (
@@ -383,20 +524,66 @@ const Home = () => {
 
       {/* DULCES IMPORTADOS */}
       {dulcesProducts.length > 0 && (
-        <section className="section-pro">
+        <section className="section-pro dulces-bg">
           <div className="container-pro">
             <div className="section-header-pro">
               <div className="header-content-pro">
                 <div className="icon-badge-pro secondary">{Icons.candy}</div>
                 <div>
-                  <h2 className="section-title-pro">Dulces Importados</h2>
-                  <p className="section-subtitle-pro">Sabores auténticos de todo el mundo</p>
+                  <h3 className="section-title-pro">Lo mejor de Dulces</h3>
+                  <p className="section-subtitle-pro">Una colección especial de sabores dulces que encantan a todos.</p>
                 </div>
               </div>
               <Link to="/products?categoria_id=1" className="link-view-pro">Ver todos {Icons.arrowRight}</Link>
             </div>
             <div className="products-grid-pro">
               {dulcesProducts.map(product => (
+                <ProductCard key={product.producto_id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* LICORES PREMIUM */}
+      {licoresProducts.length > 0 && (
+        <section className="section-pro licores-bg">
+          <div className="container-pro">
+            <div className="section-header-pro">
+              <div className="header-content-pro">
+                <div className="icon-badge-pro wine">{Icons.wine}</div>
+                <div>
+                  <h3 className="section-title-pro">Lo Último en Licores</h3>
+                  <p className="section-subtitle-pro">Descubre bebidas ideales para compartir, celebrar o relajarte.</p>
+                </div>
+              </div>
+              <Link to="/products?categoria_id=18" className="link-view-pro">Ver todos {Icons.arrowRight}</Link>
+            </div>
+            <div className="products-grid-pro">
+              {licoresProducts.map(product => (
+                <ProductCard key={product.producto_id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ÚLTIMAS UNIDADES */}
+      {lowStockProducts.length > 0 && (
+        <section className="section-pro lowstock-bg">
+          <div className="container-pro">
+            <div className="section-header-pro">
+              <div className="header-content-pro">
+                <div className="icon-badge-pro alert">{Icons.alert}</div>
+                <div>
+                  <h3 className="section-title-pro">Antes de que se Agoten</h3>
+                  <p className="section-subtitle-pro">Lo más pedido está por agotarse. Aún estás a tiempo de llevarlo</p>
+                </div>
+              </div>
+              <Link to="/products?low_stock=true" className="link-view-pro">Ver todos {Icons.arrowRight}</Link>
+            </div>
+            <div className="products-grid-pro">
+              {lowStockProducts.map(product => (
                 <ProductCard key={product.producto_id} product={product} />
               ))}
             </div>

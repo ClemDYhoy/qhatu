@@ -57,13 +57,159 @@
 }
 
 /* ===== HERO SECTION ===== */
-.hero-pro {
-  margin-top: var(--header-scrolled-height);
-  background: linear-gradient(180deg, var(--gold-light) 0%, var(--white) 100%);
-  padding: var(--space-6) 0 var(--space-10);
-  border-bottom: 1px solid var(--border-light);
+/* Variables adicionales para un diseño más sofisticado */
+:root {
+  --gold-lighter: #fffef7;
+  --gold-soft: #f9f3e0;
+  --gold-medium: #f0e6c5;
+  --border-golden: rgba(212, 175, 55, 0.15);
+  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
+/* Hero principal unificado */
+.hero-pro {
+  margin-top: var(--header-scrolled-height);
+  background: 
+    /* Capa base */
+    linear-gradient(180deg, 
+      var(--gold-light) 0%, 
+      var(--gold-soft) 25%,
+      var(--white) 100%
+    ),
+    
+    /* Iluminación superior */
+    radial-gradient(
+      ellipse 100% 40% at 50% 0%,
+      var(--gold-lighter) 0%,
+      transparent 80%
+    ),
+    
+    /* Acentos dorados sutiles */
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(255, 251, 227, 0.8) 0%,
+      transparent 50%
+    ),
+    
+    radial-gradient(
+      circle at 15% 30%,
+      rgba(255, 249, 219, 0.6) 0%,
+      transparent 45%
+    );
+  
+  padding: var(--space-6) 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto de borde inferior decorativo */
+.hero-pro::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 85%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-golden) 20%,
+    var(--border-golden) 80%,
+    transparent
+  );
+}
+
+/* Sección promocional integrada */
+.section-pro.promo-bg {
+  background: 
+    /* Transición suave desde el hero */
+    linear-gradient(180deg, 
+      transparent 0%,
+      rgba(255, 255, 255, 0.6) 15%,
+      var(--gold-soft) 100%
+    ),
+    
+    /* Patrón de ondas sutiles */
+    radial-gradient(
+      ellipse 120% 100% at 50% 0%,
+      var(--gold-lighter) 0%,
+      transparent 60%
+    ),
+    
+    /* Acabado texturizado sutil */
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      rgba(255, 255, 255, 0.03) 1px,
+      rgba(255, 255, 255, 0.03) 2px
+    );
+  
+  padding: var(--space-4) 0 var(--space-10);
+  position: relative;
+  box-shadow: var(--shadow-subtle);
+  margin-top: -1px; /* Para solapar suavemente con el hero */
+}
+
+/* Elemento decorativo entre secciones */
+.section-pro.promo-bg::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: 
+    radial-gradient(
+      ellipse 60% 20px at 50% 0%,
+      rgba(255, 251, 227, 0.7) 0%,
+      transparent 100%
+    );
+  pointer-events: none;
+}
+
+/* Contenedor interno para contenido */
+.hero-pro .container,
+.section-pro.promo-bg .container {
+  position: relative;
+  z-index: 2;
+}
+
+/* Efectos de iluminación adicional */
+.hero-pro .container::before {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: 10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 253, 245, 0.4) 0%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.section-pro.promo-bg .container::after {
+  content: '';
+  position: absolute;
+  bottom: 10%;
+  right: 5%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 249, 219, 0.3) 0%,
+    transparent 70%
+  );
+  filter: blur(30px);
+  z-index: 1;
+  pointer-events: none;
+}
 
 .hero-container {
   max-width: 680px;
@@ -137,14 +283,21 @@
 .section-pro {
   padding: var(--space-8) 0;
   border-bottom: 1px solid var(--border-light);
-}
+  background: linear-gradient(
+    135deg,
+    #fff9e8 0%,   /* dorado pastel muy claro */
+    #fff4d4 50%,  /* crema dorada cálida */
+    #ffedba 100%  /* dorado suave premium */
+  );
 
-.section-pro.promo-bg {
-  background: var(--bg-secondary);
 }
 
 .section-pro.bestseller-bg {
   background: var(--red-light);
+}
+
+.section-pro.dulces-bg {
+  background: linear-gradient(135deg, #f5f3ff 0%, #faf5ff 100%);
 }
 
 /* ===== SECTION HEADER ===== */
@@ -192,7 +345,7 @@
 }
 
 .icon-badge-pro.secondary {
-  background: linear-gradient(135deg, var(--purple) 0%, #C084FC 100%);
+  background: var(--gray-40);
 }
 
 .section-title-pro {
@@ -1017,5 +1170,282 @@
   
   .product-name-pro {
     font-size: 11px;
+  }
+}
+
+
+/* ====================================
+   NUEVAS SECCIONES - BACKGROUNDS
+   ==================================== */
+
+.licores-bg {
+  background: linear-gradient(135deg, #f3fff5 0%, #f0fff8 100%);
+}
+
+.lowstock-bg {
+  background: linear-gradient(135deg, #fff5f5 0%, #fffaf0 100%);
+}
+
+/* ====================================
+   NUEVOS ICONOS BADGE
+   ==================================== */
+
+.icon-badge-pro.wine {
+  background: linear-gradient(135deg, #4de284 0%, #29ce65 100%);
+  box-shadow: 0 8px 16px rgba(74, 222, 128, 0.25);
+}
+
+.icon-badge-pro.alert {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 8px 16px rgba(245, 158, 11, 0.25);
+}
+
+
+
+/* Iconos más grandes con !important */
+.icon-badge-pro svg {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+    transform: translateY(-1px); /* súbelo un poco */
+
+}
+
+/* Si quieres aún más grande */
+.icon-badge-pro.alert svg {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 22px !important;
+  min-height: 24px !important;
+  transform: translateY(-2px); /* súbelo un poco */
+}
+
+/* Ajuste del contenedor del icono si es necesario */
+.icon-badge-pro {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+/* ====================================
+   CAROUSEL HORIZONTAL RESPONSIVO
+   PARA PANTALLAS < 1290px
+   ==================================== */
+
+@media (max-width: 1289px) {
+  .products-grid-pro {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    gap: 20px;
+    padding: 20px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(102, 126, 234, 0.3) transparent;
+  }
+
+  .products-grid-pro::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .products-grid-pro::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+  }
+
+  .products-grid-pro::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+
+  .products-grid-pro::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+  }
+
+  /* Cada card mantiene su tamaño y no se achica */
+  .products-grid-pro > * {
+    flex: 0 0 auto;
+    min-width: 280px;
+    max-width: 280px;
+    scroll-snap-align: start;
+  }
+
+  /* Indicador visual de scroll */
+  .products-grid-pro::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.9) 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .section-pro {
+    position: relative;
+  }
+
+  /* Sombra suave para indicar más contenido */
+  .container-pro {
+    position: relative;
+  }
+}
+
+/* Para tablets */
+@media (max-width: 1024px) {
+  .products-grid-pro > * {
+    min-width: 260px;
+    max-width: 260px;
+  }
+}
+
+/* Para móviles */
+@media (max-width: 768px) {
+  .products-grid-pro > * {
+    min-width: 240px;
+    max-width: 240px;
+  }
+
+  .products-grid-pro {
+    gap: 15px;
+    padding: 15px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .products-grid-pro > * {
+    min-width: 220px;
+    max-width: 220px;
+  }
+
+  .products-grid-pro {
+    gap: 12px;
+  }
+}
+
+/* ====================================
+   ANIMACIÓN SMOOTH AL HACER SCROLL
+   ==================================== */
+
+@media (max-width: 1289px) {
+  .products-grid-pro {
+    scroll-padding-left: 20px;
+  }
+
+  /* Botones de navegación opcionales para el carousel horizontal */
+  .section-pro {
+    position: relative;
+  }
+
+  .horizontal-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .section-pro:hover .horizontal-nav-btn {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .horizontal-nav-btn:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  }
+
+  .horizontal-nav-btn:hover svg {
+    stroke: white;
+  }
+
+  .horizontal-nav-btn svg {
+    stroke: #667eea;
+    transition: stroke 0.3s ease;
+  }
+
+  .horizontal-nav-prev {
+    left: 10px;
+  }
+
+  .horizontal-nav-next {
+    right: 10px;
+  }
+}
+
+/* ====================================
+   BADGE DE "ÚLTIMAS UNIDADES"
+   ==================================== */
+
+.lowstock-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  animation: pulse-low-stock 2s ease-in-out infinite;
+  z-index: 5;
+}
+
+@keyframes pulse-low-stock {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.6);
+  }
+}
+
+/* ====================================
+   MEJORAS VISUALES PARA SECCIONES
+   ==================================== */
+
+.section-title-pro {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+
+/* ====================================
+   TRANSICIONES SUAVES
+   ==================================== */
+
+.products-grid-pro {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 1289px) {
+  .container-pro {
+    overflow: visible;
   }
 }

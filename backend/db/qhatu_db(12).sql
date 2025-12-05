@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 27-11-2025 a las 22:41:12
+-- Tiempo de generación: 05-12-2025 a las 21:58:23
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -397,7 +397,7 @@ CREATE TABLE `banners_descuento` (
 --
 
 INSERT INTO `banners_descuento` (`banner_id`, `titulo`, `descripcion`, `categoria_id`, `porcentaje_descuento`, `url_imagen_fondo`, `color_fondo`, `color_texto`, `fecha_inicio`, `fecha_fin`, `activo`, `prioridad`, `tipo_descuento`, `monto_minimo`, `clicks`, `vistas`, `creado_por`, `creado_en`, `actualizado_en`) VALUES
-(1, '¡Mega Descuento en Dulces! 🍬', 'Todos los chocolates, galletas y golosinas con 25% OFF', 1, 25.00, '/images/banners/banner-dulces.jpg', '#FF6B9D', '#FFFFFF', '2025-11-07 14:38:33', '2025-12-07 14:38:33', 1, 3, 'porcentaje', NULL, 6, 41, NULL, '2025-11-07 19:38:33', '2025-11-18 03:37:21'),
+(1, '¡Mega Descuento en Dulces! 🍬', 'Todos los chocolates, galletas y golosinas con 25% OFF', 1, 25.00, '/images/banners/banner-dulces.jpg', '#FF6B9D', '#FFFFFF', '2025-11-07 14:38:33', '2025-12-07 14:38:33', 1, 3, 'porcentaje', NULL, 6, 73, NULL, '2025-11-07 19:38:33', '2025-12-05 20:19:51'),
 (2, 'Refréscate con 15% de Descuento 🥤', 'Bebidas importadas y Bubble Tea en oferta', 14, 15.00, '/images/banners/banner-bebidas.jpg', '#4ECDC4', '#FFFFFF', '2025-11-07 14:38:33', '2025-11-22 14:38:33', 1, 2, 'porcentaje', NULL, 3, 39, NULL, '2025-11-07 19:38:33', '2025-11-18 03:37:21'),
 (3, 'Semana del Ramen 🍜', 'Aprovecha 20% OFF en todos los fideos instantáneos', 10, 20.00, '/images/banners/banner-ramen.jpg', '#FFD93D', '#2D3436', '2025-11-07 14:38:33', '2025-11-14 14:38:33', 1, 1, 'porcentaje', NULL, 2, 22, NULL, '2025-11-07 19:38:33', '2025-11-13 17:27:45'),
 (4, '¡Snacks al 30% OFF! 🍿', 'Las mejores papas y piqueos importados', 6, 30.00, '/images/banners/banner-snacks.jpg', '#FFA62B', '#FFFFFF', '2025-11-07 14:38:33', '2025-11-27 14:38:33', 1, 4, 'porcentaje', NULL, 4, 745, NULL, '2025-11-07 19:38:33', '2025-11-27 19:17:30');
@@ -446,7 +446,7 @@ CREATE TABLE `carritos` (
 INSERT INTO `carritos` (`carrito_id`, `usuario_id`, `sesion_temporal`, `estado`, `subtotal`, `descuento_total`, `total`, `notas_cliente`, `creado_en`, `actualizado_en`, `convertido_venta_id`) VALUES
 (1, 4, NULL, 'enviado', 72.00, 0.00, 72.00, NULL, '2025-11-20 20:21:38', '2025-11-23 16:02:29', 2),
 (2, 1, NULL, 'activo', 0.00, 0.00, 0.00, NULL, '2025-11-23 15:26:21', '2025-11-23 15:26:21', NULL),
-(3, 2, NULL, 'activo', 0.00, 0.00, 0.00, NULL, '2025-11-23 15:26:33', '2025-11-23 15:26:33', NULL),
+(3, 2, NULL, 'enviado', 25.50, 0.00, 25.50, NULL, '2025-11-23 15:26:33', '2025-12-03 21:16:18', 29),
 (4, 4, NULL, 'enviado', 49.50, 0.00, 49.50, NULL, '2025-11-23 16:02:29', '2025-11-23 16:32:17', 3),
 (5, 4, NULL, 'enviado', 18.00, 0.00, 18.00, NULL, '2025-11-23 16:32:17', '2025-11-23 16:32:41', 4),
 (6, 4, NULL, 'enviado', 10.00, 0.00, 10.00, NULL, '2025-11-23 16:32:41', '2025-11-23 16:35:00', 5),
@@ -459,7 +459,7 @@ INSERT INTO `carritos` (`carrito_id`, `usuario_id`, `sesion_temporal`, `estado`,
 (13, 4, NULL, 'activo', 2.50, 0.00, 2.50, NULL, '2025-11-23 16:54:25', '2025-11-24 23:32:16', NULL),
 (14, 6, NULL, 'enviado', 40.50, 0.00, 40.50, NULL, '2025-11-23 17:08:44', '2025-11-23 20:09:35', 12),
 (15, 6, NULL, 'enviado', 56.65, 34.85, 56.65, NULL, '2025-11-23 20:09:35', '2025-11-25 19:50:31', 13),
-(16, 6, NULL, 'activo', 0.00, 0.00, 0.00, NULL, '2025-11-25 19:50:31', '2025-11-25 19:50:31', NULL),
+(16, 6, NULL, 'enviado', 24.00, 0.00, 24.00, NULL, '2025-11-25 19:50:31', '2025-12-05 20:20:19', 30),
 (17, 7, NULL, 'enviado', 60.32, 2.68, 60.32, NULL, '2025-11-27 07:24:13', '2025-11-27 07:24:29', 21),
 (18, 7, NULL, 'enviado', 53.99, 2.01, 53.99, NULL, '2025-11-27 07:24:29', '2025-11-27 15:01:23', 22),
 (19, 7, NULL, 'enviado', 45.00, 0.00, 45.00, NULL, '2025-11-27 15:01:23', '2025-11-27 15:05:03', 23),
@@ -472,7 +472,9 @@ INSERT INTO `carritos` (`carrito_id`, `usuario_id`, `sesion_temporal`, `estado`,
 (26, 10, NULL, 'activo', 0.00, 0.00, 0.00, NULL, '2025-11-27 18:22:03', '2025-11-27 18:22:03', NULL),
 (27, 11, NULL, 'enviado', 46.78, 2.70, 46.78, NULL, '2025-11-27 18:23:44', '2025-11-27 18:24:52', 27),
 (28, 11, NULL, 'enviado', 34.00, 0.00, 34.00, NULL, '2025-11-27 18:24:52', '2025-11-27 19:17:50', 28),
-(29, 11, NULL, 'activo', 0.00, 0.00, 0.00, NULL, '2025-11-27 19:17:50', '2025-11-27 19:17:50', NULL);
+(29, 11, NULL, 'activo', 0.00, 0.00, 0.00, NULL, '2025-11-27 19:17:50', '2025-11-27 19:17:50', NULL),
+(30, 2, NULL, 'activo', 0.00, 0.00, 0.00, NULL, '2025-12-03 21:16:18', '2025-12-03 21:16:36', NULL),
+(31, 6, NULL, 'activo', 36.00, 0.00, 36.00, NULL, '2025-12-05 20:20:19', '2025-12-05 20:33:09', NULL);
 
 -- --------------------------------------------------------
 
@@ -537,7 +539,12 @@ INSERT INTO `carrito_items` (`item_id`, `carrito_id`, `producto_id`, `cantidad`,
 (52, 27, 15, 3, 2.50, NULL, '2025-11-27 18:24:46'),
 (53, 28, 16, 1, 6.00, NULL, '2025-11-27 19:17:39'),
 (54, 28, 15, 4, 2.50, NULL, '2025-11-27 19:17:43'),
-(55, 28, 12, 4, 4.50, NULL, '2025-11-27 19:17:45');
+(55, 28, 12, 4, 4.50, NULL, '2025-11-27 19:17:45'),
+(56, 3, 15, 3, 2.50, NULL, '2025-12-03 21:16:13'),
+(57, 3, 12, 4, 4.50, NULL, '2025-12-03 21:16:14'),
+(58, 16, 16, 4, 6.00, NULL, '2025-12-05 20:20:11'),
+(59, 31, 10, 4, 5.00, NULL, '2025-12-05 20:33:07'),
+(60, 31, 8, 4, 4.00, NULL, '2025-12-05 20:33:09');
 
 --
 -- Disparadores `carrito_items`
@@ -904,7 +911,7 @@ INSERT INTO `productos` (`producto_id`, `nombre`, `descripcion`, `precio`, `prec
 (13, 'SOFT DRINK SANTA FE COFFE\r\nHAZELNUT 175 ML.', 'Es una bebida de café con sabor a avellana coreana de la marca Santa Fe (producida por Paldo), que se caracteriza por ser una bebida suave lista para beber, que combina un sabor a café tostado con un aroma rico y clásico a nuez. Se presenta en una lata individual de 175 ml.\r\nPrecio de la caja (30 unidades): S/ XX.XX \r\nAlérgenos: Contiene cafeína. El sabor a avellana es típicamente artificial y no contiene frutos secos reales ni leche. Personas con sensibilidad a la cafeína deben evitar su consumo.', 3.50, NULL, 100, 20, 10, 14, 0, 45, NULL, 'paquete', 'https://oppastorecolombia.com/wp-content/uploads/2022/04/8801128941792_1.jpeg', '2025-10-23 04:49:01', '2025-11-24 23:03:03'),
 (14, 'GOOD DAY SOJU GREEN APPLE 300 ML-12% ALC', 'Es un licor destilado coreano tradicional, conocido como soju (similar al vodka, pero más suave y dulce), de la marca Good Day, sabor a manzana verde. Se caracteriza por su bajo contenido alcohólico para un destilado  y un sabor frutal, refrescante y ligeramente dulce. Se presenta en una botella de vidrio individual de 300 ml. \r\nPrecio de la caja (20 unidades):S/ 200 \r\nAlérgenos: Contiene alcohol destilado a partir de almidones como arroz, batata, tapioca, trigo o cebada. También contiene azúcar, jarabe de maíz alto en fructosa y saborizantes. Ya que la destilación puede eliminar el gluten, pero la base de cereales es común en la producción de soju.', 4.00, NULL, 74, 20, 10, 18, 1, 73, NULL, 'bolsa', 'https://whisky.my/cdn-cgi/image/quality=80,format=auto,onerror=redirect,metadata=none/wp-content/uploads/GOOD-DAY-Apple-Soju-20-Bottles.jpg', '2025-10-23 04:49:01', '2025-11-27 15:47:29'),
 (15, 'BULDAK CARBONARA 130 GR', 'Es un paquete de fideos instantáneos tipo ramen, conocido como Buldak Carbonara Hot Chicken Flavor Ramen de la marca surcoreana Samyang. Se caracteriza por ser un \"fideo frito\" (salteado) que combina la salsa de pollo picante icónica de la marca con un polvo cremoso sabor a carbonara (queso mozzarella, mantequilla y leche). Se presenta en un paquete individual de 130 g. \r\n\r\nAlérgenos: Contiene trigo (gluten), soja y leche. Es fabricado en instalaciones que también procesan crustáceos, huevos, pescado, moluscos, mostaza, nueces, maní y semillas de sésamo. Personas con estas alergias deben evitar su consumo. ', 2.50, NULL, 3, 20, 10, 10, 0, 40, NULL, 'bolsa', 'https://orientalhm.com/cdn/shop/products/90_Carbonara_Buldak_Bokkeum_503x503_d2e08a95-bbee-4075-85d3-97cb1d383089_470x.jpg?v=1616758390', '2025-10-23 04:49:01', '2025-11-27 19:18:44'),
-(16, 'BEBIDAS DE ALOE VERA SURTIDO 450 ML', 'Es un surtido de bebidas frutales con base de aloe vera (Aloe barbadensis Miller), presentadas en botellas individuales de 450 ml. Se caracterizan por contener jugo de aloe vera y trozos de pulpa real de la planta, combinados con jugos y sabores de frutas naturales: piña, sandía original, uva y mango. Son bebidas refrescantes que se asocian con beneficios para la salud digestiva e hidratación.\r\nAlérgenos: Estas bebidas generalmente no contienen alérgenos comunes como gluten, soja o lácteos. Sin embargo, se recomienda a las personas con alergias específicas a las frutas listadas (piña, sandía, uva, mango) que revisen la etiqueta antes de consumir.', 6.00, NULL, 16, 20, 10, 14, 1, 103, NULL, 'bolsa', 'https://gw.alicdn.com/imgextra/i4/6000000000247/O1CN01YA7ie51DhAtuRQhHw_!!6000000000247-2-mia.png_.webp', '2025-10-23 04:49:01', '2025-11-27 19:18:44'),
+(16, 'BEBIDAS DE ALOE VERA SURTIDO 450 ML', 'Es un surtido de bebidas frutales con base de aloe vera (Aloe barbadensis Miller), presentadas en botellas individuales de 450 ml. Se caracterizan por contener jugo de aloe vera y trozos de pulpa real de la planta, combinados con jugos y sabores de frutas naturales: piña, sandía original, uva y mango. Son bebidas refrescantes que se asocian con beneficios para la salud digestiva e hidratación.\r\nAlérgenos: Estas bebidas generalmente no contienen alérgenos comunes como gluten, soja o lácteos. Sin embargo, se recomienda a las personas con alergias específicas a las frutas listadas (piña, sandía, uva, mango) que revisen la etiqueta antes de consumir.', 6.00, NULL, 12, 20, 10, 14, 1, 107, NULL, 'bolsa', 'https://gw.alicdn.com/imgextra/i4/6000000000247/O1CN01YA7ie51DhAtuRQhHw_!!6000000000247-2-mia.png_.webp', '2025-10-23 04:49:01', '2025-12-05 20:31:26'),
 (17, 'TE VERDE MATCHA EN POLVO GRADO CULINARIO 100 GR', 'Es un té verde matcha japonés en polvo de grado culinario (culinary grade). Se caracteriza por ser hojas de té verde molidas finamente, con un sabor ligeramente más robusto y menos dulce que el grado ceremonial. Es ideal para preparar lattes de matcha, batidos, helados, o como ingrediente para hornear galletas, pasteles y postres con sabor a té verde. Se presenta en una lata o bolsa sellada, usualmente en formato de 100 g.\r\nAlérgenos: No contiene alérgenos comunes. Es 100% té verde. Contiene cafeína natural.', 45.00, NULL, 25, 20, 10, 26, 1, 0, 100.00, 'gramos', 'https://media.falabella.com/falabellaPE/138330970_01/w=800,h=800,fit=pad', '2025-11-25 01:04:18', '2025-11-25 01:06:55'),
 (18, 'SEASONED SEAWEED SNACK GIM 10 GR', 'Es un snack de hojas de alga marina (gim o nori en coreano/japonés) sazonadas y tostadas. Se caracteriza por su textura extremadamente crujiente y su sabor salado y umami, realzado con aceite de sésamo y sal. Se presenta en un paquete individual de 10 g, que usualmente contiene varias láminas pequeñas. Marcas comunes incluyen Kwangcheonkim, Bibigo, y Ockdongja.\r\n\r\nAlérgenos: Contiene sésamo. Puede contener trazas de pescado o mariscos debido al entorno marino de cosecha.', 5.00, NULL, 30, 20, 10, 9, 1, 0, 15.00, 'gramos', 'https://kfood.pe/wp-content/uploads/2022/08/SEASONED-SEAWEED-JARAE-KIM-10-GR..jpg', '2025-11-25 01:27:48', '2025-11-25 01:34:46'),
 (19, 'SHRIMP FLAVORED CRACKER 75 GR', 'Es un snack crujiente sabor a camarones (gambas) producido por varias marcas asiáticas. Se caracteriza por su textura ligera y aireada, con un sabor intenso a mariscos salados. Se presenta en una bolsa sellada individual, usualmente en formato de 75 g.\r\n\r\nAlérgenos: Contiene trigo (gluten) y mariscos/crustáceos (gambas/camarones). Puede contener soja y huevo dependiendo de la marca específica.\r\n\r\n', 5.00, NULL, 18, 15, 8, 8, 1, 0, 150.00, 'gramos', 'https://kfood.pe/wp-content/uploads/2022/08/SHRIMP-FLAVORED-CRACKER-x-75GR.jpg', '2025-11-25 01:21:57', '2025-11-25 01:37:39');
@@ -1123,7 +1130,12 @@ INSERT INTO `sesiones_tracking` (`tracking_id`, `usuario_id`, `sesion_temporal`,
 (157, 11, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0', 'desktop', 'Edge 142.0.0.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/register', '2025-11-27 18:23:44', NULL),
 (158, 11, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0', 'desktop', 'Edge 142.0.0.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-27 18:24:31', NULL),
 (159, 11, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0', 'desktop', 'Edge 142.0.0.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-27 19:17:25', NULL),
-(160, 2, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-27 21:40:35', NULL);
+(160, 2, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-11-27 21:40:35', NULL),
+(161, 6, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 OPR/124.0.0.0', 'desktop', 'Opera 124.0.0.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-12-05 20:19:46', NULL),
+(162, 2, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-12-05 20:20:31', NULL),
+(163, 4, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-12-05 20:32:31', NULL),
+(164, 6, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 OPR/124.0.0.0', 'desktop', 'Opera 124.0.0.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-12-05 20:33:02', NULL),
+(165, 6, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'desktop', 'Firefox 145.0', 'Windows 10', NULL, NULL, NULL, NULL, 'http://localhost:5173/', '/api/auth/login', '2025-12-05 20:33:25', NULL);
 
 -- --------------------------------------------------------
 
@@ -1189,11 +1201,11 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`usuario_id`, `email`, `password`, `auth_provider`, `google_id`, `foto_perfil_url`, `creado_en`, `actualizado_en`, `rol_id`, `nombre_completo`, `telefono`, `direccion`, `distrito`, `ciudad`, `pais`, `departamento`, `codigo_postal`, `documento_tipo`, `documento_numero`, `fecha_nacimiento`, `genero`, `estado`, `email_verificado`, `telefono_verificado`, `ultimo_acceso`, `intentos_fallidos`, `bloqueado_hasta`, `como_nos_conocio`, `categorias_interes`, `frecuencia_compra`, `rango_presupuesto`, `perfil_completado`) VALUES
 (1, 'admin@qhatu.com', '$2b$10$8uAQOLU3fcDjUIhVm6.j8.Kzl.jNfqdcm3nPqFf/LcVw6Kbj/mrE2', 'manual', NULL, NULL, NULL, '2025-11-23 10:26:21', 1, 'Administrador Principal', '962000001', 'Av. Alameda de la República 123', 'Huánuco', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000001', NULL, NULL, 'activo', 1, 0, '2025-11-23 15:26:21', 0, NULL, NULL, NULL, NULL, NULL, 0),
-(2, 'vendedor@qhatu.com', '$2b$10$qXzEjQKm3JvobHGiIUmoRuTWJbwxjzygCd.eGRinYQwZ27KDGLlAC', 'manual', NULL, NULL, '2025-11-09 18:23:50', '2025-11-27 16:40:35', 2, 'María Vendedora', '962000002', 'Jr. Dos de Mayo 456', 'Huánuco', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000002', NULL, NULL, 'activo', 1, 0, '2025-11-27 21:40:35', 0, NULL, NULL, NULL, NULL, NULL, 0),
+(2, 'vendedor@qhatu.com', '$2b$10$qXzEjQKm3JvobHGiIUmoRuTWJbwxjzygCd.eGRinYQwZ27KDGLlAC', 'manual', NULL, NULL, '2025-11-09 18:23:50', '2025-12-05 15:20:31', 2, 'María Vendedora', '962000002', 'Jr. Dos de Mayo 456', 'Huánuco', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000002', NULL, NULL, 'activo', 1, 0, '2025-12-05 20:20:31', 0, NULL, NULL, NULL, NULL, NULL, 0),
 (3, 'almacenero@qhatu.com', '$2b$10$BsXYzeA6Rqp6iNThzEASm.cUdftfAsH5k2ySP9QdL2CM4jxHEMAIu', 'manual', NULL, NULL, '2025-11-09 18:23:50', '2025-11-13 12:22:37', 3, 'Carlos Almacenero', '962000003', 'Av. 28 de Julio 789', 'Huánuco', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000003', NULL, NULL, 'bloqueado', 1, 0, NULL, 5, '2025-11-13 17:52:37', NULL, NULL, NULL, NULL, 0),
-(4, 'cliente@qhatu.com', '$2b$10$PLFM53I7OyWYsC4wSq8oM.tBq7N9hY7vnRgrtK79LMGYs4qbIsgLe', 'manual', NULL, NULL, '2025-11-09 18:23:50', '2025-11-27 12:01:47', 4, 'Ana Cliente', '962000004', 'Jr. Progreso 321', 'Huánuco', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000004', NULL, NULL, 'activo', 1, 0, '2025-11-27 17:01:47', 0, NULL, NULL, NULL, NULL, NULL, 0),
+(4, 'cliente@qhatu.com', '$2b$10$PLFM53I7OyWYsC4wSq8oM.tBq7N9hY7vnRgrtK79LMGYs4qbIsgLe', 'manual', NULL, NULL, '2025-11-09 18:23:50', '2025-12-05 15:32:31', 4, 'Ana Cliente', '962000004', 'Jr. Progreso 321', 'Huánuco', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000004', NULL, NULL, 'activo', 1, 0, '2025-12-05 20:32:31', 0, NULL, NULL, NULL, NULL, NULL, 0),
 (5, 'cliente2@qhatu.com', '$2b$10$pAka.I9DBHj1bKuz8ecyqeHsqygzp/YPrE.VgIjWgageefHZ2uZX2', 'manual', NULL, NULL, '2025-11-09 18:23:50', '2025-11-09 18:23:50', 4, 'Pedro Cliente', '962000005', 'Av. Universitaria 555', 'Amarilis', 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', '70000005', NULL, NULL, 'activo', 1, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0),
-(6, 'yhoycmdz@gmail.com', '$2b$10$3CYqurxKtYXUnPcxOA66GemW71fbU1HTT2MtNhy4drA25xfCkzOIu', 'manual', NULL, NULL, '2025-11-23 11:40:14', '2025-11-25 14:50:09', 4, 'maynor', '986523741', NULL, NULL, 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', NULL, NULL, NULL, 'activo', 0, 0, '2025-11-25 19:50:09', 0, NULL, NULL, NULL, NULL, NULL, 0),
+(6, 'yhoycmdz@gmail.com', '$2b$10$3CYqurxKtYXUnPcxOA66GemW71fbU1HTT2MtNhy4drA25xfCkzOIu', 'manual', NULL, NULL, '2025-11-23 11:40:14', '2025-12-05 15:33:25', 4, 'maynor', '986523741', NULL, NULL, 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', NULL, NULL, NULL, 'activo', 0, 0, '2025-12-05 20:33:25', 0, NULL, NULL, NULL, NULL, NULL, 0),
 (7, 'jhonnsimp@gmail.com', '$2b$10$Myj8xYjbiLjjcATjNZhDj.oIZSNSWYmC4nfEZrnzCQag.lAPRRQjG', 'manual', NULL, NULL, '2025-11-27 02:24:13', '2025-11-27 02:24:13', 4, 'yhoy', '914679650', NULL, NULL, 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', NULL, NULL, NULL, 'activo', 0, 0, '2025-11-27 07:24:13', 0, NULL, NULL, NULL, NULL, NULL, 0),
 (8, 'yhoylsd@gmail.com', '$2b$10$0ZxfEJduaA/XN.I97Slo6eEnAiDDnq.kbZEXqWLLe43Kl8r8SiPcC', 'manual', NULL, NULL, '2025-11-27 11:55:52', '2025-11-27 11:55:52', 4, 'juan', '914679650', NULL, NULL, 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', NULL, NULL, NULL, 'activo', 0, 0, '2025-11-27 16:55:52', 0, NULL, NULL, NULL, NULL, NULL, 0),
 (9, 'yhoisgone@gmail.com', '$2b$10$3NVgv/LVyNEabCzV/Q9NQelmGD4IJmwb6X.jxRRAnyHWXKytOLxku', 'manual', NULL, NULL, '2025-11-27 11:59:36', '2025-11-27 12:03:52', 4, 'pablo', '914679650', NULL, NULL, 'Huánuco', 'Perú', 'Huánuco', NULL, 'DNI', NULL, NULL, NULL, 'activo', 0, 0, '2025-11-27 17:03:52', 0, NULL, NULL, NULL, NULL, NULL, 0),
@@ -1282,7 +1294,9 @@ INSERT INTO `ventas` (`venta_id`, `carrito_id`, `usuario_id`, `vendedor_id`, `nu
 (25, 23, 9, NULL, 'QH-0023', 'pablo', 'yhoisgone@gmail.com', '914679650', 'Por confirmar', NULL, 27.25, 0.00, 27.25, 'pendiente', 'whatsapp_pago', NULL, NULL, NULL, NULL, NULL, '2025-11-27 16:59:55', NULL, NULL, NULL, '2025-11-27 16:59:55', 1, '2025-11-27 11:59:55', 'Hola Qhatu E-commerce 👋\n\nSoy *pablo*\n\nQuiero realizar la compra del pedido:\n\n🛍️ Código: *QH-0023*\n💰 Total: *S/.27.25*\n\n¿Cómo procedo con el pago?', NULL),
 (26, 24, 9, 2, 'QH-0024', 'pablo', 'yhoisgone@gmail.com', '914679650', 'Por confirmar', NULL, 46.92, 4.05, 46.92, 'confirmada', 'whatsapp_pago', NULL, NULL, NULL, NULL, NULL, '2025-11-27 17:04:11', '2025-11-27 17:04:42', NULL, NULL, '2025-11-27 17:04:42', 1, '2025-11-27 12:04:11', 'Hola Qhatu E-commerce 👋\n\nSoy *pablo*\n\nQuiero realizar la compra del pedido:\n\n🛍️ Código: *QH-0024*\n💰 Total: *S/.46.92*\n\n¿Cómo procedo con el pago?', NULL),
 (27, 27, 11, 2, 'QH-0025', 'leo', 'leo@gmail.com', '925725091', 'Por confirmar', NULL, 46.78, 2.70, 46.78, 'confirmada', 'whatsapp_pago', NULL, NULL, NULL, NULL, NULL, '2025-11-27 18:24:52', '2025-11-27 18:26:07', NULL, NULL, '2025-11-27 18:26:07', 1, '2025-11-27 13:24:52', 'Hola Qhatu E-commerce 👋\n\nSoy *leo*\n\nQuiero realizar la compra del pedido:\n\n🛍️ Código: *QH-0025*\n💰 Total: *S/.46.78*\n\n¿Cómo procedo con el pago?', NULL),
-(28, 28, 11, 2, 'QH-0026', 'leo', 'leo@gmail.com', '925725091', 'Por confirmar', NULL, 34.00, 0.00, 34.00, 'confirmada', 'whatsapp_pago', NULL, NULL, NULL, NULL, NULL, '2025-11-27 19:17:50', '2025-11-27 19:18:44', NULL, NULL, '2025-11-27 19:18:44', 1, '2025-11-27 14:17:50', 'Hola Qhatu E-commerce 👋\n\nSoy *leo*\n\nQuiero realizar la compra del pedido:\n\n🛍️ Código: *QH-0026*\n💰 Total: *S/.34.00*\n\n¿Cómo procedo con el pago?', NULL);
+(28, 28, 11, 2, 'QH-0026', 'leo', 'leo@gmail.com', '925725091', 'Por confirmar', NULL, 34.00, 0.00, 34.00, 'confirmada', 'whatsapp_pago', NULL, NULL, NULL, NULL, NULL, '2025-11-27 19:17:50', '2025-11-27 19:18:44', NULL, NULL, '2025-11-27 19:18:44', 1, '2025-11-27 14:17:50', 'Hola Qhatu E-commerce 👋\n\nSoy *leo*\n\nQuiero realizar la compra del pedido:\n\n🛍️ Código: *QH-0026*\n💰 Total: *S/.34.00*\n\n¿Cómo procedo con el pago?', NULL),
+(29, 3, 2, NULL, 'QH-0027', 'María Vendedora', 'vendedor@qhatu.com', '962000002', 'Jr. Dos de Mayo 456', 'Huánuco', 25.50, 0.00, 25.50, 'pendiente', 'whatsapp_pago', NULL, NULL, NULL, NULL, NULL, '2025-12-03 21:16:18', NULL, NULL, NULL, '2025-12-03 21:16:18', 1, '2025-12-03 16:16:18', 'Hola Qhatu E-commerce 👋\n\nSoy *María Vendedora*\n\nQuiero realizar la compra del pedido:\n\n🛍️ Código: *QH-0027*\n💰 Total: *S/.25.50*\n\n¿Cómo procedo con el pago?', NULL),
+(30, 16, 6, 2, 'QH-0028', 'maynor', 'yhoycmdz@gmail.com', '986523741', 'Por confirmar', NULL, 24.00, 0.00, 24.00, 'confirmada', 'whatsapp_pago', NULL, NULL, NULL, NULL, NULL, '2025-12-05 20:20:19', '2025-12-05 20:31:26', NULL, NULL, '2025-12-05 20:31:26', 1, '2025-12-05 15:20:19', 'Hola Qhatu E-commerce 👋\n\nSoy *maynor*\n\nQuiero realizar la compra del pedido:\n\n🛍️ Código: *QH-0028*\n💰 Total: *S/.24.00*\n\n¿Cómo procedo con el pago?', NULL);
 
 --
 -- Disparadores `ventas`
@@ -1469,7 +1483,8 @@ INSERT INTO `venta_historial` (`historial_id`, `venta_id`, `usuario_id`, `accion
 (22, 2, 2, 'cambio_estado', 'pendiente', 'confirmada', 'Estado cambiado de pendiente a confirmada', NULL, '2025-11-27 15:47:29'),
 (23, 26, 2, 'cambio_estado', 'pendiente', 'confirmada', 'Estado cambiado de pendiente a confirmada', NULL, '2025-11-27 17:04:42'),
 (24, 27, 2, 'cambio_estado', 'pendiente', 'confirmada', 'Estado cambiado de pendiente a confirmada', NULL, '2025-11-27 18:26:07'),
-(25, 28, 2, 'cambio_estado', 'pendiente', 'confirmada', 'Estado cambiado de pendiente a confirmada', NULL, '2025-11-27 19:18:44');
+(25, 28, 2, 'cambio_estado', 'pendiente', 'confirmada', 'Estado cambiado de pendiente a confirmada', NULL, '2025-11-27 19:18:44'),
+(26, 30, 2, 'cambio_estado', 'pendiente', 'confirmada', 'Estado cambiado de pendiente a confirmada', NULL, '2025-12-05 20:31:26');
 
 -- --------------------------------------------------------
 
@@ -1559,7 +1574,10 @@ INSERT INTO `venta_items` (`item_id`, `venta_id`, `producto_id`, `producto_nombr
 (59, 27, 15, 'BULDAK CARBONARA 130 GR', 'Es un paquete de fideos instantáneos tipo ramen, conocido como Buldak Carbonara Hot Chicken Flavor Ramen de la marca surcoreana Samyang. Se caracteriza por ser un \"fideo frito\" (salteado) que combina la salsa de pollo picante icónica de la marca con un polvo cremoso sabor a carbonara (queso mozzarella, mantequilla y leche). Se presenta en un paquete individual de 130 g. \r\n\r\nAlérgenos: Contiene trigo (gluten), soja y leche. Es fabricado en instalaciones que también procesan crustáceos, huevos, pescado, moluscos, mostaza, nueces, maní y semillas de sésamo. Personas con estas alergias deben evitar su consumo. ', NULL, 3, 2.50, NULL, 7.50, NULL, 'https://orientalhm.com/cdn/shop/products/90_Carbonara_Buldak_Bokkeum_503x503_d2e08a95-bbee-4075-85d3-97cb1d383089_470x.jpg?v=1616758390', '2025-11-27 13:24:52'),
 (60, 28, 16, 'BEBIDAS DE ALOE VERA SURTIDO 450 ML', 'Es un surtido de bebidas frutales con base de aloe vera (Aloe barbadensis Miller), presentadas en botellas individuales de 450 ml. Se caracterizan por contener jugo de aloe vera y trozos de pulpa real de la planta, combinados con jugos y sabores de frutas naturales: piña, sandía original, uva y mango. Son bebidas refrescantes que se asocian con beneficios para la salud digestiva e hidratación.\r\nAlérgenos: Estas bebidas generalmente no contienen alérgenos comunes como gluten, soja o lácteos. Sin embargo, se recomienda a las personas con alergias específicas a las frutas listadas (piña, sandía, uva, mango) que revisen la etiqueta antes de consumir.', NULL, 1, 6.00, NULL, 6.00, NULL, 'https://gw.alicdn.com/imgextra/i4/6000000000247/O1CN01YA7ie51DhAtuRQhHw_!!6000000000247-2-mia.png_.webp', '2025-11-27 14:17:50'),
 (61, 28, 15, 'BULDAK CARBONARA 130 GR', 'Es un paquete de fideos instantáneos tipo ramen, conocido como Buldak Carbonara Hot Chicken Flavor Ramen de la marca surcoreana Samyang. Se caracteriza por ser un \"fideo frito\" (salteado) que combina la salsa de pollo picante icónica de la marca con un polvo cremoso sabor a carbonara (queso mozzarella, mantequilla y leche). Se presenta en un paquete individual de 130 g. \r\n\r\nAlérgenos: Contiene trigo (gluten), soja y leche. Es fabricado en instalaciones que también procesan crustáceos, huevos, pescado, moluscos, mostaza, nueces, maní y semillas de sésamo. Personas con estas alergias deben evitar su consumo. ', NULL, 4, 2.50, NULL, 10.00, NULL, 'https://orientalhm.com/cdn/shop/products/90_Carbonara_Buldak_Bokkeum_503x503_d2e08a95-bbee-4075-85d3-97cb1d383089_470x.jpg?v=1616758390', '2025-11-27 14:17:50'),
-(62, 28, 12, 'GOOD DAY SOJU GRANADA 300 ML-13.5 % ALC', 'Es un licor destilado coreano tradicional, conocido como soju (similar al vodka, pero más suave y dulce), de la marca Good Day, sabor a granada. Se caracteriza por su bajo contenido alcohólico para un destilado (13.5% ALC) y un sabor frutal, refrescante y ligeramente dulce. Se presenta en una botella de vidrio individual de 300 ml \r\nPrecio de la caja (12 unidades): S/ 260 \r\nAlérgenos: Contiene alcohol destilado de cereales como trigo o cebada, o almidones como tapioca/patata, y saborizantes, ya que la destilación puede eliminar el gluten, pero la base de cereales es común en la producción de soju.', NULL, 4, 4.50, NULL, 18.00, NULL, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSD0pEwySgMnNWkxIDUyutE_0zeEVVnkvtxYQ&s', '2025-11-27 14:17:50');
+(62, 28, 12, 'GOOD DAY SOJU GRANADA 300 ML-13.5 % ALC', 'Es un licor destilado coreano tradicional, conocido como soju (similar al vodka, pero más suave y dulce), de la marca Good Day, sabor a granada. Se caracteriza por su bajo contenido alcohólico para un destilado (13.5% ALC) y un sabor frutal, refrescante y ligeramente dulce. Se presenta en una botella de vidrio individual de 300 ml \r\nPrecio de la caja (12 unidades): S/ 260 \r\nAlérgenos: Contiene alcohol destilado de cereales como trigo o cebada, o almidones como tapioca/patata, y saborizantes, ya que la destilación puede eliminar el gluten, pero la base de cereales es común en la producción de soju.', NULL, 4, 4.50, NULL, 18.00, NULL, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSD0pEwySgMnNWkxIDUyutE_0zeEVVnkvtxYQ&s', '2025-11-27 14:17:50'),
+(63, 29, 15, 'BULDAK CARBONARA 130 GR', 'Es un paquete de fideos instantáneos tipo ramen, conocido como Buldak Carbonara Hot Chicken Flavor Ramen de la marca surcoreana Samyang. Se caracteriza por ser un \"fideo frito\" (salteado) que combina la salsa de pollo picante icónica de la marca con un polvo cremoso sabor a carbonara (queso mozzarella, mantequilla y leche). Se presenta en un paquete individual de 130 g. \r\n\r\nAlérgenos: Contiene trigo (gluten), soja y leche. Es fabricado en instalaciones que también procesan crustáceos, huevos, pescado, moluscos, mostaza, nueces, maní y semillas de sésamo. Personas con estas alergias deben evitar su consumo. ', NULL, 3, 2.50, NULL, 7.50, NULL, 'https://orientalhm.com/cdn/shop/products/90_Carbonara_Buldak_Bokkeum_503x503_d2e08a95-bbee-4075-85d3-97cb1d383089_470x.jpg?v=1616758390', '2025-12-03 16:16:18'),
+(64, 29, 12, 'GOOD DAY SOJU GRANADA 300 ML-13.5 % ALC', 'Es un licor destilado coreano tradicional, conocido como soju (similar al vodka, pero más suave y dulce), de la marca Good Day, sabor a granada. Se caracteriza por su bajo contenido alcohólico para un destilado (13.5% ALC) y un sabor frutal, refrescante y ligeramente dulce. Se presenta en una botella de vidrio individual de 300 ml \r\nPrecio de la caja (12 unidades): S/ 260 \r\nAlérgenos: Contiene alcohol destilado de cereales como trigo o cebada, o almidones como tapioca/patata, y saborizantes, ya que la destilación puede eliminar el gluten, pero la base de cereales es común en la producción de soju.', NULL, 4, 4.50, NULL, 18.00, NULL, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSD0pEwySgMnNWkxIDUyutE_0zeEVVnkvtxYQ&s', '2025-12-03 16:16:18'),
+(65, 30, 16, 'BEBIDAS DE ALOE VERA SURTIDO 450 ML', 'Es un surtido de bebidas frutales con base de aloe vera (Aloe barbadensis Miller), presentadas en botellas individuales de 450 ml. Se caracterizan por contener jugo de aloe vera y trozos de pulpa real de la planta, combinados con jugos y sabores de frutas naturales: piña, sandía original, uva y mango. Son bebidas refrescantes que se asocian con beneficios para la salud digestiva e hidratación.\r\nAlérgenos: Estas bebidas generalmente no contienen alérgenos comunes como gluten, soja o lácteos. Sin embargo, se recomienda a las personas con alergias específicas a las frutas listadas (piña, sandía, uva, mango) que revisen la etiqueta antes de consumir.', NULL, 4, 6.00, NULL, 24.00, NULL, 'https://gw.alicdn.com/imgextra/i4/6000000000247/O1CN01YA7ie51DhAtuRQhHw_!!6000000000247-2-mia.png_.webp', '2025-12-05 15:20:19');
 
 -- --------------------------------------------------------
 
@@ -1978,13 +1996,13 @@ ALTER TABLE `banners_descuento`
 -- AUTO_INCREMENT de la tabla `carritos`
 --
 ALTER TABLE `carritos`
-  MODIFY `carrito_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `carrito_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT de la tabla `carrito_items`
 --
 ALTER TABLE `carrito_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 
 --
 -- AUTO_INCREMENT de la tabla `carruseles`
@@ -2050,7 +2068,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `sesiones_tracking`
 --
 ALTER TABLE `sesiones_tracking`
-  MODIFY `tracking_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
+  MODIFY `tracking_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=166;
 
 --
 -- AUTO_INCREMENT de la tabla `sesiones_usuario`
@@ -2074,7 +2092,7 @@ ALTER TABLE `usuario_categorias_interes`
 -- AUTO_INCREMENT de la tabla `ventas`
 --
 ALTER TABLE `ventas`
-  MODIFY `venta_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `venta_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT de la tabla `ventas_realizadas`
@@ -2092,13 +2110,13 @@ ALTER TABLE `ventas_realizadas_items`
 -- AUTO_INCREMENT de la tabla `venta_historial`
 --
 ALTER TABLE `venta_historial`
-  MODIFY `historial_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `historial_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT de la tabla `venta_items`
 --
 ALTER TABLE `venta_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
 
 --
 -- Restricciones para tablas volcadas
