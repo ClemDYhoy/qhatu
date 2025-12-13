@@ -205,6 +205,109 @@ router.get('/best-sellers', async (req, res) => {
   }
 });
 
+
+// ============================================
+// AGREGAR ESTE ENDPOINT EN products.js
+// Después de la ruta /best-sellers
+// ============================================
+
+/**
+ * GET /api/products/descuentos
+ * Productos con descuento activo (precio_descuento < precio)
+ */
+router.get('/descuentos', async (req, res) => {
+  try {
+    const { 
+      limit = 12, 
+      offset = 0, 
+      orderBy = 'descuento_porcentaje', 
+      order = 'DESC',
+      categoria_id // 🔥 NUEVO: Filtrar por categoría
+    } = req.query;
+
+    const validLimit = Math.min(parseInt32(limit, 12), 100);
+    const validOffset = parseInt32(offset, 0);
+
+    // Construir condiciones WHERE
+    const where = {
+      precio_descuento: { [Op.ne]: null },
+      [Op.and]: [
+        Sequelize.where(
+          Sequelize.col('precio_descuento'),
+          Op.lt,
+          Sequelize.col('precio')
+        ),
+        { stock: { [Op.gt]: 0 } }
+      ]
+    };
+
+    // 🔥 FILTRAR POR CATEGORÍA SI SE PROPORCIONA
+    if (categoria_id) {
+      const categoryIds = await getCategoryAndSubcategories(categoria_id);
+      if (categoryIds.length > 0) {
+        where.categoria_id = { [Op.in]: categoryIds };
+      }
+    }
+
+    // Validar ordenamiento
+    const validOrderFields = ['nombre', 'precio', 'descuento_porcentaje', 'ventas', 'stock'];
+    const sanitizedOrderBy = validOrderFields.includes(orderBy) ? orderBy : 'descuento_porcentaje';
+    const sanitizedOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    const { count, rows: products } = await Product.findAndCountAll({
+      where,
+      attributes: {
+        include: [
+          [
+            Sequelize.literal('ROUND(((precio - precio_descuento) / precio) * 100, 0)'),
+            'descuento_porcentaje'
+          ],
+          [
+            Sequelize.literal('precio - precio_descuento'),
+            'ahorro'
+          ]
+        ]
+      },
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre', 'padre_id']
+      }],
+      order: sanitizedOrderBy === 'descuento_porcentaje' 
+        ? [[Sequelize.literal('descuento_porcentaje'), sanitizedOrder]]
+        : [[sanitizedOrderBy, sanitizedOrder]],
+      limit: validLimit,
+      offset: validOffset,
+      distinct: true
+    });
+
+    const totalPages = Math.ceil(count / validLimit);
+    const currentPage = Math.floor(validOffset / validLimit) + 1;
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        total: count,
+        limit: validLimit,
+        offset: validOffset,
+        currentPage,
+        totalPages,
+        hasNext: currentPage < totalPages,
+        hasPrev: currentPage > 1
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en /descuentos:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener productos en descuento',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 /**
  * GET /api/products/low-stock
  * Productos con stock bajo (stock <= umbral_bajo_stock Y stock > 0)
@@ -510,9 +613,14 @@ router.get('/search', async (req, res) => {
 // === RUTA PRINCIPAL CON FILTROS ===
 // ============================================
 
+// ============================================
+// REEMPLAZAR LA RUTA PRINCIPAL GET / en products.js
+// ============================================
+
 /**
  * GET /api/products
  * Lista de productos con filtros avanzados
+ * INCLUYE: Filtro por descuentos activos
  */
 router.get('/', async (req, res) => {
   try {
@@ -526,6 +634,7 @@ router.get('/', async (req, res) => {
       highlighted,
       destacado,
       low_stock,
+      mostrar_descuentos, // ⭐ NUEVO: Filtro para mostrar solo descuentos
       orderBy = 'nombre',
       order = 'ASC',
       limit = 12,
@@ -547,6 +656,19 @@ router.get('/', async (req, res) => {
         { nombre: { [Op.like]: `%${search.trim()}%` } },
         { descripcion: { [Op.like]: `%${search.trim()}%` } }
       ];
+    }
+
+    // ⭐ NUEVO: Filtro de descuentos
+    if (mostrar_descuentos === 'true' || mostrar_descuentos === '1') {
+      where.precio_descuento = { [Op.ne]: null };
+      where[Op.and] = where[Op.and] || [];
+      where[Op.and].push(
+        Sequelize.where(
+          Sequelize.col('precio_descuento'),
+          Op.lt,
+          Sequelize.col('precio')
+        )
+      );
     }
 
     // Filtro por categoría (ID directo)
@@ -592,14 +714,15 @@ router.get('/', async (req, res) => {
 
     // Stock bajo
     if (low_stock === 'true' || low_stock === '1') {
-      where[Op.and] = [
+      where[Op.and] = where[Op.and] || [];
+      where[Op.and].push(
         { stock: { [Op.gt]: 0 } },
         Sequelize.where(
           Sequelize.col('stock'),
           Op.lte,
           Sequelize.col('umbral_bajo_stock')
         )
-      ];
+      );
     }
 
     // === ORDENAMIENTO Y PAGINACIÓN ===
@@ -608,10 +731,33 @@ router.get('/', async (req, res) => {
     const limitNum = Math.min(parseInt32(limit, 12), 100);
     const offsetNum = parseInt32(offset, 0);
 
+    // === ATRIBUTOS ADICIONALES PARA DESCUENTOS ===
+    const attributes = {
+      include: [
+        [
+          Sequelize.literal(
+            'CASE WHEN precio_descuento IS NOT NULL AND precio_descuento < precio ' +
+            'THEN ROUND(((precio - precio_descuento) / precio) * 100, 0) ' +
+            'ELSE 0 END'
+          ),
+          'descuento_porcentaje'
+        ],
+        [
+          Sequelize.literal(
+            'CASE WHEN precio_descuento IS NOT NULL AND precio_descuento < precio ' +
+            'THEN precio - precio_descuento ' +
+            'ELSE 0 END'
+          ),
+          'ahorro'
+        ]
+      ]
+    };
+
     // === CONSULTA ===
 
     const { count, rows: products } = await Product.findAndCountAll({
       where,
+      attributes,
       include,
       order: [[field, direction]],
       limit: limitNum,

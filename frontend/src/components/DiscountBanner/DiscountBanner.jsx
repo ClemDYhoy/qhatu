@@ -138,38 +138,7 @@ const DiscountBanner = ({ onCategorySelect }) => {
         </div>
       </div>
 
-      {/* Trust Indicators */}
-      <div className="trust-bar">
-        <div className="trust-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-          </svg>
-          <span>Ofertas verificadas</span>
-        </div>
-        <div className="trust-divider"></div>
-        <div className="trust-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-          <span>Pago seguro</span>
-        </div>
-        <div className="trust-divider"></div>
-        <div className="trust-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          <span>Miles de usuarios</span>
-        </div>
-        <div className="trust-divider"></div>
-        <div className="trust-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          <span>Garantía de satisfacción</span>
-        </div>
-      </div>
-
+      
       {/* Banner Principal */}
       <div className="banner-content">
         <div className="banner-header">
@@ -324,20 +293,7 @@ const DiscountBanner = ({ onCategorySelect }) => {
       )}
 
 
-      {/* Social Proof */}
-      <div className="social-proof">
-        <div className="proof-avatars">
-          <div className="avatar"></div>
-          <div className="avatar"></div>
-          <div className="avatar"></div>
-          <div className="avatar"></div>
-          <div className="avatar-more">+{Math.floor(Math.random() * 900) + 100}</div>
-        </div>
-        <div className="proof-text">
-          <strong>{Math.floor(Math.random() * 50) + 20} personas</strong> están viendo estas ofertas ahora
-        </div>
-        
-      </div>
+      
     </div>
   );
 };

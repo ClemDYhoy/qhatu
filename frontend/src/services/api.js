@@ -8,7 +8,6 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const isDevelopment = import.meta.env.VITE_APP_ENV === 'development';
 
-// Validación de configuración al cargar
 if (isDevelopment) {
   console.log('🔧 API Configuration:', {
     API_URL,
@@ -74,17 +73,14 @@ apiClient.interceptors.response.use(
     if (error.response) {
       const { status, data } = error.response;
 
-      // Token expirado o inválido
       if (status === 401 && !originalRequest._retry) {
         console.warn('⚠️ Token expirado o inválido - Limpiando sesión');
         
         localStorage.removeItem('qhatu_token');
         localStorage.removeItem('qhatu_user');
         
-        // Disparar evento para que AppContext limpie el estado
         window.dispatchEvent(new Event('userDataChanged'));
         
-        // Redirigir al login si no estamos ya ahí
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login?expired=true';
         }
@@ -137,7 +133,7 @@ const buildQueryString = (params) => {
 };
 
 // ============================================
-// 🔄 CLIENTE HTTP FETCH (para compatibilidad)
+// 🔄 CLIENTE HTTP FETCH
 // ============================================
 
 const fetchAPI = async (endpoint, options = {}) => {
@@ -220,6 +216,14 @@ export const getProducts = async (filters = {}) => {
   return fetchAPI(`/products${queryString}`);
 };
 
+/**
+ * ⭐ NUEVO: Obtener productos con descuento
+ */
+export const getProductsWithDiscount = async (filters = {}) => {
+  const queryString = buildQueryString(filters);
+  return fetchAPI(`/products/descuentos${queryString}`);
+};
+
 export const getProductById = async (id) => {
   if (!id) throw new Error('ID de producto requerido');
   return fetchAPI(`/products/${id}`);
@@ -271,6 +275,13 @@ export const getCategories = async (options = {}) => {
   return fetchAPI(`/categories${queryString}`);
 };
 
+/**
+ * ⭐ NUEVO: Obtener todas las categorías planas (sin jerarquía)
+ */
+export const getAllCategoriesFlat = async () => {
+  return fetchAPI('/categories/all/flat');
+};
+
 export const getCategoryById = async (id) => {
   if (!id) throw new Error('ID de categoría requerido');
   return fetchAPI(`/categories/${id}`);
@@ -299,7 +310,7 @@ export const getCarouselById = async (id) => {
 };
 
 // ============================================
-// 🔐 AUTENTICACIÓN (FETCH)
+// 🔐 AUTENTICACIÓN
 // ============================================
 
 export const login = async (email, password) => {
@@ -446,3 +457,4 @@ export const healthCheck = async () => {
     return { status: 'unhealthy', error: error.message };
   }
 };
+

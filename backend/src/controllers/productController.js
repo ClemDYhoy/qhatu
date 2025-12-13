@@ -13,6 +13,81 @@ const parseInt32 = (value, defaultValue = 0) => {
   return isNaN(parsed) || parsed < 0 ? defaultValue : parsed;
 };
 
+export const getDiscountedProducts = async (req, res) => {
+  try {
+    const {
+      categoria_id,
+      limit = 12,
+      offset = 0,
+      orderBy = 'precio_descuento',
+      order = 'ASC'
+    } = req.query;
+
+    const where = {
+      precio_descuento: { [Op.ne]: null },
+      [Op.and]: [
+        Sequelize.where(
+          Sequelize.col('precio_descuento'),
+          Op.lt,
+          Sequelize.col('precio')
+        )
+      ]
+    };
+
+    // 🔥 FILTRO POR CATEGORÍA (PADRE + HIJOS)
+    if (categoria_id) {
+      const catId = parseInt32(categoria_id);
+
+      if (catId > 0) {
+        const subCategories = await Category.findAll({
+          where: { padre_id: catId },
+          attributes: ['categoria_id']
+        });
+
+        const categoryIds = [catId, ...subCategories.map(c => c.categoria_id)];
+
+        where.categoria_id = { [Op.in]: categoryIds };
+      }
+    }
+
+    const validLimit = Math.min(parseInt32(limit, 12), 100);
+    const validOffset = parseInt32(offset, 0);
+
+    const { count, rows } = await Product.findAndCountAll({
+      where,
+      include: [{
+        model: Category,
+        as: 'categoria',
+        attributes: ['categoria_id', 'nombre', 'padre_id']
+      }],
+      order: [[orderBy, order]],
+      limit: validLimit,
+      offset: validOffset,
+      distinct: true
+    });
+
+    res.json({
+      success: true,
+      data: rows,
+      pagination: {
+        total: count,
+        limit: validLimit,
+        offset: validOffset,
+        totalPages: Math.ceil(count / validLimit),
+        currentPage: Math.floor(validOffset / validLimit) + 1
+      }
+    });
+
+  } catch (error) {
+    console.error('Error al obtener productos con descuento:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener productos con descuento'
+    });
+  }
+};
+
+
 // Obtener todos los productos con filtros avanzados
 export const getAllProducts = async (req, res) => {
   try {

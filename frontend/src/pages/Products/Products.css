@@ -1629,3 +1629,149 @@
     padding: 0.6rem 1rem;
   }
 }
+
+
+/* ============================================
+   GRID 5x2 (10 PRODUCTOS POR PÁGINA)
+   ============================================ */
+
+.products-grid--5x2 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 columnas */
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Tablet: 3 columnas */
+@media (max-width: 1200px) {
+  .products-grid--5x2 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Móvil: 2 columnas */
+@media (max-width: 768px) {
+  .products-grid--5x2 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+/* Móvil pequeño: 2 columnas más compactas */
+@media (max-width: 480px) {
+  .products-grid--5x2 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+/* ============================================
+   SUBCATEGORÍAS EN SIDEBAR - MEJORADO
+   ============================================ */
+
+.filter-group--subcategories {
+  background: linear-gradient(135deg, rgba(103, 58, 183, 0.05), rgba(156, 39, 176, 0.05));
+  border: 2px solid rgba(103, 58, 183, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.filter-group--subcategories label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: #673ab7;
+  margin-bottom: 0.75rem;
+}
+
+.subcategory-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.subcategory-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.subcategory-chip:hover {
+  border-color: #673ab7;
+  background: rgba(103, 58, 183, 0.05);
+  transform: translateX(4px);
+}
+
+.subcategory-chip.active {
+  background: linear-gradient(135deg, #673ab7, #9c27b0);
+  color: white;
+  border-color: #673ab7;
+  box-shadow: 0 4px 12px rgba(103, 58, 183, 0.3);
+}
+
+.subcategory-chip svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Toggle de descuentos mejorado */
+.filter-group--toggle {
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 159, 28, 0.1));
+  border: 2px solid rgba(255, 107, 107, 0.3);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 24px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
