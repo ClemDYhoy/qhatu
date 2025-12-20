@@ -23,14 +23,65 @@ const GridIcon = React.memo(() => (<svg width="18" height="18" viewBox="0 0 24 2
 const CategoryChipIcon = React.memo(({ type }) => {
   const icons = useMemo(() => ({
     todos: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>),
-    descuentos: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="9" r="7"/><path d="M14 14l7 7"/><circle cx="9" cy="9" r="2" fill="currentColor"/></svg>),
+    descuentos: (
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 11V6.5A2.5 2.5 0 0 1 5.5 4h5L21 14.5l-6.5 6.5L3 11z"/>
+        <circle cx="9" cy="9" r="1.6"/>
+      </svg>
+    ),
     combos: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 11h18"/><path d="M12 8v13"/><path d="M8 8V5a2 2 0 0 1 4 0v3"/><path d="M16 8V5a2 2 0 0 0-4 0v3"/></svg>),
-    dulces: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><g transform="rotate(-25 12 12)"><rect x="6" y="6" width="12" height="12" rx="3"/><line x1="10" y1="9" x2="10" y2="15" strokeWidth="2.5"/><line x1="14" y1="9" x2="14" y2="15" strokeWidth="2.5"/></g></svg>),
-    snacks: (<svg width="22" height="22" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.8"><circle cx="11" cy="11" r="7"/><circle cx="18" cy="18" r="6.5"/></svg>),
-    ramen: (<svg width="22" height="22" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.8"><path d="M4 17h20l-2 6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2l-2-6z"/><ellipse cx="14" cy="17" rx="10" ry="2.5"/></svg>),
-    bebidas: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 8h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 8z"/></svg>),
-    licores: (<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.8"><ellipse cx="14" cy="4" rx="4" ry="1.8"/></svg>),
-    otros: (<svg width="22" height="22" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.8"><rect x="7" y="10" width="14" height="14" rx="2"/></svg>)
+    dulces: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 4c1.5 1 3 1.5 5 1.5S15.5 5 17 4"/>
+        <path d="M6 6c1.2 1 2.5 1.5 6 1.5S16.8 7 18 6"/>
+        <path d="M6.5 7.5l-1 12a2.5 2.5 0 0 0 2.5 2.8h8a2.5 2.5 0 0 0 2.5-2.8l-1-12"/>
+        <path d="M10 13l2-2 2 2-2 2-2-2z"/>
+      </svg>
+    ),
+    snacks: (
+      <svg width="22" height="22" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="14" cy="14" r="8"/>
+        <circle cx="11" cy="11" r="1"/>
+        <circle cx="17" cy="11" r="1"/>
+        <circle cx="11.5" cy="16" r="1"/>
+        <circle cx="16.5" cy="17" r="1"/>
+        <circle cx="15" cy="13.5" r="1"/>
+      </svg>
+    ),
+    ramen: (
+  <svg width="22" height="22" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.8" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="1" x2="20" y2="10"/>
+    <line x1="18" y1="1" x2="10" y2="10"/>
+
+    <path d="M7 7h14l-1.8 14.5a3 3 0 0 1-3 2.5h-4.4a3 3 0 0 1-3-2.5L7 7z"/>
+    <ellipse cx="14" cy="7" rx="7" ry="2.4"/>
+
+    <path d="M9.5 15c1-1 2 1 3 0s2-1 3 0 2 1 3 0"/>
+  </svg>
+),
+
+    bebidas: (
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="4" width="10" height="20" rx="2.5"/>
+        <ellipse cx="14" cy="4" rx="5" ry="2"/>
+        <line x1="11" y1="9" x2="17" y2="9"/>
+      </svg>
+    ),
+    licores: (
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2h4"/>
+        <path d="M11 4h6"/>
+        <path d="M10 6v4c0 1-1 2-1 3v11a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3V13c0-1-1-2-1-3V6"/>
+        <line x1="12" y1="15" x2="16" y2="15"/>
+      </svg>
+    ),
+    otros: (
+      <svg width="22" height="22" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 9l8-4 8 4"/>
+        <rect x="6" y="9" width="16" height="14" rx="2"/>
+        <line x1="14" y1="9" x2="14" y2="23"/>
+      </svg>
+    ),
   }), []);
 
   return icons[type] || icons.otros;
@@ -547,10 +598,14 @@ const Products = () => {
               />
             </div>
 
-            {/* 🔥 MEJORA 4: Ocultar toggle si estamos en categoría Descuentos */}
+            {/* 🔥 Toggle mejorado con indicador visual profesional */}
             {!isInDiscountCategory && (
               <div className="filter-group filter-group--toggle">
                 <label className="toggle-label">
+                  <span className="toggle-text">
+                    <DiscountTagIcon />
+                    Solo descuentos
+                  </span>
                   <input 
                     type="checkbox" 
                     checked={filters.mostrar_descuentos} 
@@ -559,7 +614,8 @@ const Products = () => {
                     aria-label="Mostrar solo productos con descuento"
                   />
                   <span className="toggle-slider"></span>
-                  <span className="toggle-text"><DiscountTagIcon /> Solo descuentos</span>
+                  {/* Badge opcional que aparece cuando está activo */}
+                  <span className="toggle-badge">ON</span>
                 </label>
               </div>
             )}
