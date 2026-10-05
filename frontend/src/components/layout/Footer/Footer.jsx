@@ -10,6 +10,19 @@ export default function QhatuFooter() {
       {/* Main Section */}
       <section className="qhatu-main-section">
         <div className="qhatu-container">
+          <div className="qhatu-brand">
+            <img
+              src="/logo-oe.png"
+              alt="Qhatu"
+              className="qhatu-brand__logo"
+              width="120"
+              height="40"
+              loading="lazy"
+            />
+            <p className="qhatu-brand__tagline">
+              Dulces, snacks y bebidas importadas en Huánuco. Compra fácil, rápido y recíbelo en casa.
+            </p>
+          </div>
           <div className="qhatu-grid">
 
             {/* Enlaces Rápidos */}

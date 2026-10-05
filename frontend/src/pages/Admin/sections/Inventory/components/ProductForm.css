@@ -468,3 +468,24 @@
 .form-group input:valid:not(:placeholder-shown):focus {
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
 }
+
+/* ===== AJUSTES DEL FORMULARIO (nuevo) ===== */
+.error-message::before { content: none !important; }
+
+.pf-alert {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-base);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
+}
+.pf-alert--error { background: var(--red-light); color: var(--red-dark); }
+
+.pf-preview {
+  margin-top: var(--space-3);
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-base);
+  border: 1px solid var(--border-light);
+  display: block;
+}

@@ -1,8 +1,12 @@
 import express from 'express';
 import { Op, Sequelize } from 'sequelize';
 import sequelize from '../config/database.js';
+import { requireAuth, requireSuperAdmin } from '../config/middleware/auth.js';
 
 const router = express.Router();
+
+// Middleware para las rutas administrativas de banners
+const requireAdminAuth = [requireAuth, requireSuperAdmin];
 
 // ============================================
 // === UTILIDADES ===
@@ -178,10 +182,8 @@ router.post('/interaccion', async (req, res) => {
  * GET /api/banners-descuento/admin/all
  * Obtener todos los banners (admin)
  */
-router.get('/admin/all', async (req, res) => {
+router.get('/admin/all', ...requireAdminAuth, async (req, res) => {
   try {
-    // TODO: Agregar middleware de autenticación admin
-    
     const [results] = await sequelize.query(`
       SELECT 
         b.*,
@@ -221,10 +223,8 @@ router.get('/admin/all', async (req, res) => {
  * POST /api/banners-descuento/admin/create
  * Crear nuevo banner (admin)
  */
-router.post('/admin/create', async (req, res) => {
+router.post('/admin/create', ...requireAdminAuth, async (req, res) => {
   try {
-    // TODO: Agregar middleware de autenticación admin
-    
     const {
       titulo,
       descripcion,
@@ -294,10 +294,8 @@ router.post('/admin/create', async (req, res) => {
  * PUT /api/banners-descuento/admin/:id
  * Actualizar banner (admin)
  */
-router.put('/admin/:id', async (req, res) => {
+router.put('/admin/:id', ...requireAdminAuth, async (req, res) => {
   try {
-    // TODO: Agregar middleware de autenticación admin
-    
     const bannerId = parseInt32(req.params.id);
     const updates = req.body;
 
@@ -362,10 +360,8 @@ router.put('/admin/:id', async (req, res) => {
  * DELETE /api/banners-descuento/admin/:id
  * Eliminar banner (admin)
  */
-router.delete('/admin/:id', async (req, res) => {
+router.delete('/admin/:id', ...requireAdminAuth, async (req, res) => {
   try {
-    // TODO: Agregar middleware de autenticación admin
-    
     const bannerId = parseInt32(req.params.id);
 
     if (bannerId <= 0) {
@@ -401,10 +397,8 @@ router.delete('/admin/:id', async (req, res) => {
  * GET /api/banners-descuento/admin/stats
  * Estadísticas de banners (admin)
  */
-router.get('/admin/stats', async (req, res) => {
+router.get('/admin/stats', ...requireAdminAuth, async (req, res) => {
   try {
-    // TODO: Agregar middleware de autenticación admin
-    
     const [results] = await sequelize.query(`
       SELECT 
         b.banner_id,

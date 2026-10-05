@@ -284,17 +284,3 @@
   }
 }
 
-/* Modo oscuro */
-@media (prefers-color-scheme: dark) {
-  .qhatu-benefit-card {
-    background: var(--fondo-secundario);
-  }
-  
-  .qhatu-value-item {
-    background: var(--fondo-terciario);
-  }
-  
-  .qhatu-about-quote {
-    background: var(--fondo-terciario);
-  }
-}

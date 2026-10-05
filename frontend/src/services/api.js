@@ -445,6 +445,46 @@ export const registerBannerInteraction = async (bannerId, tipo) => {
 };
 
 // ============================================
+// 📦 PEDIDOS DEL USUARIO
+// ============================================
+
+export const getMisPedidos = async () => {
+  return fetchAPI('/ventas/mis-pedidos');
+};
+
+// ============================================
+// 🛠️ CATÁLOGO (admin / almacén)
+// ============================================
+
+export const getAdminProducts = async (params = {}) => {
+  const queryString = buildQueryString({ limit: 100, orderBy: 'nombre', order: 'ASC', ...params });
+  return fetchAPI(`/products${queryString}`);
+};
+
+export const createProduct = async (data) => {
+  return fetchAPI('/products', { method: 'POST', body: JSON.stringify(data) });
+};
+
+export const updateProduct = async (id, data) => {
+  return fetchAPI(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+};
+
+export const deleteProduct = async (id) => {
+  return fetchAPI(`/products/${id}`, { method: 'DELETE' });
+};
+
+// ============================================
+// 👤 MI PERFIL
+// ============================================
+
+export const updateMyProfile = async (data) => {
+  return fetchAPI('/users/profile', {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  });
+};
+
+// ============================================
 // 🏥 HEALTH CHECK
 // ============================================
 

@@ -30,6 +30,38 @@
   margin: 0 auto;
 }
 
+/* ===== CABECERA DE MARCA ===== */
+.qhatu-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--gray-80);
+}
+
+.qhatu-brand__logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.qhatu-brand__tagline {
+  margin: 0;
+  max-width: 62ch;
+  font-size: var(--text-xs);
+  line-height: var(--leading-relaxed);
+  color: var(--gray-40);
+}
+
+@media (max-width: 768px) {
+  .qhatu-brand {
+    align-items: center;
+    text-align: center;
+  }
+}
+
 /* ===== GRID 4 COLUMNAS COMPACTO ===== */
 .qhatu-grid {
   display: grid;
@@ -42,9 +74,8 @@
 .qhatu-col {
   display: flex;
   flex-direction: column;
-  animation: slideInCompact 0.5s var(--ease-out) forwards;
-  opacity: 0;
-  transform: translateY(20px);
+  opacity: 1;
+  animation: slideInCompact 0.5s var(--ease-out) backwards;
 }
 
 .qhatu-col:nth-child(1) { animation-delay: 0.1s; }
@@ -53,6 +84,10 @@
 .qhatu-col:nth-child(4) { animation-delay: 0.25s; }
 
 @keyframes slideInCompact {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
   to {
     opacity: 1;
     transform: translateY(0);
@@ -631,7 +666,12 @@
 
 /* ===== ACCESIBILIDAD ===== */
 @media (prefers-reduced-motion: reduce) {
-  .qhatu-col,
+  .qhatu-col {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
   .qhatu-newsletter-btn,
   .qhatu-col-title {
     animation: none;

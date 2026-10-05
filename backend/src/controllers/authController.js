@@ -12,6 +12,22 @@ import { UAParser } from 'ua-parser-js';
 // ====================================
 
 /**
+ * Obtiene el rol_id del rol "cliente" por nombre (evita IDs hardcodeados).
+ */
+const getClienteRoleId = async () => {
+  const rolCliente = await Role.findOne({
+    where: { nombre: 'cliente' },
+    attributes: ['rol_id']
+  });
+
+  if (!rolCliente) {
+    throw new Error('El rol "cliente" no está configurado en la base de datos');
+  }
+
+  return rolCliente.rol_id;
+};
+
+/**
  * Generar JWT
  */
 const generateToken = (userId) => {
@@ -114,10 +130,10 @@ const register = async (req, res) => {
       });
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return res.status(400).json({
         success: false,
-        message: 'La contraseña debe tener al menos 6 caracteres'
+        message: 'La contraseña debe tener al menos 8 caracteres'
       });
     }
 
@@ -140,7 +156,7 @@ const register = async (req, res) => {
       nombre_completo: nombre_completo?.trim() || null,
       telefono: telefono ? telefono.replace(/\s/g, '') : null,
       auth_provider: 'manual',
-      rol_id: 4, // Cliente
+      rol_id: await getClienteRoleId(),
       estado: 'activo',
       email_verificado: false
     });
@@ -388,7 +404,7 @@ const googleAuth = async (req, res) => {
         nombre_completo: googleData.nombre_completo,
         foto_perfil_url: googleData.foto_perfil_url,
         auth_provider: 'google',
-        rol_id: 4, // Cliente
+        rol_id: await getClienteRoleId(),
         estado: 'activo',
         email_verificado: true
       });
@@ -529,14 +545,11 @@ const checkEmail = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({
-      where: { email: email.toLowerCase() },
-      attributes: ['usuario_id']
-    });
-
+    // No revelar si el correo existe (evita enumeración de usuarios).
+    // El frontend no depende de este endpoint para el registro.
     res.json({
       success: true,
-      exists: !!user
+      message: 'Puedes continuar con el registro.'
     });
 
   } catch (error) {
@@ -565,10 +578,10 @@ const changePassword = async (req, res) => {
       });
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       return res.status(400).json({
         success: false,
-        message: 'La nueva contraseña debe tener al menos 6 caracteres'
+        message: 'La nueva contraseña debe tener al menos 8 caracteres'
       });
     }
 

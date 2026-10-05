@@ -101,7 +101,7 @@ const AnalyticsService = {
         whereClause += ' AND YEAR(fecha_venta) = YEAR(NOW())';
       }
       
-      const [results] = await sequelize.query(`
+      const results = await sequelize.query(`
         SELECT 
           vendedor_id,
           vendedor_nombre,
@@ -217,7 +217,7 @@ const AnalyticsService = {
     try {
       const { limite = 20, min_compras = 3 } = filtros;
       
-      const [results] = await sequelize.query(`
+      const results = await sequelize.query(`
         SELECT 
           vr.cliente_id,
           vr.cliente_nombre,
@@ -274,7 +274,7 @@ const AnalyticsService = {
    */
   obtenerClientesInactivos: async (dias_inactividad = 60) => {
     try {
-      const [results] = await sequelize.query(`
+      const results = await sequelize.query(`
         SELECT 
           vr.cliente_id,
           vr.cliente_nombre,
@@ -347,7 +347,7 @@ const AnalyticsService = {
       
       replacements.push(limite);
       
-      const [results] = await sequelize.query(`
+      const results = await sequelize.query(`
         SELECT 
           vri.producto_id,
           vri.producto_nombre,
@@ -410,7 +410,7 @@ const AnalyticsService = {
         whereClause += ' AND vri.fecha_registro >= DATE_FORMAT(NOW(), "%Y-%m-01")';
       }
       
-      const [results] = await sequelize.query(`
+      const results = await sequelize.query(`
         SELECT 
           vri.categoria_id,
           vri.categoria_nombre,
@@ -468,7 +468,7 @@ const AnalyticsService = {
         whereClause += ' AND fecha_venta >= DATE_FORMAT(NOW(), "%Y-%m-01")';
       }
       
-      const [results] = await sequelize.query(`
+      const results = await sequelize.query(`
         SELECT 
           dia_semana,
           CASE dia_semana
@@ -526,7 +526,7 @@ const AnalyticsService = {
         whereClause += ' AND fecha_venta >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
       }
       
-      const [results] = await sequelize.query(`
+      const results = await sequelize.query(`
         SELECT 
           HOUR(hora_venta) as hora,
           COUNT(*) as total_ventas,
@@ -571,7 +571,7 @@ const AnalyticsService = {
    */
   obtenerComparativaPeriodos: async () => {
     try {
-      const [results] = await sequelize.query(`
+      const results = await sequelize.query(`
         SELECT 
           'Hoy' as periodo,
           COUNT(*) as ventas,

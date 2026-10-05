@@ -6,9 +6,21 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+/**
+ * Actualiza la contraseña del usuario admin.
+ * La nueva contraseña se toma de SEED_ADMIN_PASSWORD (o SEED_DEFAULT_PASSWORD).
+ */
+
+const newPassword = process.env.SEED_ADMIN_PASSWORD || process.env.SEED_DEFAULT_PASSWORD;
+
+if (!newPassword || newPassword.length < 8) {
+  console.error('\n❌ Define SEED_ADMIN_PASSWORD (o SEED_DEFAULT_PASSWORD) con mínimo 8 caracteres.\n');
+  process.exit(1);
+}
+
 async function updateAdminPassword() {
   let connection;
-  
+
   try {
     console.log('🔄 Actualizando contraseña del admin...\n');
 
@@ -22,10 +34,8 @@ async function updateAdminPassword() {
 
     console.log('✓ Conexión establecida\n');
 
-    // Hash de la nueva contraseña
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Actualizar admin
     const [result] = await connection.query(
       `UPDATE usuarios 
        SET password = ?, 
@@ -43,9 +53,8 @@ async function updateAdminPassword() {
     );
 
     if (result.affectedRows > 0) {
-      console.log('✓ Admin actualizado exitosamente');
-      console.log('  Email: admin@qhatu.com');
-      console.log('  Password: admin123\n');
+      console.log('✓ Admin actualizado exitosamente (email: admin@qhatu.com)');
+      console.log('  La contraseña se tomó de las variables SEED_* del .env.\n');
     } else {
       console.log('⚠️  No se encontró el usuario admin@qhatu.com\n');
     }

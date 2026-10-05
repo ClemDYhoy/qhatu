@@ -1,0 +1,212 @@
+/* ===== PÁGINAS DE CUENTA ===== */
+.account-page {
+  padding: var(--space-8) 0 var(--space-16);
+  background: linear-gradient(180deg, var(--gray-5) 0%, var(--white) 320px);
+  min-height: 60vh;
+}
+
+.account-header {
+  margin-bottom: var(--space-6);
+}
+
+.account-title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-1);
+  letter-spacing: -0.01em;
+}
+
+.account-subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-6);
+}
+
+.account-card {
+  background: var(--white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.account-card + .account-card {
+  margin-top: var(--space-6);
+}
+
+.account-card__title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-4);
+}
+
+/* Formulario */
+.account-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.account-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+}
+
+.account-input {
+  padding: var(--space-3);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-base);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--white);
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.account-input:focus {
+  outline: none;
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 0 3px var(--gold-light);
+}
+
+.account-input:disabled {
+  background: var(--gray-5);
+  color: var(--text-muted);
+}
+
+/* Botones */
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border: none;
+  border-radius: var(--radius-base);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), background var(--duration-base) var(--ease-out);
+}
+
+.account-btn svg { width: 18px; height: 18px; }
+
+.account-btn--primary {
+  background: var(--gold-gradient);
+  color: var(--white);
+  box-shadow: var(--shadow-gold);
+}
+.account-btn--primary:hover:not(:disabled) { transform: translateY(-2px); }
+
+.account-btn--ghost {
+  background: var(--white);
+  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+}
+.account-btn--ghost:hover:not(:disabled) { border-color: var(--gold-primary); color: var(--gold-dark); }
+
+.account-btn--whatsapp { background: #25d366; color: #fff; }
+.account-btn--whatsapp:hover { transform: translateY(-2px); }
+
+.account-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.account-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* Avisos */
+.account-alert {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-base);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+.account-alert--success { background: #dcfce7; color: #15803d; }
+.account-alert--error { background: var(--red-light); color: var(--red-dark); }
+.account-alert--info { background: var(--gold-light); color: var(--gold-dark); }
+
+/* Estado vacío / carga */
+.account-state {
+  text-align: center;
+  padding: var(--space-16) var(--space-4);
+  color: var(--text-secondary);
+}
+.account-state__icon { color: var(--text-muted); margin-bottom: var(--space-3); }
+.account-state h3 { margin: 0 0 var(--space-2); color: var(--text-primary); }
+.account-spinner {
+  width: 36px; height: 36px; margin: 0 auto var(--space-3);
+  border: 3px solid var(--gray-20);
+  border-top-color: var(--gold-primary);
+  border-radius: var(--radius-full);
+  animation: accountSpin 0.8s linear infinite;
+}
+@keyframes accountSpin { to { transform: rotate(360deg); } }
+
+/* FAQ */
+.account-faq details {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-base);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  background: var(--white);
+}
+.account-faq summary {
+  cursor: pointer;
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+.account-faq p {
+  margin: var(--space-3) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+/* Pedidos */
+.order-card {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  background: var(--white);
+}
+.order-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.order-card__num { font-weight: var(--font-bold); color: var(--text-primary); }
+.order-card__meta { font-size: var(--text-xs); color: var(--text-tertiary); }
+.order-card__status {
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  background: var(--gold-light);
+  color: var(--gold-dark);
+  text-transform: capitalize;
+}
+.order-card__total { font-weight: var(--font-bold); color: var(--gold-dark); font-size: var(--text-lg); }
+
+/* Grid de productos (favoritos / vistos) */
+.account-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-4);
+}

@@ -696,6 +696,15 @@ confirmarVenta: async (req, res) => {
         return res.status(404).json({ success: false, message: 'Venta no encontrada' });
       }
 
+      // Un cliente solo puede ver sus propias ventas; el staff comercial ve todas.
+      const esStaff = ['super_admin', 'vendedor', 'almacenero'].includes(req.user.rol_nombre);
+      if (!esStaff && venta.usuario_id !== req.user.usuario_id) {
+        return res.status(403).json({
+          success: false,
+          message: 'No tienes permiso para acceder a esta venta'
+        });
+      }
+
       return res.json({ success: true, data: venta });
 
     } catch (error) {
@@ -703,6 +712,31 @@ confirmarVenta: async (req, res) => {
       return res.status(500).json({ 
         success: false, 
         message: 'Error al obtener detalle de venta'
+      });
+    }
+  },
+
+  // ====================================
+  // 📦 MIS PEDIDOS (del cliente autenticado)
+  // ====================================
+  obtenerMisPedidos: async (req, res) => {
+    try {
+      const usuario_id = req.user.usuario_id;
+
+      const ventas = await Venta.findAll({
+        where: { usuario_id },
+        include: [{ model: VentaItem, as: 'items' }],
+        order: [['fecha_venta', 'DESC']],
+        limit: 50
+      });
+
+      return res.json({ success: true, data: ventas });
+
+    } catch (error) {
+      console.error('❌ Error en obtenerMisPedidos:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error al obtener tus pedidos'
       });
     }
   },

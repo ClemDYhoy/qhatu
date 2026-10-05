@@ -68,12 +68,28 @@ router.get('/search-terms', requireAuth, requireAdmin, async (req, res) => {
 router.get('/popular-products', requireAuth, requireAdmin, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
-    const tipoInteraccion = req.query.tipo || 'all'; // vista, carrito, compra, all
 
+    // Whitelist estricta: nunca interpolar el valor del cliente en el SQL.
+    const tiposPermitidos = ['vista', 'carrito', 'compra'];
+    const tipoSolicitado = req.query.tipo || 'all';
+    const tipoInteraccion = tipoSolicitado === 'all' || tiposPermitidos.includes(tipoSolicitado)
+      ? tipoSolicitado
+      : null;
+
+    if (tipoInteraccion === null) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tipo de interacción inválido'
+      });
+    }
+
+    const replacements = [];
     let whereClause = '';
     if (tipoInteraccion !== 'all') {
-      whereClause = `AND ip.tipo_interaccion = '${tipoInteraccion}'`;
+      whereClause = 'AND ip.tipo_interaccion = ?';
+      replacements.push(tipoInteraccion);
     }
+    replacements.push(limit);
 
     const [results] = await sequelize.query(`
       SELECT 
@@ -93,7 +109,7 @@ router.get('/popular-products', requireAuth, requireAdmin, async (req, res) => {
       ORDER BY total_interacciones DESC
       LIMIT ?
     `, {
-      replacements: [limit]
+      replacements
     });
 
     res.json({

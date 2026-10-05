@@ -5,7 +5,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "seed": "node src/scripts/seedProducts.js"
+    "seed": "node src/scripts/seedProducts.js",
+    "migrate": "node src/scripts/migrate.js",
+    "migrate:status": "node src/scripts/migrate.js --status"
   },
   "dependencies": {
     "axios": "^1.13.2",
@@ -29,8 +31,10 @@
     "morgan": "^1.10.1",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.15.3",
+    "node": "^22.23.3",
     "nodemailer": "^7.0.6",
     "sequelize": "^6.37.7",
+    "server.js": "^1.0.0",
     "socket.io": "^4.8.1",
     "ua-parser-js": "^2.0.6",
     "uuid": "^13.0.0"

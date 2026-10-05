@@ -41,7 +41,7 @@ router.get('/health', mlController.healthCheck);
  * @returns {Object} Segmento y características del cliente
  */
 router.get('/segmento-cliente/:usuarioId', 
-  requireRole(['vendedor', 'admin']), 
+  requireRole(['vendedor', 'super_admin']), 
   mlController.obtenerSegmentoCliente
 );
 
@@ -53,7 +53,7 @@ router.get('/segmento-cliente/:usuarioId',
  * @returns {Object} Probabilidad y factores de influencia
  */
 router.get('/probabilidad-cierre/:usuarioId', 
-  requireRole(['vendedor', 'admin']), 
+  requireRole(['vendedor', 'super_admin']), 
   mlController.obtenerProbabilidadCierre
 );
 
@@ -65,7 +65,7 @@ router.get('/probabilidad-cierre/:usuarioId',
  * @returns {Object} Productos recomendados con similitud
  */
 router.get('/recomendaciones/:ventaId', 
-  requireRole(['vendedor', 'admin']), 
+  requireRole(['vendedor', 'super_admin']), 
   mlController.obtenerRecomendacionesProductos
 );
 
@@ -77,7 +77,7 @@ router.get('/recomendaciones/:ventaId',
  * @returns {Object} Análisis completo con segmento, probabilidad y recomendaciones
  */
 router.get('/analisis-completo/:ventaId/:usuarioId', 
-  requireRole(['vendedor', 'admin']), 
+  requireRole(['vendedor', 'super_admin']), 
   mlController.obtenerAnalisisCompleto
 );
 
@@ -108,7 +108,7 @@ router.post('/enviar-recomendaciones-whatsapp',
  * @returns {Object} Confirmación de limpieza
  */
 router.post('/limpiar-cache', 
-  requireRole(['admin']), 
+  requireRole(['super_admin']), 
   mlController.limpiarCache
 );
 

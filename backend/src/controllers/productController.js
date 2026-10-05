@@ -583,3 +583,115 @@ export const searchProducts = async (req, res) => {
     });
   }
 };
+
+// ============================================
+// ✏️ CRUD DE PRODUCTOS (admin / almacén)
+// ============================================
+
+const buildProductFields = (body, { partial = false } = {}) => {
+  const data = {};
+  const errors = [];
+
+  if (body.nombre !== undefined || !partial) {
+    const nombre = String(body.nombre || '').trim();
+    if (nombre.length < 3) errors.push('El nombre debe tener al menos 3 caracteres');
+    else data.nombre = nombre;
+  }
+
+  if (body.precio !== undefined || !partial) {
+    const precio = parseFloat(body.precio);
+    if (!precio || precio <= 0) errors.push('El precio debe ser mayor a 0');
+    else data.precio = precio;
+  }
+
+  if (body.stock !== undefined) {
+    const stock = parseInt(body.stock, 10);
+    if (Number.isNaN(stock) || stock < 0) errors.push('El stock no puede ser negativo');
+    else data.stock = stock;
+  }
+
+  if (body.categoria_id !== undefined || !partial) {
+    const categoriaId = parseInt(body.categoria_id, 10);
+    if (!categoriaId) errors.push('La categoría es obligatoria');
+    else data.categoria_id = categoriaId;
+  }
+
+  if (body.descripcion !== undefined) data.descripcion = body.descripcion || null;
+  if (body.url_imagen !== undefined) data.url_imagen = body.url_imagen || null;
+  if (body.destacado !== undefined) data.destacado = !!body.destacado;
+
+  if (body.precio_descuento !== undefined && body.precio_descuento !== '' && body.precio_descuento !== null) {
+    data.precio_descuento = parseFloat(body.precio_descuento);
+  } else if (body.precio_descuento === '' || body.precio_descuento === null) {
+    data.precio_descuento = null;
+  }
+
+  if (body.peso !== undefined) data.peso = body.peso === '' ? null : parseFloat(body.peso);
+  if (body.unidad_medida !== undefined) data.unidad_medida = body.unidad_medida || null;
+  if (body.umbral_bajo_stock !== undefined) data.umbral_bajo_stock = parseInt(body.umbral_bajo_stock, 10);
+  if (body.umbral_critico_stock !== undefined) data.umbral_critico_stock = parseInt(body.umbral_critico_stock, 10);
+
+  return { data, errors };
+};
+
+export const createProduct = async (req, res) => {
+  try {
+    const { data, errors } = buildProductFields(req.body, { partial: false });
+    if (errors.length) {
+      return res.status(400).json({ success: false, message: errors.join('. ') });
+    }
+
+    const product = await Product.create(data);
+    return res.status(201).json({ success: true, message: 'Producto creado', data: product });
+  } catch (error) {
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ success: false, message: error.errors.map((e) => e.message).join('. ') });
+    }
+    console.error('❌ Error creando producto:', error);
+    return res.status(500).json({ success: false, message: 'Error al crear el producto' });
+  }
+};
+
+export const updateProduct = async (req, res) => {
+  try {
+    const product = await Product.findByPk(parseInt(req.params.id, 10));
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+    }
+
+    const { data, errors } = buildProductFields(req.body, { partial: true });
+    if (errors.length) {
+      return res.status(400).json({ success: false, message: errors.join('. ') });
+    }
+
+    await product.update(data);
+    return res.json({ success: true, message: 'Producto actualizado', data: product });
+  } catch (error) {
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ success: false, message: error.errors.map((e) => e.message).join('. ') });
+    }
+    console.error('❌ Error actualizando producto:', error);
+    return res.status(500).json({ success: false, message: 'Error al actualizar el producto' });
+  }
+};
+
+export const deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findByPk(parseInt(req.params.id, 10));
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+    }
+
+    await product.destroy();
+    return res.json({ success: true, message: 'Producto eliminado' });
+  } catch (error) {
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(409).json({
+        success: false,
+        message: 'No se puede eliminar: el producto tiene ventas o carritos asociados.'
+      });
+    }
+    console.error('❌ Error eliminando producto:', error);
+    return res.status(500).json({ success: false, message: 'Error al eliminar el producto' });
+  }
+};

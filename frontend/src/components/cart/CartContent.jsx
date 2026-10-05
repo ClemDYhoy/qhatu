@@ -354,12 +354,13 @@ const CartContent = ({ onClose, isPage = false }) => {
                         <button
                             className="cart-content__btn cart-content__btn--secondary"
                             onClick={() => {
+                                if (isPage) { navigate('/products'); return; }
                                 if (onClose) onClose();
-                                if (isPage) navigate('/products');
+                                navigate('/cart');
                             }}
                             disabled={whatsappLoading}
                         >
-                            {isPage ? 'Seguir Comprando' : 'Cerrar'}
+                            {isPage ? 'Seguir comprando' : 'Ver carrito completo'}
                         </button>
                     </div>
                 </div>

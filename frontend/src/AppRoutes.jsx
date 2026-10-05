@@ -18,6 +18,14 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 // 🚀 IMPORTACIÓN DE LA NUEVA PÁGINA DEL CARRITO - Añadimos .jsx
 import CartPage from './pages/Cart/CartPage.jsx'; 
 
+// Páginas de cuenta
+import Configuracion from './pages/Account/Configuracion.jsx';
+import Ayuda from './pages/Account/Ayuda.jsx';
+import MisPedidos from './pages/Account/MisPedidos.jsx';
+import Favoritos from './pages/Account/Favoritos.jsx';
+import Direcciones from './pages/Account/Direcciones.jsx';
+import MetodosPago from './pages/Account/MetodosPago.jsx';
+
 const AppRoutes = () => {
     const location = useLocation();
     
@@ -38,6 +46,14 @@ const AppRoutes = () => {
 
                 <Route path="/nosotros" element={<Nosotros />} />
                 <Route path="/contact" element={<Contact />} />
+
+                {/* ========== CUENTA (requieren sesión) ========== */}
+                <Route path="/configuracion" element={<ProtectedRoute><Configuracion /></ProtectedRoute>} />
+                <Route path="/ayuda" element={<ProtectedRoute><Ayuda /></ProtectedRoute>} />
+                <Route path="/mis-pedidos" element={<ProtectedRoute><MisPedidos /></ProtectedRoute>} />
+                <Route path="/favoritos" element={<ProtectedRoute><Favoritos /></ProtectedRoute>} />
+                <Route path="/direcciones" element={<ProtectedRoute><Direcciones /></ProtectedRoute>} />
+                <Route path="/metodos-pago" element={<ProtectedRoute><MetodosPago /></ProtectedRoute>} />
                 
                 {/* ========== RUTAS PROTEGIDAS - ADMIN ========== */}
                 <Route 

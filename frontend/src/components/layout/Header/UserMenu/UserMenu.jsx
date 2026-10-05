@@ -209,7 +209,7 @@ const UserMenu = ({ user, onLogout, onUserUpdate }) => {
           <h4 className="user-full-name">{user?.nombre_completo || 'Usuario'}</h4>
           <p className="user-email">{user?.email}</p>
           <span className={`user-role-badge role-${user?.rol_nombre}`}>
-            {roleBadge.icon} {roleBadge.label}
+            {roleBadge.label}
           </span>
         </div>
       </div>
@@ -232,10 +232,17 @@ const UserMenu = ({ user, onLogout, onUserUpdate }) => {
   // ====================================
   // 🎯 OPCIONES DE MENÚ
   // ====================================
+  const panelLabels = {
+    super_admin: 'Panel de administración',
+    vendedor: 'Panel de vendedor',
+    almacenero: 'Panel de almacén'
+  };
+  const panelLabel = panelLabels[user?.rol_nombre] || 'Panel de gestión';
+
   const staffMenuItems = [
     {
       icon: Icon.Dashboard,
-      label: 'Mi Dashboard',
+      label: panelLabel,
       onClick: () => handleMenuItemClick(authService.getRedirectRoute(user.rol_nombre))
     }
   ];

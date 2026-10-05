@@ -6,47 +6,52 @@ import SellerAssistPanel from './components/SellerAssistPanel';
 import CarouselSuggestions from './components/CarouselSuggestions';
 import './AIReports.css';
 
+const Ico = {
+  Predict: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>),
+  Target: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>),
+  Chat: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>),
+  Gallery: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>),
+  Refresh: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>)
+};
+
 const AIReports = () => {
-  const [activeAI, setActiveAI] = useState('prediction'); // 'prediction' | 'recommendations' | 'assistant' | 'carousels'
+  const [activeAI, setActiveAI] = useState('prediction');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const aiTabs = [
-    { id: 'prediction', label: 'Predicción de Inventario', icon: '🔮' },
-    { id: 'recommendations', label: 'Recomendaciones', icon: '🎯' },
-    { id: 'assistant', label: 'Asistente Vendedor', icon: '💬' },
-    { id: 'carousels', label: 'Carruseles Sugeridos', icon: '🎨' }
+    { id: 'prediction', label: 'Predicción de inventario', Icon: Ico.Predict },
+    { id: 'recommendations', label: 'Recomendaciones', Icon: Ico.Target },
+    { id: 'assistant', label: 'Asistente vendedor', Icon: Ico.Chat },
+    { id: 'carousels', label: 'Carruseles sugeridos', Icon: Ico.Gallery }
   ];
 
   return (
     <div className="ai-reports-section">
-      {/* Header */}
       <div className="section-header">
         <div>
-          <h1>🤖 Reportes Inteligentes</h1>
-          <p className="section-subtitle">
-            Análisis y sugerencias generadas por Inteligencia Artificial
-          </p>
+          <h1>Reportes inteligentes</h1>
+          <p className="section-subtitle">Análisis y sugerencias generadas con inteligencia artificial</p>
         </div>
-        <button className="refresh-btn">
-          🔄 Actualizar Reportes
+        <button className="refresh-btn" onClick={() => setRefreshKey((k) => k + 1)} type="button">
+          <Ico.Refresh /> Actualizar reportes
         </button>
       </div>
 
-      {/* Tabs de IAs */}
       <div className="ai-tabs">
-        {aiTabs.map(tab => (
+        {aiTabs.map((tab) => (
           <button
             key={tab.id}
             className={`ai-tab ${activeAI === tab.id ? 'active' : ''}`}
             onClick={() => setActiveAI(tab.id)}
+            type="button"
           >
-            <span className="tab-icon">{tab.icon}</span>
+            <span className="tab-icon"><tab.Icon /></span>
             <span className="tab-label">{tab.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Contenido según IA activa */}
-      <div className="ai-content">
+      <div className="ai-content" key={refreshKey}>
         {activeAI === 'prediction' && <PredictionPanel />}
         {activeAI === 'recommendations' && <RecommendationsPanel />}
         {activeAI === 'assistant' && <SellerAssistPanel />}
@@ -57,20 +62,3 @@ const AIReports = () => {
 };
 
 export default AIReports;
-
-/* 
-CSS ESPECIFICACIONES (AIReports.css):
-- .ai-reports-section: padding 30px
-- .section-header: display flex, justify-content space-between, align-items flex-start, margin-bottom 30px
-- .section-header h1: margin 0 0 5px 0, font-size 28px, color #2c3e50
-- .section-subtitle: margin 0, font-size 14px, color #7f8c8d
-- .refresh-btn: padding 10px 20px, background #3498db, color white, border none, border-radius 6px, cursor pointer, font-size 14px, font-weight 600
-- .refresh-btn:hover: background #2980b9
-- .ai-tabs: display grid, grid-template-columns repeat(4, 1fr), gap 15px, margin-bottom 30px
-- .ai-tab: padding 15px 20px, background white, border 2px solid #ecf0f1, border-radius 10px, cursor pointer, transition all 0.3s, display flex, flex-direction column, align-items center, gap 8px
-- .ai-tab:hover: border-color #3498db, transform translateY(-2px), box-shadow 0 4px 12px rgba(0,0,0,0.1)
-- .ai-tab.active: border-color #3498db, background #ecf5ff, box-shadow 0 4px 12px rgba(52,152,219,0.2)
-- .tab-icon: font-size 32px
-- .tab-label: font-size 13px, font-weight 600, color #2c3e50, text-align center
-- .ai-content: background white, border-radius 12px, padding 25px, box-shadow 0 2px 8px rgba(0,0,0,0.1)
-*/

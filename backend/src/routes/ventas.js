@@ -1,9 +1,12 @@
 // C:\qhatu\backend\src\routes\ventas.js
 import express from 'express';
 import VentaController from '../controllers/ventaController.js';
-import { requireAuth } from '../config/middleware/auth.js';
+import { requireAuth, requireRole } from '../config/middleware/auth.js';
 
 const router = express.Router();
+
+// Operaciones de gestión de ventas: solo staff comercial
+const requireVentasStaff = requireRole(['super_admin', 'vendedor']);
 
 // ====================================
 // 🛒 VENTAS - OPERACIONES PRINCIPALES
@@ -24,7 +27,7 @@ router.post('/crear-whatsapp', requireAuth, VentaController.crearVentaWhatsApp);
  * @access  Privado
  * @returns { success: boolean, data: Venta[], totales: object }
  */
-router.get('/pendientes', requireAuth, VentaController.obtenerVentasPendientes);
+router.get('/pendientes', requireAuth, requireVentasStaff, VentaController.obtenerVentasPendientes);
 
 /**
  * @route   GET /api/ventas/estadisticas/vendedor
@@ -34,7 +37,17 @@ router.get('/pendientes', requireAuth, VentaController.obtenerVentasPendientes);
  * 
  * IMPORTANTE: Esta ruta debe ir ANTES de /:ventaId para evitar conflictos
  */
-router.get('/estadisticas/vendedor', requireAuth, VentaController.obtenerEstadisticas);
+router.get('/estadisticas/vendedor', requireAuth, requireVentasStaff, VentaController.obtenerEstadisticas);
+
+/**
+ * @route   GET /api/ventas/mis-pedidos
+ * @desc    Obtener los pedidos del usuario autenticado
+ * @access  Privado
+ * @returns { success: boolean, data: Venta[] }
+ *
+ * IMPORTANTE: Esta ruta debe ir ANTES de /:ventaId para evitar conflictos
+ */
+router.get('/mis-pedidos', requireAuth, VentaController.obtenerMisPedidos);
 
 /**
  * @route   GET /api/ventas/:ventaId
@@ -53,7 +66,7 @@ router.get('/:ventaId', requireAuth, VentaController.obtenerDetalleVenta);
  * @body    { notas_vendedor?: string }
  * @returns { success: boolean, message: string, data: Venta }
  */
-router.post('/:ventaId/confirmar', requireAuth, VentaController.confirmarVenta);
+router.post('/:ventaId/confirmar', requireAuth, requireVentasStaff, VentaController.confirmarVenta);
 
 /**
  * @route   POST /api/ventas/:ventaId/marcar-enviado
@@ -63,7 +76,7 @@ router.post('/:ventaId/confirmar', requireAuth, VentaController.confirmarVenta);
  * @body    { mensaje: string }
  * @returns { success: boolean, message: string, data: object }
  */
-router.post('/:ventaId/marcar-enviado', requireAuth, VentaController.marcarEnviadoWhatsApp);
+router.post('/:ventaId/marcar-enviado', requireAuth, requireVentasStaff, VentaController.marcarEnviadoWhatsApp);
 
 // ====================================
 // 📤 EXPORTAR ROUTER

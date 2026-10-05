@@ -142,7 +142,7 @@ export const verifyTables = async () => {
     const requiredTables = [
       'productos', 'categorias', 'usuarios', 'carritos', 
       'carrito_items', 'ventas', 'venta_items', 'roles', 
-      'carruseles', 'banners_descuento', 'sesiones_usuario'
+      'carruseles', 'banners_descuento', 'sesiones_tracking'
     ];
     
     const missingTables = requiredTables.filter(t => !tableNames.includes(t));

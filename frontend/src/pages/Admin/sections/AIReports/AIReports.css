@@ -458,3 +458,12 @@
   0% { transform: translate(-50%, -50%) rotate(0deg); }
   100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
+
+/* ===== AJUSTES (iconos SVG, sin emojis) ===== */
+.ai-reports-section::after { content: none !important; }
+.section-header h1::before { content: none !important; }
+.ai-reports-section.loading::after { content: none !important; }
+
+.tab-icon { display: inline-flex; }
+.tab-icon svg { width: 26px; height: 26px; color: #059669; }
+.refresh-btn svg { width: 16px; height: 16px; }

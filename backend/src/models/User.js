@@ -3,6 +3,10 @@ import { DataTypes } from 'sequelize';
 import bcrypt from 'bcryptjs';
 import sequelize from '../config/database.js';
 
+// Detecta un hash bcrypt ya existente para no re-hashear.
+const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$/;
+const isAlreadyHashed = (value) => typeof value === 'string' && BCRYPT_HASH_REGEX.test(value);
+
 const User = sequelize.define('Usuario', {
   usuario_id: {
     type: DataTypes.INTEGER,
@@ -170,8 +174,9 @@ const User = sequelize.define('Usuario', {
   timestamps: false,
   hooks: {
     beforeCreate: async (user) => {
-      // Solo hashear si es registro manual y hay password
-      if (user.password && user.auth_provider === 'manual') {
+      // Hashear siempre que haya una contraseña en texto plano,
+      // sin depender de auth_provider (evita guardar texto plano).
+      if (user.password && !isAlreadyHashed(user.password)) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
       }
@@ -179,7 +184,7 @@ const User = sequelize.define('Usuario', {
       user.actualizado_en = new Date();
     },
     beforeUpdate: async (user) => {
-      if (user.changed('password') && user.password && user.auth_provider === 'manual') {
+      if (user.changed('password') && user.password && !isAlreadyHashed(user.password)) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
       }

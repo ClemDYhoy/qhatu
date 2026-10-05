@@ -2,7 +2,7 @@
 // Script de diagnóstico para verificar conectividad API
 // Ubicación: C:\qhatu\test-api-connection.js
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5010/api';
 
 const colors = {
   reset: '\x1b[0m',
@@ -47,7 +47,7 @@ async function runDiagnostics() {
   
   // Test 1: Backend Health
   log.header('1️⃣  HEALTH CHECK DEL BACKEND');
-  await testEndpoint('Health Check', 'http://localhost:5000/health');
+  await testEndpoint('Health Check', 'http://localhost:5010/health');
   
   // Test 2: Productos
   log.header('2️⃣  ENDPOINTS DE PRODUCTOS');
@@ -85,11 +85,11 @@ async function runDiagnostics() {
   log.warn('Si hay errores ❌, verifica:');
   console.log('   1. ¿El backend está corriendo? (node src/server.js)');
   console.log('   2. ¿La base de datos está conectada?');
-  console.log('   3. ¿El puerto 5000 está libre?');
+  console.log('   3. ¿El puerto 5010 está libre?');
   console.log('   4. ¿Las variables de entorno están correctas?');
   
   log.header('🎯 PRÓXIMOS PASOS');
-  console.log('1. Actualiza frontend/.env con: VITE_API_URL=http://localhost:5000/api');
+  console.log('1. Actualiza frontend/.env con: VITE_API_URL=http://localhost:5010/api');
   console.log('2. Reinicia el servidor frontend: npm run dev');
   console.log('3. Verifica la consola del navegador');
 }

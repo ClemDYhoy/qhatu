@@ -91,7 +91,15 @@ const Product = sequelize.define('Product', {
   url_imagen: {
     type: DataTypes.STRING(500),
     allowNull: true,
-    validate: { isUrl: true }
+    validate: {
+      isValidImage(value) {
+        if (!value) return;
+        // Acepta URL absoluta (http/https) o ruta local que empiece con "/".
+        if (/^https?:\/\//i.test(value)) return;
+        if (value.startsWith('/')) return;
+        throw new Error('url_imagen debe ser una URL http(s) o una ruta que empiece con "/"');
+      }
+    }
   }
 }, {
   tableName: 'productos',

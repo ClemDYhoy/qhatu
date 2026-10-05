@@ -150,7 +150,60 @@ const Icons = {
       stroke="none"
     />
   </svg>
-)
+),
+  bowl: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11h18a9 9 0 0 1-9 9 9 9 0 0 1-9-9z"/>
+      <path d="M8 7c0-1.5 1-2 1-3M12 6c0-1.5 1-2 1-3M16 7c0-1.5 1-2 1-3"/>
+    </svg>
+  ),
+  noodles: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 11h16l-1.2 7a3 3 0 0 1-3 2.5H8.2a3 3 0 0 1-3-2.5L4 11z"/>
+      <path d="M8.5 8L16 4M9.5 8L17 4"/>
+      <path d="M8 14c1-1 2 1 3 0s2-1 3 0 2 1 3 0"/>
+    </svg>
+  ),
+  cup: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 4h12l-1.2 15a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 4z"/>
+      <path d="M5 8h14"/>
+    </svg>
+  ),
+  clock: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 7v5l3 2"/>
+    </svg>
+  )
+};
+
+// Imágenes referenciales (Pexels) para las tarjetas de categoría
+const catImg = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=800`;
+
+// Presentación de categorías (icono + tono + imagen) para la vitrina del home
+const CATEGORY_STYLES = {
+  dulces: { icon: 'candy', tone: 'gold', image: catImg(1435904) },
+  chocolates: { icon: 'candy', tone: 'gold', image: catImg(918327) },
+  snacks: { icon: 'bowl', tone: 'red', image: catImg(4110103) },
+  ramen: { icon: 'noodles', tone: 'red', image: catImg(1630572) },
+  bebidas: { icon: 'cup', tone: 'blue', image: catImg(1170596) },
+  licores: { icon: 'wine', tone: 'green', image: catImg(1283219) },
+  combos: { icon: 'box', tone: 'gold', image: catImg(2983101) },
+  descuentos: { icon: 'tag', tone: 'red', image: catImg(884600) }
+};
+
+const getCategoryPresentation = (nombre = '') => {
+  const n = nombre.toLowerCase();
+  if (n.includes('dulce')) return CATEGORY_STYLES.dulces;
+  if (n.includes('chocolate')) return CATEGORY_STYLES.chocolates;
+  if (n.includes('snack') || n.includes('papa')) return CATEGORY_STYLES.snacks;
+  if (n.includes('ramen') || n.includes('fideo')) return CATEGORY_STYLES.ramen;
+  if (n.includes('bebida')) return CATEGORY_STYLES.bebidas;
+  if (n.includes('licor') || n.includes('sake')) return CATEGORY_STYLES.licores;
+  if (n.includes('combo')) return CATEGORY_STYLES.combos;
+  if (n.includes('descuento') || n.includes('oferta')) return CATEGORY_STYLES.descuentos;
+  return { icon: 'box', tone: 'gray', image: catImg(264636) };
 };
 
 const Home = () => {
@@ -160,6 +213,7 @@ const Home = () => {
   const [dulcesProducts, setDulcesProducts] = useState([]);
   const [licoresProducts, setLicoresProducts] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [carruseles, setCarruseles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [carruselError, setCarruselError] = useState(null);
@@ -168,6 +222,7 @@ const Home = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef(null);
+  const touchStartX = useRef(0);
 
   // Auto-play del carrusel
   useEffect(() => {
@@ -186,6 +241,15 @@ const Home = () => {
   const goToSlide = (index) => setActiveIndex(index);
   const handlePrev = () => setActiveIndex(prev => (prev - 1 + carruseles.length) % carruseles.length);
   const handleNext = () => setActiveIndex(prev => (prev + 1) % carruseles.length);
+
+  // Deslizamiento táctil (móvil)
+  const handleTouchStart = (e) => { touchStartX.current = e.changedTouches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) < 40) return;
+    if (dx < 0) handleNext();
+    else handlePrev();
+  };
 
   // Scroll header effect
   useEffect(() => {
@@ -316,6 +380,38 @@ const Home = () => {
   };
 
   /**
+   * Cargar categorías principales con su conteo de productos
+   */
+  const fetchCategories = async () => {
+    try {
+      const [catsRes, statsRes] = await Promise.all([
+        api.get('/categories/all/flat'),
+        api.get('/products/stats-by-category')
+      ]);
+
+      const cats = catsRes.data?.data || catsRes.data || [];
+      const stats = statsRes.data?.data?.categorias || [];
+      const counts = new Map(stats.map(s => [s.categoria_id, s]));
+
+      const principales = (Array.isArray(cats) ? cats : [])
+        .filter(c => !c.padre_id)
+        .map(c => ({
+          id: c.categoria_id,
+          name: c.nombre,
+          count: counts.get(c.categoria_id)?.total_productos || 0,
+          ...getCategoryPresentation(c.nombre)
+        }))
+        .filter(c => c.count > 0)
+        .sort((a, b) => b.count - a.count);
+
+      setCategories(principales);
+    } catch (err) {
+      console.error('❌ Error cargando categorías:', err);
+      setCategories([]);
+    }
+  };
+
+  /**
    * Cargar todos los datos al montar el componente
    */
   useEffect(() => {
@@ -329,7 +425,8 @@ const Home = () => {
           fetchBestSellers(),
           fetchDulcesProducts(),
           fetchLicoresProducts(),
-          fetchLowStockProducts()
+          fetchLowStockProducts(),
+          fetchCategories()
         ]);
         console.log('✅ Todos los datos cargados correctamente');
       } catch (error) {
@@ -341,6 +438,30 @@ const Home = () => {
     
     loadData();
   }, []);
+
+  // Revelado al hacer scroll (respeta prefers-reduced-motion)
+  useEffect(() => {
+    const nodes = Array.from(document.querySelectorAll('.home-pro .reveal'));
+    if (!nodes.length) return undefined;
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !('IntersectionObserver' in window)) {
+      nodes.forEach(el => el.classList.add('is-visible'));
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -8% 0px' });
+
+    nodes.forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, [loading, categories.length]);
 
   // ============================================
   // LOADING STATE
@@ -366,13 +487,21 @@ const Home = () => {
       <section className="hero-pro">
         <div className="hero-container">
           <div className="hero-badge-pro">
-            {Icons.star2}
-            <span>Todo lo que Tu Antojo Pide</span>
+            {Icons.shield}
+            <span>Productos importados 100% originales</span>
           </div>
-          <h1 className="hero-title-pro">Disfruta Cada Momento con Sabor</h1>
+          <h1 className="hero-title-pro">Productos importados con calidad garantizada</h1>
           <p className="hero-desc-pro">
-            Descubre una selección irresistible de dulces, snacks, bebidas y más, perfecta para tus antojos y momentos especiales en Huánuco
+            Dulces, snacks, bebidas y más, seleccionados para tu día a día. Compra fácil y recibe en Huánuco.
           </p>
+          <div className="hero-cta-pro">
+            <Link to="/products" className="hero-btn-pro hero-btn-pro--primary">
+              Explorar catálogo {Icons.arrowRight}
+            </Link>
+            <Link to="/products?mostrar_descuentos=true" className="hero-btn-pro hero-btn-pro--ghost">
+              Ver ofertas de hoy
+            </Link>
+          </div>
           <div className="hero-features-pro">
             <div className="hero-item-pro">{Icons.truck}<span>Envío gratis +S/50</span></div>
             <div className="hero-item-pro">{Icons.shield}<span>100% originales</span></div>
@@ -386,8 +515,13 @@ const Home = () => {
         <section className="section-pro promo-bg">
           <div 
             className="premium-carousel"
+            role="region"
+            aria-roledescription="carrusel"
+            aria-label="Ofertas destacadas"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
             <button 
               className="carousel-nav-btn carousel-nav-prev"
@@ -476,9 +610,45 @@ const Home = () => {
         </section>
       ) : null}
 
+      {/* CATEGORÍAS */}
+      {categories.length > 0 && (
+        <section className="section-pro categories-section-pro reveal">
+          <div className="container-pro">
+            <div className="section-header-pro">
+              <div className="header-content-pro">
+                <div className="icon-badge-pro primary">{Icons.box}</div>
+                <div>
+                  <h3 className="section-title-pro">Explora por categoría</h3>
+                  <p className="section-subtitle-pro">Encuentra justo lo que buscas navegando por nuestras categorías.</p>
+                </div>
+              </div>
+              <Link to="/products" className="link-view-pro">Ver catálogo {Icons.arrowRight}</Link>
+            </div>
+            <div className="categories-grid-pro">
+              {categories.map(cat => (
+                <Link
+                  key={cat.id}
+                  to={`/products?categoria_id=${cat.id}`}
+                  className={`category-card-pro tone-${cat.tone}`}
+                  style={{ backgroundImage: `url('${cat.image}')` }}
+                >
+                  <span className="category-card-pro__overlay" aria-hidden="true" />
+                  <span className="category-card-pro__icon" aria-hidden="true">{Icons[cat.icon]}</span>
+                  <span className="category-card-pro__body">
+                    <span className="category-card-pro__name">{cat.name}</span>
+                    <span className="category-card-pro__count">{cat.count} producto{cat.count !== 1 ? 's' : ''}</span>
+                  </span>
+                  <span className="category-card-pro__arrow" aria-hidden="true">{Icons.arrowRight}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* PRODUCTOS DESTACADOS */}
       {featuredProducts.length > 0 && (
-        <section className="section-pro">
+        <section className="section-pro reveal">
           <div className="container-pro">
             <div className="section-header-pro">
               <div className="header-content-pro">
@@ -501,7 +671,7 @@ const Home = () => {
 
       {/* MÁS VENDIDOS */}
       {bestSellers.length > 0 && (
-        <section className="section-pro bestseller-bg">
+        <section className="section-pro bestseller-bg reveal">
           <div className="container-pro">
             <div className="section-header-pro">
               <div className="header-content-pro">
@@ -524,7 +694,7 @@ const Home = () => {
 
       {/* DULCES IMPORTADOS */}
       {dulcesProducts.length > 0 && (
-        <section className="section-pro dulces-bg">
+        <section className="section-pro dulces-bg reveal">
           <div className="container-pro">
             <div className="section-header-pro">
               <div className="header-content-pro">
@@ -547,7 +717,7 @@ const Home = () => {
 
       {/* LICORES PREMIUM */}
       {licoresProducts.length > 0 && (
-        <section className="section-pro licores-bg">
+        <section className="section-pro licores-bg reveal">
           <div className="container-pro">
             <div className="section-header-pro">
               <div className="header-content-pro">
@@ -570,7 +740,7 @@ const Home = () => {
 
       {/* ÚLTIMAS UNIDADES */}
       {lowStockProducts.length > 0 && (
-        <section className="section-pro lowstock-bg">
+        <section className="section-pro lowstock-bg reveal">
           <div className="container-pro">
             <div className="section-header-pro">
               <div className="header-content-pro">
@@ -591,16 +761,38 @@ const Home = () => {
         </section>
       )}
 
+      {/* CÓMO COMPRAR */}
+      <section className="how-section-pro reveal">
+        <div className="container-pro">
+          <div className="section-header-pro section-header-pro--center">
+            <div className="header-content-pro">
+              <div className="icon-badge-pro primary">{Icons.box}</div>
+              <div>
+                <h3 className="section-title-pro">Comprar es muy fácil</h3>
+                <p className="section-subtitle-pro">En tres pasos tienes tus productos favoritos en casa.</p>
+              </div>
+            </div>
+          </div>
+          <div className="how-grid-pro">
+            {[
+              { n: '01', t: 'Elige tus productos', d: 'Explora el catálogo y arma tu carrito con lo que más te guste.' },
+              { n: '02', t: 'Pide por WhatsApp', d: 'Envía tu pedido en un clic y te confirmamos disponibilidad y total.' },
+              { n: '03', t: 'Recíbelo en casa', d: 'Coordinamos la entrega en Huánuco, rápida y segura.' }
+            ].map(step => (
+              <div className="how-step-pro" key={step.n}>
+                <span className="how-step-pro__num">{step.n}</span>
+                <h4 className="how-step-pro__title">{step.t}</h4>
+                <p className="how-step-pro__desc">{step.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* INFO SECTION */}
-      <section className="info-section-pro">
+      <section className="info-section-pro reveal">
         <div className="container-pro">
           <div className="info-grid-pro">
-            <div className="info-card-pro">
-              <div className="info-icon-pro">{Icons.mapPin}</div>
-              <h3 className="info-title-pro">Nuestra Ubicación</h3>
-              <p className="info-text-pro">Av. Juan Velasco Alvarado 748, Pillco Marca</p>
-              <p className="info-text-pro secondary">Lunes a Domingo: 8:00 AM - 10:00 PM</p>
-            </div>
             <div className="info-card-pro">
               <div className="info-icon-pro">{Icons.phone}</div>
               <h3 className="info-title-pro">Contacto Directo</h3>
@@ -623,8 +815,56 @@ const Home = () => {
         </div>
       </section>
 
+      {/* UBICACIÓN + MAPA */}
+      <section className="location-section-pro reveal">
+        <div className="container-pro">
+          <div className="location-grid-pro">
+            <div className="location-info-pro">
+              <span className="location-eyebrow-pro">{Icons.mapPin} Visítanos</span>
+              <h3 className="location-title-pro">Encuéntranos en Huánuco</h3>
+              <p className="location-text-pro">
+                Te esperamos en nuestra tienda con la mejor selección de productos importados.
+                Pasa a conocerlos o escríbenos para coordinar tu pedido.
+              </p>
+              <ul className="location-list-pro">
+                <li>{Icons.mapPin}<span>Av. Juan Velasco Alvarado 748, Pillco Marca, Huánuco</span></li>
+                <li><span className="location-clock" aria-hidden="true">{Icons.clock}</span><span>Lunes a Domingo: 8:00 AM - 10:00 PM</span></li>
+                <li>{Icons.phone}<span>+51 952 682 285</span></li>
+              </ul>
+              <div className="location-actions-pro">
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=Av.+Juan+Velasco+Alvarado+748,+Pillco+Marca,+Hu%C3%A1nuco"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="location-btn-pro location-btn-pro--primary"
+                >
+                  Cómo llegar {Icons.arrowRight}
+                </a>
+                <a
+                  href="https://wa.me/51952682285"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="location-btn-pro location-btn-pro--ghost"
+                >
+                  Escribir por WhatsApp
+                </a>
+              </div>
+            </div>
+            <div className="location-map-pro">
+              <iframe
+                title="Ubicación de Qhatu en el mapa"
+                src="https://www.google.com/maps?q=Av.%20Juan%20Velasco%20Alvarado%20748%2C%20Pillco%20Marca%2C%20Hu%C3%A1nuco&output=embed"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* STATS SECTION */}
-      <section className="stats-section-pro">
+      <section className="stats-section-pro reveal">
         <div className="container-pro">
           <div className="stats-grid-pro">
             <div className="stat-item-pro">

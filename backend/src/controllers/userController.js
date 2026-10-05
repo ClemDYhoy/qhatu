@@ -46,6 +46,11 @@ const getUsers = async (req, res) => {
     // Paginación
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
+    // Ordenamiento seguro (whitelist para evitar inyección en ORDER BY)
+    const validSortFields = ['creado_en', 'actualizado_en', 'nombre_completo', 'email', 'estado', 'ultimo_acceso'];
+    const safeSortBy = validSortFields.includes(sortBy) ? sortBy : 'creado_en';
+    const safeSortOrder = String(sortOrder).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
     // Consulta con relaciones
     const { count, rows: users } = await User.findAndCountAll({
       where,
@@ -59,7 +64,7 @@ const getUsers = async (req, res) => {
       }],
       limit: parseInt(limit),
       offset,
-      order: [[sortBy, sortOrder.toUpperCase()]],
+      order: [[safeSortBy, safeSortOrder]],
       distinct: true
     });
 

@@ -1,7 +1,8 @@
 // C:\qhatu\frontend\src\components\products\ProductCard\ProductCard.jsx
-import React, { useState, useCallback, memo, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect, memo } from 'react';
 import { useCart } from '../../../contexts/CartContext';
 import whatsappService from '../../../services/whatsappService';
+import { isFavorite, toggleFavorite } from '../../../utils/favorites';
 import './ProductCard.css';
 
 // ============================================
@@ -125,6 +126,24 @@ const ProductCard = memo(({ product }) => {
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState(null);
+  const [fav, setFav] = useState(false);
+  const modalImgRef = useRef(null);
+
+  // Favoritos (localStorage)
+  useEffect(() => {
+    setFav(isFavorite(product?.producto_id));
+  }, [product?.producto_id]);
+
+  // Zoom del modal: aumenta y sigue el punto del cursor (estilo Amazon)
+  const handleModalZoom = useCallback((e) => {
+    const img = modalImgRef.current;
+    if (!img) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    img.style.transformOrigin = `${x}% ${y}%`;
+  }, []);
 
   if (!product?.producto_id) return null;
 
@@ -286,6 +305,20 @@ const ProductCard = memo(({ product }) => {
             loading="lazy" 
             onError={() => setImageError(true)} 
           />
+          <button
+            type="button"
+            className={`product-card__fav ${fav ? 'is-active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              const list = toggleFavorite(product);
+              setFav(list.some((p) => p.producto_id === product.producto_id));
+            }}
+            aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </button>
         </div>
 
         {/* Contenido */}
@@ -405,13 +438,24 @@ const ProductCard = memo(({ product }) => {
             </button>
 
             <div className="modal__content">
-              <div className="modal__image">
-                <img src={imageUrl} alt={product.nombre} onError={() => setImageError(true)} />
+              <div className="modal__image" onMouseMove={handleModalZoom} aria-label="Imagen del producto">
+                <img
+                  ref={modalImgRef}
+                  src={imageUrl}
+                  alt={product.nombre}
+                  onError={() => setImageError(true)}
+                />
                 {product.destacado && (
                   <div className="modal__image-badge">
                     <StarIcon /> Destacado
                   </div>
                 )}
+                {prices.hasDiscount && (
+                  <div className="modal__image-discount">-{prices.discountPercent}%</div>
+                )}
+                <span className="modal__image-hint">
+                  <EyeIcon /> Pasa el cursor para ampliar
+                </span>
               </div>
 
               <div className="modal__info">
@@ -443,7 +487,7 @@ const ProductCard = memo(({ product }) => {
                         </span>
                       </div>
                       <div className="price-detail__savings">
-                        🎉 Ahorras {formatPrice(prices.precio - prices.precioDescuento)}
+                        <SavingsIcon /> Ahorras {formatPrice(prices.precio - prices.precioDescuento)}
                       </div>
                     </>
                   ) : (
@@ -467,7 +511,7 @@ const ProductCard = memo(({ product }) => {
                     </span>
                   ) : (
                     <span className="stock-badge stock-badge--available">
-                      <PlusIcon /> {stockInfo.stock} disponibles
+                      <CheckIcon /> {stockInfo.stock} disponibles
                     </span>
                   )}
                 </div>

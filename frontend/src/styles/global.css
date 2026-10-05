@@ -23,7 +23,7 @@ body {
   width: 100%;
   max-width: var(--screen-xl);
   margin: 0 auto;
-  padding: 0 var(--space-4);
+  padding: 0 var(--space-8);
 }
 
 .container-fluid {
@@ -507,7 +507,7 @@ p {
 /* ===== RESPONSIVE DESIGN PERFECTO ===== */
 @media (max-width: 768px) {
   .container {
-    padding: 0 var(--space-4);
+    padding: 0 var(--space-5);
   }
   
   .hero {
@@ -576,3 +576,18 @@ body, html, .app-container {
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* Alineación del contenedor con el header (1280px / 32px) */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 var(--space-6);
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 var(--space-4);
+  }
+}
+
+/* (Modo oscuro retirado: la app usa un único modo, claro.) */

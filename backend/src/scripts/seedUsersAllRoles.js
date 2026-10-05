@@ -7,14 +7,26 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 /**
- * Script para crear usuarios de prueba de todos los roles
+ * Script para crear usuarios de prueba de todos los roles.
  * Ejecutar: node src/scripts/seedUsersAllRoles.js
+ *
+ * Las contraseñas NO se hardcodean: se leen de variables de entorno.
+ * Requiere SEED_DEFAULT_PASSWORD (mínimo 8 caracteres) y permite
+ * override por usuario con SEED_SUPER_ADMIN_PASSWORD, etc.
  */
+
+const defaultPassword = process.env.SEED_DEFAULT_PASSWORD;
+
+if (!defaultPassword || defaultPassword.length < 8) {
+  console.error('\n❌ Falta SEED_DEFAULT_PASSWORD (mínimo 8 caracteres) en tu .env.');
+  console.error('   Este seed no usa contraseñas por defecto por seguridad.\n');
+  process.exit(1);
+}
 
 const usuarios = [
   {
     email: 'admin@qhatu.com',
-    password: 'admin123',
+    password: process.env.SEED_SUPER_ADMIN_PASSWORD || defaultPassword,
     nombre_completo: 'Administrador Principal',
     telefono: '962000001',
     direccion: 'Av. Alameda de la República 123',
@@ -27,7 +39,7 @@ const usuarios = [
   },
   {
     email: 'vendedor@qhatu.com',
-    password: 'vendedor123',
+    password: process.env.SEED_VENDEDOR_PASSWORD || defaultPassword,
     nombre_completo: 'María Vendedora',
     telefono: '962000002',
     direccion: 'Jr. Dos de Mayo 456',
@@ -40,7 +52,7 @@ const usuarios = [
   },
   {
     email: 'almacenero@qhatu.com',
-    password: 'almacen123',
+    password: process.env.SEED_ALMACENERO_PASSWORD || defaultPassword,
     nombre_completo: 'Carlos Almacenero',
     telefono: '962000003',
     direccion: 'Av. 28 de Julio 789',
@@ -53,7 +65,7 @@ const usuarios = [
   },
   {
     email: 'cliente@qhatu.com',
-    password: 'cliente123',
+    password: process.env.SEED_CLIENTE_PASSWORD || defaultPassword,
     nombre_completo: 'Ana Cliente',
     telefono: '962000004',
     direccion: 'Jr. Progreso 321',
@@ -66,7 +78,7 @@ const usuarios = [
   },
   {
     email: 'cliente2@qhatu.com',
-    password: 'cliente123',
+    password: process.env.SEED_CLIENTE_PASSWORD || defaultPassword,
     nombre_completo: 'Pedro Cliente',
     telefono: '962000005',
     direccion: 'Av. Universitaria 555',
@@ -81,11 +93,10 @@ const usuarios = [
 
 async function seedUsers() {
   let connection;
-  
+
   try {
     console.log('🔄 Iniciando seed de usuarios...\n');
 
-    // Crear conexión directa a MySQL
     connection = await mysql.createConnection({
       host: process.env.DB_HOST || 'localhost',
       user: process.env.DB_USER || 'root',
@@ -98,7 +109,6 @@ async function seedUsers() {
 
     for (const usuario of usuarios) {
       try {
-        // Verificar si el usuario ya existe
         const [existingUser] = await connection.query(
           'SELECT usuario_id FROM usuarios WHERE email = ?',
           [usuario.email]
@@ -109,10 +119,8 @@ async function seedUsers() {
           continue;
         }
 
-        // Hash de la contraseña
         const hashedPassword = await bcrypt.hash(usuario.password, 10);
 
-        // Insertar usuario
         const [result] = await connection.query(
           `INSERT INTO usuarios 
           (email, password, nombre_completo, telefono, direccion, distrito, 
@@ -134,46 +142,19 @@ async function seedUsers() {
           ]
         );
 
-        // Obtener nombre del rol
         const [rol] = await connection.query(
           'SELECT nombre FROM roles WHERE rol_id = ?',
           [usuario.rol_id]
         );
 
-        console.log(`✓ Usuario creado exitosamente:`);
-        console.log(`  ID: ${result.insertId}`);
-        console.log(`  Email: ${usuario.email}`);
-        console.log(`  Password: ${usuario.password}`);
-        console.log(`  Rol: ${rol[0].nombre}`);
-        console.log(`  Nombre: ${usuario.nombre_completo}\n`);
+        console.log(`✓ Usuario creado: ${usuario.email} (ID ${result.insertId}, rol ${rol[0]?.nombre || usuario.rol_id})`);
       } catch (error) {
         console.error(`✗ Error al crear usuario ${usuario.email}:`, error.message);
       }
     }
 
-    console.log('\n✅ Seed de usuarios completado\n');
-    console.log('📋 Credenciales de acceso:');
-    console.log('═══════════════════════════════════════════════════');
-    console.log('👑 SUPER ADMIN');
-    console.log('   Email: admin@qhatu.com');
-    console.log('   Password: admin123');
-    console.log('');
-    console.log('💼 VENDEDOR');
-    console.log('   Email: vendedor@qhatu.com');
-    console.log('   Password: vendedor123');
-    console.log('');
-    console.log('📦 ALMACENERO');
-    console.log('   Email: almacenero@qhatu.com');
-    console.log('   Password: almacen123');
-    console.log('');
-    console.log('👤 CLIENTE 1');
-    console.log('   Email: cliente@qhatu.com');
-    console.log('   Password: cliente123');
-    console.log('');
-    console.log('👤 CLIENTE 2');
-    console.log('   Email: cliente2@qhatu.com');
-    console.log('   Password: cliente123');
-    console.log('═══════════════════════════════════════════════════\n');
+    console.log('\n✅ Seed de usuarios completado');
+    console.log('   Las contraseñas provienen de las variables SEED_* de tu .env.\n');
 
     await connection.end();
     process.exit(0);
@@ -186,5 +167,4 @@ async function seedUsers() {
   }
 }
 
-// Ejecutar seed
 seedUsers();

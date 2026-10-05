@@ -2,8 +2,13 @@ import express from 'express';
 import { Op, Sequelize } from 'sequelize';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
+import { createProduct, updateProduct, deleteProduct } from '../controllers/productController.js';
+import { requireAuth, requireRole } from '../config/middleware/auth.js';
 
 const router = express.Router();
+
+// Gestión de catálogo: super_admin y almacenero
+const requireCatalogStaff = requireRole(['super_admin', 'almacenero']);
 
 // ============================================
 // === UTILIDADES ===
@@ -825,5 +830,24 @@ router.get('/:id', async (req, res) => {
     });
   }
 });
+
+// ============================================
+// === CRUD (admin / almacén) ===
+// ============================================
+
+/**
+ * POST /api/products — Crear producto
+ */
+router.post('/', requireAuth, requireCatalogStaff, createProduct);
+
+/**
+ * PUT /api/products/:id — Actualizar producto
+ */
+router.put('/:id', requireAuth, requireCatalogStaff, updateProduct);
+
+/**
+ * DELETE /api/products/:id — Eliminar producto
+ */
+router.delete('/:id', requireAuth, requireRole(['super_admin']), deleteProduct);
 
 export default router;

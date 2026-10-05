@@ -37,9 +37,15 @@ import analyticsRoutes from './routes/analytics.js';
 import ventasRoutes from './routes/ventas.js';
 import analyticsVentasRoutes from './routes/analytics-ventas.js';
 import mlRoutes from './routes/ml.js';
+
+// Validación de entorno (falla rápido si falta configuración crítica)
+import { validateEnv } from './config/env.js';
+
 // ====================================
 // 📊 VARIABLES DE ENTORNO
 // ====================================
+
+validateEnv();
 
 const app = express();
 const server = createServer(app);
@@ -250,7 +256,7 @@ app.use(express.json({
 }));
 
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(cookieParser(process.env.COOKIE_SECRET || 'qhatu-secret'));
+app.use(cookieParser(process.env.COOKIE_SECRET));
 
 // ====================================
 // 📝 LOGGING PERSONALIZADO (DEV)
@@ -352,10 +358,11 @@ app.get('/api/health', async (req, res) => {
       version: '2.2.0'
     });
   } catch (error) {
+    console.error(chalk.red('❌ Error en /api/health:'), error.message);
     res.status(503).json({
       success: false,
       status: 'unhealthy',
-      error: error.message,
+      error: 'Servicio de base de datos no disponible',
       timestamp: new Date().toISOString()
     });
   }
